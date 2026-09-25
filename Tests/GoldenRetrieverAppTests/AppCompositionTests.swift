@@ -59,7 +59,8 @@ final class AppCompositionTests: XCTestCase {
 
         XCTAssertEqual(dependencies.trackingController.mode, .privateMode)
         XCTAssertTrue((dependencies.store as AnyObject) === store)
-        XCTAssertEqual(dependencies.scheduler, BreakScheduler())
+        XCTAssertEqual(dependencies.scheduler.policy, BreakPolicy())
+        XCTAssertEqual(dependencies.scheduler.calendar.identifier, Calendar.current.identifier)
     }
 
     func testCompletedSessionFeedsSnapshotAndDailyStatisticsStore() throws {
