@@ -9,6 +9,7 @@ public struct PopoverView: View {
     public var onPostpone: () -> Void
     public var onPauseReminders: () -> Void
     public var onOpenStatistics: () -> Void
+    public var onOpenSettings: () -> Void
 
     public init(
         snapshot: UsageSnapshot,
@@ -17,7 +18,8 @@ public struct PopoverView: View {
         onStartBreak: @escaping () -> Void = {},
         onPostpone: @escaping () -> Void = {},
         onPauseReminders: @escaping () -> Void = {},
-        onOpenStatistics: @escaping () -> Void = {}
+        onOpenStatistics: @escaping () -> Void = {},
+        onOpenSettings: @escaping () -> Void = {}
     ) {
         self.snapshot = snapshot
         self.dogState = dogState
@@ -26,6 +28,7 @@ public struct PopoverView: View {
         self.onPostpone = onPostpone
         self.onPauseReminders = onPauseReminders
         self.onOpenStatistics = onOpenStatistics
+        self.onOpenSettings = onOpenSettings
     }
 
     public var body: some View {
@@ -51,6 +54,7 @@ public struct PopoverView: View {
             HStack {
                 Button("暫停提醒", action: onPauseReminders)
                 Button("查看統計", action: onOpenStatistics)
+                Button("設定", action: onOpenSettings)
             }
         }
         .padding(16)

@@ -3,9 +3,11 @@ import SwiftUI
 
 public struct SettingsView: View {
     @Binding private var mode: TrackingMode
+    private let onClose: () -> Void
 
-    public init(mode: Binding<TrackingMode>) {
+    public init(mode: Binding<TrackingMode>, onClose: @escaping () -> Void = {}) {
         self._mode = mode
+        self.onClose = onClose
     }
 
     public var body: some View {
@@ -20,6 +22,7 @@ public struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Button("返回", action: onClose)
         }
         .padding()
         .frame(width: 360)
