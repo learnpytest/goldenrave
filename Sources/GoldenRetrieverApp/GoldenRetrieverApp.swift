@@ -128,6 +128,10 @@ final class AppRuntime: ObservableObject {
         }
     }
 
+    func deleteAllData() {
+        try? dependencies?.store.deleteAll()
+    }
+
     var store: (any LocalStore)? { dependencies?.store }
 }
 
@@ -150,7 +154,8 @@ struct GoldenRetrieverApp: App {
                         get: { runtime.trackingMode },
                         set: runtime.setTrackingMode
                     ),
-                    onClose: runtime.closeSecondaryView
+                    onClose: runtime.closeSecondaryView,
+                    onDeleteData: runtime.deleteAllData
                 )
             } else {
                 PopoverView(

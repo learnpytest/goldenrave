@@ -4,10 +4,17 @@ import SwiftUI
 public struct SettingsView: View {
     @Binding private var mode: TrackingMode
     private let onClose: () -> Void
+    private let onDeleteData: () -> Void
+    @State private var showingDeleteConfirmation = false
 
-    public init(mode: Binding<TrackingMode>, onClose: @escaping () -> Void = {}) {
+    public init(
+        mode: Binding<TrackingMode>,
+        onClose: @escaping () -> Void = {},
+        onDeleteData: @escaping () -> Void = {}
+    ) {
         self._mode = mode
         self.onClose = onClose
+        self.onDeleteData = onDeleteData
     }
 
     public var body: some View {
@@ -22,9 +29,20 @@ public struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Button("清除本機資料", role: .destructive) {
+                showingDeleteConfirmation = true
+            }
             Button("返回", action: onClose)
         }
         .padding()
         .frame(width: 360)
+        .confirmationDialog(
+            "確定清除所有本機使用與休息紀錄？",
+            isPresented: $showingDeleteConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("清除", role: .destructive, action: onDeleteData)
+            Button("取消", role: .cancel) {}
+        }
     }
 }
