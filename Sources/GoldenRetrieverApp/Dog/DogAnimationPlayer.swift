@@ -30,8 +30,7 @@ public struct DogAnimationPlayer: Sendable {
     public static func resourceURL(for state: DogState) -> URL? {
         Bundle.module.url(
             forResource: resourceName(for: state),
-            withExtension: "png",
-            subdirectory: resourceSubdirectory(for: state)
+            withExtension: "png"
         )
     }
 
@@ -61,20 +60,4 @@ public struct DogAnimationPlayer: Sendable {
         }
     }
 
-    private static func resourceSubdirectory(for state: DogState) -> String? {
-        switch state {
-        case .idle:
-            nil
-        case .walk:
-            "Animation/walk"
-        case .run:
-            "Animation/run"
-        case .play:
-            "Animation/play"
-        case .jump:
-            "Animation/jump"
-        case .rest:
-            "Animation/rest"
-        }
-    }
 }
