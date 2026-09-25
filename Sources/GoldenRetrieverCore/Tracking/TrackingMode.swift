@@ -1,4 +1,4 @@
-public enum TrackingMode: String, Codable, CaseIterable, Sendable {
+public enum TrackingMode: String, Codable, CaseIterable, Hashable, Sendable {
     case privateMode
     case detailed
 

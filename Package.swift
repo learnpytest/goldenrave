@@ -25,7 +25,7 @@ let package = Package(
             name: "GoldenRetrieverApp",
             dependencies: ["GoldenRetrieverCore"],
             resources: [
-                .process("Resources")
+                .process("Resources/Animation")
             ]
         ),
         .testTarget(

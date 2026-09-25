@@ -19,7 +19,7 @@ fi
 rm -rf "$APP_DIR"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$EXECUTABLE" "$APP_DIR/Contents/MacOS/GoldenRetrieverApp"
-cp "$ROOT_DIR/Sources/GoldenRetrieverApp/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+cp "$ROOT_DIR/Packaging/Info.plist" "$APP_DIR/Contents/Info.plist"
 
 RESOURCE_BUNDLE="$(find "$BIN_PATH" -maxdepth 1 -type d -name '*.resources' -print -quit)"
 if [[ -z "$RESOURCE_BUNDLE" ]]; then
