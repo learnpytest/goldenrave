@@ -13,11 +13,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Run tests, release build, and app packaging
         run: bash Scripts/run-checks.sh
-      - name: Archive macOS app
-        run: ditto -c -k --sequesterRsrc --keepParent dist/GoldenRetriever.app dist/GoldenRetriever.app.zip
       - name: Upload macOS app artifact
         uses: actions/upload-artifact@v4
         with:
           name: GoldenRetriever-macOS
-          path: dist/GoldenRetriever.app.zip
+          path: dist/GoldenRetriever.app
           if-no-files-found: error

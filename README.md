@@ -13,6 +13,10 @@ open dist/GoldenRetriever.app
 
 app 是 menu-bar-only utility，不會建立不必要的 Dock 視窗。第一次啟動後，點選 menu bar 的小黃金即可看到連續使用時間、今天累積時間、下次休息和控制按鈕。
 
+## 下載已打包版本
+
+從 GitHub repo 開啟 `Actions` → `macOS checks` → 最新一筆 `main` 分支且顯示成功的 workflow run，在頁面最下方 `Artifacts` 下載 `GoldenRetriever-macOS`。解壓縮一次後，將 `GoldenRetriever.app` 拖到 Applications 再開啟。這個 artifact 是未上架 App Store 的個人版，使用 ad-hoc signing；如果 macOS 第一次顯示安全提示，請在 Finder 對 app 按右鍵並選「打開」。
+
 ## 追蹤模式
 
 - Private（預設）：只記錄 active／idle、連續使用時間、每日使用時間和休息事件。
