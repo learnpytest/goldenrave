@@ -28,4 +28,9 @@ if [[ -z "$RESOURCE_BUNDLE" ]]; then
 fi
 cp -R "$RESOURCE_BUNDLE" "$APP_DIR/Contents/Resources/"
 
+# SwiftPM's executable carries a linker ad-hoc signature, but the assembled
+# app bundle needs its own resource seal before it is distributed.
+codesign --force --deep --sign - "$APP_DIR"
+bash "$ROOT_DIR/Scripts/verify-app-bundle.sh" "$APP_DIR"
+
 echo "$APP_DIR"
