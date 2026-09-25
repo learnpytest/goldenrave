@@ -28,14 +28,14 @@ public struct DogAnimationPlayer: Sendable {
     }
 
     public static func resourceURL(for state: DogState) -> URL? {
-        Bundle.module.url(
+        resourceBundle().url(
             forResource: resourceName(for: state),
             withExtension: "png"
         )
     }
 
     public static func canonicalReferenceURL() -> URL? {
-        Bundle.module.url(forResource: "golden-retriever-puppy-reference", withExtension: "png")
+        resourceBundle().url(forResource: "golden-retriever-puppy-reference", withExtension: "png")
     }
 
     private func loadImage(for state: DogState) -> NSImage? {
@@ -58,6 +58,22 @@ public struct DogAnimationPlayer: Sendable {
         case .rest:
             "rest"
         }
+    }
+
+    private static func resourceBundle() -> Bundle {
+        let bundleName = "GoldenRetriever_GoldenRetrieverApp.bundle"
+        let candidates = [
+            Bundle.main.resourceURL?.appendingPathComponent(bundleName),
+            Bundle.main.bundleURL.appendingPathComponent(bundleName)
+        ].compactMap { $0 }
+
+        for candidate in candidates {
+            if let bundle = Bundle(url: candidate) {
+                return bundle
+            }
+        }
+
+        return Bundle.module
     }
 
 }

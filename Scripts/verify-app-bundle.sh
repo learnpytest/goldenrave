@@ -10,6 +10,7 @@ fi
 
 EXECUTABLE="$APP_PATH/Contents/MacOS/GoldenRetrieverApp"
 INFO_PLIST="$APP_PATH/Contents/Info.plist"
+RESOURCE_BUNDLE="$APP_PATH/Contents/Resources/GoldenRetriever_GoldenRetrieverApp.bundle"
 
 if [[ ! -x "$EXECUTABLE" ]]; then
     echo "error: app executable is missing or not executable: $EXECUTABLE" >&2
@@ -18,6 +19,11 @@ fi
 
 if [[ ! -f "$INFO_PLIST" ]]; then
     echo "error: app Info.plist is missing: $INFO_PLIST" >&2
+    exit 1
+fi
+
+if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
+    echo "error: SwiftPM resource bundle is missing from app resources: $RESOURCE_BUNDLE" >&2
     exit 1
 fi
 
