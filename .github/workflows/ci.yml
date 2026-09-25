@@ -1,0 +1,15 @@
+name: macOS checks
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  native-checks:
+    runs-on: macos-14
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Run tests, release build, and app packaging
+        run: bash Scripts/run-checks.sh
