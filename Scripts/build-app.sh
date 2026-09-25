@@ -21,7 +21,7 @@ mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$EXECUTABLE" "$APP_DIR/Contents/MacOS/GoldenRetrieverApp"
 cp "$ROOT_DIR/Packaging/Info.plist" "$APP_DIR/Contents/Info.plist"
 
-RESOURCE_BUNDLE="$(find "$BIN_PATH" -maxdepth 1 -type d -name '*.resources' -print -quit)"
+RESOURCE_BUNDLE="$(find "$BIN_PATH" -maxdepth 1 -type d \( -name '*.resources' -o -name '*.bundle' \) -print -quit)"
 if [[ -z "$RESOURCE_BUNDLE" ]]; then
     echo "error: expected SwiftPM resource bundle was not built in: $BIN_PATH" >&2
     exit 1

@@ -22,7 +22,7 @@ public final class UserNotificationPresenter: NotificationPresenter {
         let minutes = max(1, Int(ceil(secondsRemaining / 60)))
         present(
             title: "小黃金提醒你",
-            body: "再工作約 (minutes) 分鐘，就陪我休息一下吧。"
+            body: "再工作約 \(minutes) 分鐘，就陪我休息一下吧。"
         )
     }
 
