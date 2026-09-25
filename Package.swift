@@ -31,6 +31,10 @@ let package = Package(
         .testTarget(
             name: "GoldenRetrieverCoreTests",
             dependencies: ["GoldenRetrieverCore"]
+        ),
+        .testTarget(
+            name: "GoldenRetrieverAppTests",
+            dependencies: ["GoldenRetrieverApp", "GoldenRetrieverCore"]
         )
     ]
 )
