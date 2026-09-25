@@ -20,6 +20,7 @@ final class LocalStoreTests: XCTestCase {
         let container = try ModelContainer(
             for: UsageSessionModel.self,
             BreakEventModel.self,
+            DetailedActivityModel.self,
             configurations: configuration
         )
         return SwiftDataLocalStore(container: container, calendar: calendar)

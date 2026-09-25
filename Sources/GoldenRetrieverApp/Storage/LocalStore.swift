@@ -30,6 +30,7 @@ public final class SwiftDataLocalStore: LocalStore {
         let container = try ModelContainer(
             for: UsageSessionModel.self,
             BreakEventModel.self,
+            DetailedActivityModel.self,
             configurations: configuration
         )
         return SwiftDataLocalStore(container: container, calendar: calendar)
@@ -48,6 +49,11 @@ public final class SwiftDataLocalStore: LocalStore {
         try context.save()
     }
 
+    public func save(segment: ActivitySegment) throws {
+        context.insert(DetailedActivityModel(segment: segment))
+        try context.save()
+    }
+
     public func dailyTotal(on date: Date) throws -> TimeInterval {
         let dayStart = calendar.startOfDay(for: date)
         guard let dayEnd = calendar.date(byAdding: .day, value: 1, to: dayStart) else {
@@ -63,7 +69,9 @@ public final class SwiftDataLocalStore: LocalStore {
         let sessions = try context.fetch(FetchDescriptor<UsageSessionModel>())
             .map { $0.record() }
             .sorted { $0.start < $1.start }
-        let hasDetails = sessions.contains { $0.mode == .detailed || $0.appName != nil || $0.windowTitle != nil || $0.browserURL != nil }
+        let detailedSegments = try context.fetch(FetchDescriptor<DetailedActivityModel>())
+            .sorted { $0.timestamp < $1.timestamp }
+        let hasDetails = sessions.contains { $0.mode == .detailed || $0.appName != nil || $0.windowTitle != nil || $0.browserURL != nil } || !detailedSegments.isEmpty
         var lines = [hasDetails
             ? "start,end,active_seconds,tracking_mode,app_name,window_title,browser_url"
             : "start,end,active_seconds,tracking_mode"]
@@ -83,6 +91,18 @@ public final class SwiftDataLocalStore: LocalStore {
             }
             lines.append(fields.map(escapeCSV).joined(separator: ","))
         }
+        for segment in detailedSegments {
+            let fields = [
+                formatter.string(from: segment.timestamp),
+                formatter.string(from: segment.timestamp),
+                "0",
+                TrackingMode.detailed.rawValue,
+                segment.appName,
+                segment.windowTitle ?? "",
+                segment.browserURLString ?? ""
+            ]
+            lines.append(fields.map(escapeCSV).joined(separator: ","))
+        }
         return Data((lines.joined(separator: "\n") + "\n").utf8)
     }
 
@@ -91,6 +111,9 @@ public final class SwiftDataLocalStore: LocalStore {
             context.delete(model)
         }
         for model in try context.fetch(FetchDescriptor<BreakEventModel>()) {
+            context.delete(model)
+        }
+        for model in try context.fetch(FetchDescriptor<DetailedActivityModel>()) {
             context.delete(model)
         }
         try context.save()

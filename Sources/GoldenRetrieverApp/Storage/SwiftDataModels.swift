@@ -44,3 +44,18 @@ final class BreakEventModel {
         self.actionRaw = record.action.rawValue
     }
 }
+
+@Model
+final class DetailedActivityModel {
+    var timestamp: Date
+    var appName: String
+    var windowTitle: String?
+    var browserURLString: String?
+
+    init(segment: ActivitySegment) {
+        self.timestamp = segment.timestamp
+        self.appName = segment.appName
+        self.windowTitle = segment.windowTitle
+        self.browserURLString = segment.browserURL?.absoluteString
+    }
+}
