@@ -44,8 +44,8 @@ public struct PopoverView: View {
                 }
             }
             Divider()
-            metric("這次連續使用", format(snapshot.currentSession))
-            metric("今天累積使用", format(snapshot.todayTotal))
+            metric("這次連續使用", Self.format(snapshot.currentSession))
+            metric("今天累積使用", Self.format(snapshot.todayTotal))
             metric("下次休息", nextBreak.map(Self.timeString) ?? "尚未排程")
             HStack {
                 Button("開始休息", action: onStartBreak)

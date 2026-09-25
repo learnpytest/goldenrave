@@ -24,7 +24,9 @@ final class AppRuntime: ObservableObject {
         trackingMode = dependencies?.trackingController.mode ?? .privateMode
         tick()
         timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
-            self?.tick()
+            Task { @MainActor [weak self] in
+                self?.tick()
+            }
         }
     }
 
@@ -45,7 +47,7 @@ final class AppRuntime: ObservableObject {
                 activeSessionStart = now
             }
             if dependencies.trackingController.mode == .detailed {
-                try? dependencies.trackingController.capture()
+                _ = try? dependencies.trackingController.capture()
             }
         } else if let activeSessionStart, previousSnapshot.isActive {
             let activeSeconds = max(
