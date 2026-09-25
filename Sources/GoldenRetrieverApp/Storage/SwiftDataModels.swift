@@ -1,4 +1,5 @@
 import Foundation
+import GoldenRetrieverCore
 import SwiftData
 
 @Model
