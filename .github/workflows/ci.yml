@@ -17,5 +17,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: GoldenRetriever-macOS
-          path: dist/GoldenRetriever.app
+          path: dist
           if-no-files-found: error
