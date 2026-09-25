@@ -65,7 +65,7 @@ public final class TrackingModeController {
             guard permission.canReadDetailedActivity else {
                 throw DetailedActivityPermissionError()
             }
-            return enableDetailedMode()
+            return try enableDetailedMode()
         }
         mode = .detailed
     }

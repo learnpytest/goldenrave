@@ -14,7 +14,7 @@ public enum LocalStoreError: Error, Equatable {
     case invalidRecord
 }
 
-public final class SwiftDataLocalStore: LocalStore {
+public final class SwiftDataLocalStore: LocalStore, DetailedActivityStore {
     private let container: ModelContainer
     private let context: ModelContext
     private let calendar: Calendar
