@@ -1,3 +1,4 @@
+import Foundation
 import GoldenRetrieverCore
 
 struct MenuBarStatusConfiguration: Equatable {

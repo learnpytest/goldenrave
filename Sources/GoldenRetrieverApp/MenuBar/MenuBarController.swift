@@ -83,8 +83,8 @@ final class MenuBarController: NSObject {
         } else if runtime.showSettings {
             SettingsView(
                 mode: Binding(
-                    get: { runtime.trackingMode },
-                    set: runtime.setTrackingMode
+                    get: { self.runtime.trackingMode },
+                    set: self.runtime.setTrackingMode
                 ),
                 onClose: runtime.closeSecondaryView,
                 onDeleteData: runtime.deleteAllData
