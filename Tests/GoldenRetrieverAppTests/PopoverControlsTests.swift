@@ -64,4 +64,24 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(PopoverView.remainingBreakMinutes(until: endsAt, now: now), 7)
         XCTAssertEqual(PopoverView.remainingBreakMinutes(until: now.addingTimeInterval(-5), now: now), 0)
     }
+
+    func testWhileInvitingTheRowSaysTheBreakIsHereAndKeepsThePlannedTime() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        let planned = now.addingTimeInterval(-3 * 60)
+
+        let row = PopoverView.breakRow(nextBreak: planned, isInviting: true, now: now)
+
+        XCTAssertEqual(row.title, "喘口氣時間到了")
+        XCTAssertEqual(row.value, PopoverView.timeString(planned))
+    }
+
+    func testBeforeTheInvitationTheRowIsThePlainNextBreak() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+        let planned = now.addingTimeInterval(10 * 60)
+
+        let row = PopoverView.breakRow(nextBreak: planned, isInviting: false, now: now)
+
+        XCTAssertEqual(row.title, "喘口氣")
+        XCTAssertEqual(row.value, PopoverView.timeString(planned))
+    }
 }

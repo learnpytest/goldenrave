@@ -42,6 +42,7 @@ final class MenuBarController: NSObject {
 
         floatingPuppy = FloatingPuppyController(
             playbackAt: { [runtime] date in runtime.dogPlayback(at: date) },
+            lineAt: { [runtime] date in runtime.invitationText(at: date) },
             onClick: { [weak self] in self?.showPopover() }
         )
 

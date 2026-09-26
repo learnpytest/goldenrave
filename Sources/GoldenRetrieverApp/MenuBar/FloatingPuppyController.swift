@@ -23,13 +23,14 @@ enum FloatingPuppyPlacement {
 /// Shows the puppy on the desktop while a break invitation is running.
 @MainActor
 final class FloatingPuppyController {
-    static let size = CGSize(width: 180, height: 170)
+    static let size = CGSize(width: 240, height: 190)
 
     private let panel: NSPanel
     private let preferences: AppPreferences
 
     init(
         playbackAt: @escaping (Date) -> DogAnimationPlayback,
+        lineAt: @escaping (Date) -> String?,
         preferences: AppPreferences = AppPreferences(),
         onClick: @escaping () -> Void
     ) {
@@ -48,7 +49,7 @@ final class FloatingPuppyController {
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
 
-        let hosting = NSHostingView(rootView: FloatingPuppyView(playbackAt: playbackAt))
+        let hosting = NSHostingView(rootView: FloatingPuppyView(playbackAt: playbackAt, lineAt: lineAt))
         hosting.frame = CGRect(origin: .zero, size: Self.size)
         let container = DragOrClickView(frame: hosting.frame)
         container.addSubview(hosting)
@@ -129,12 +130,19 @@ private final class DragOrClickView: NSView {
 
 private struct FloatingPuppyView: View {
     let playbackAt: (Date) -> DogAnimationPlayback
+    let lineAt: (Date) -> String?
     private static let dogSide: CGFloat = 120
 
     var body: some View {
         VStack(spacing: 2) {
-            Text("喘口氣時間到了")
+            // Same line as under 小金金陪伴中 in the popover; it changes every 45s.
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(lineAt(context.date) ?? BreakInvitation.lines[0].text)
+            }
                 .font(.system(size: 13, weight: .medium))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                .frame(maxWidth: 220)
                 .foregroundStyle(Color(nsColor: .labelColor))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)

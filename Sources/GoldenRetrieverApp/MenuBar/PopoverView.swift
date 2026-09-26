@@ -160,6 +160,15 @@ public struct PopoverView: View {
         return activities + [remindersPaused ? .resumeReminders : .pauseReminders]
     }
 
+    /// While the puppy is inviting, the row says the break is here and keeps
+    /// the time it was planned for, rather than "現在".
+    static func breakRow(nextBreak: Date?, isInviting: Bool, now: Date) -> (title: String, value: String) {
+        if isInviting, let nextBreak {
+            return ("喘口氣時間到了", timeString(nextBreak))
+        }
+        return ("喘口氣", nextBreakText(nextBreak, now: now))
+    }
+
     /// A reminder that is already due reads "現在", never a time in the past.
     static func nextBreakText(_ nextBreak: Date?, now: Date) -> String {
         guard let nextBreak else { return "尚未排程" }
@@ -185,8 +194,23 @@ public struct PopoverView: View {
             metric((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
             metric("喘口氣", "已暫停")
+        } else if invitationText != nil {
+            let row = Self.breakRow(nextBreak: nextBreak, isInviting: true, now: Date())
+            HStack(spacing: 6) {
+                Image(systemName: "pawprint.fill")
+                Text(row.title).fontWeight(.semibold)
+                Spacer()
+                Text(row.value).monospacedDigit().fontWeight(.semibold)
+            }
+            .font(.callout)
+            .foregroundStyle(Color.orange)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Color.orange.opacity(0.16), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .padding(.horizontal, -8)
         } else {
-            metric("喘口氣", Self.nextBreakText(nextBreak, now: Date()))
+            let row = Self.breakRow(nextBreak: nextBreak, isInviting: false, now: Date())
+            metric(row.title, row.value)
         }
     }
 
