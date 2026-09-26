@@ -47,13 +47,17 @@ final class BreakInvitationTests: XCTestCase {
         XCTAssertFalse(BreakInvitation.lines.contains { $0.animation == .pounce || $0.animation == .run })
     }
 
+    func testTheHugLineUsesTheCuddleAnimation() {
+        XCTAssertEqual(BreakInvitation.lines.first { $0.text.contains("抱抱") }?.animation, .cuddle)
+    }
+
     func testUsesTheSixChosenLines() {
         XCTAssertEqual(BreakInvitation.lines.map(\.text), [
             "你已經工作好久了，要不要陪我一下？",
             "我在這裡等你，想休息時叫我喔",
             "我有點想你了，有空來摸摸我嗎？",
             "忙完這段再來找我就好",
-            "你已經專心好久了，我們一起放空一下",
+            "你專心好久了，我等你的抱抱喔",
             "我幫你看著時間"
         ])
     }
