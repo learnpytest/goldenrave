@@ -2,67 +2,38 @@ import GoldenRetrieverCore
 import SwiftUI
 
 public struct DogAnimationView: View {
-    public let state: DogState
-    public let player: DogAnimationPlayer
-    @State private var isAnimating = false
+    private let playbackAt: (Date) -> DogAnimationPlayback
+    private let player: DogAnimationPlayer
 
-    public init(state: DogState, player: DogAnimationPlayer = DogAnimationPlayer()) {
-        self.state = state
+    public init(
+        playbackAt: @escaping (Date) -> DogAnimationPlayback,
+        player: DogAnimationPlayer = DogAnimationPlayer()
+    ) {
+        self.playbackAt = playbackAt
         self.player = player
     }
 
     public var body: some View {
-        Group {
-            if let frame = player.frames(for: state).first {
-                frame
-                    .resizable()
-                    .scaledToFit()
-                    .scaleEffect(scale)
-                    .rotationEffect(.degrees(rotation))
-                    .offset(y: verticalOffset)
-            } else {
+        TimelineView(.periodic(from: .now, by: 0.05)) { context in
+            let playback = playbackAt(context.date)
+            let animation = playback.animation
+            let frames = player.frames(for: animation)
+            if frames.isEmpty {
                 Image(systemName: "pawprint.fill")
                     .resizable()
                     .scaledToFit()
                     .foregroundStyle(.orange)
+            } else {
+                let index = DogAnimationPlayer.frameIndex(
+                    elapsed: context.date.timeIntervalSince(playback.startedAt ?? Date(timeIntervalSinceReferenceDate: 0)),
+                    frameDuration: player.frameDuration(for: animation),
+                    frameCount: frames.count,
+                    loops: player.loops(animation)
+                )
+                Image(nsImage: frames[index])
+                    .resizable()
+                    .scaledToFit()
             }
-        }
-        .animation(.easeInOut(duration: animationDuration), value: isAnimating)
-        .onAppear { isAnimating = true }
-        .onChange(of: state) { _, _ in isAnimating.toggle() }
-    }
-
-    private var animationDuration: Double {
-        switch state {
-        case .idle: 1.4
-        case .walk: 0.24
-        case .run: 0.12
-        case .play: 0.35
-        case .jump: 0.4
-        case .rest: 2.0
-        }
-    }
-
-    private var scale: CGFloat {
-        guard isAnimating else { return 1 }
-        return state == .rest ? 1.02 : 1.0
-    }
-
-    private var rotation: Double {
-        guard isAnimating else { return 0 }
-        switch state {
-        case .walk, .run: return 2
-        case .play: return -3
-        default: return 0
-        }
-    }
-
-    private var verticalOffset: CGFloat {
-        guard isAnimating else { return 0 }
-        switch state {
-        case .jump: return -4
-        case .walk, .run, .play: return 2
-        default: return 0
         }
     }
 }

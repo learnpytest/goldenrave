@@ -3,39 +3,59 @@ import XCTest
 @testable import GoldenRetrieverCore
 
 final class DogAnimationPlayerTests: XCTestCase {
-    func testEveryVisualStateHasAFrame() {
+    func testEveryAnimationHasAtLeastOneFrame() {
         let player = DogAnimationPlayer()
 
-        for state in DogState.allCases {
-            XCTAssertFalse(player.frames(for: state).isEmpty, "Missing frame for \(state)")
+        for animation in DogAnimation.allCases {
+            XCTAssertFalse(player.frames(for: animation).isEmpty, "Missing frames for \(animation)")
         }
     }
 
-    func testCanonicalReferenceAndMotionResourcesExist() {
+    func testCanonicalReferenceIsPackaged() {
         XCTAssertNotNil(DogAnimationPlayer.canonicalReferenceURL())
-        for state in [DogState.walk, .run, .play, .jump, .rest] {
-            XCTAssertNotNil(DogAnimationPlayer.resourceURL(for: state), "Missing resource for \(state)")
-        }
     }
 
-    func testMenuBarImageFitsInTheMenuBar() throws {
+    func testMenuBarFramesFitInTheMenuBar() {
         let player = DogAnimationPlayer()
 
-        for state in DogState.allCases {
-            let image = try XCTUnwrap(player.menuBarImage(for: state), "Missing menu bar image for \(state)")
-            XCTAssertLessThanOrEqual(image.size.height, 22, "Menu bar image too tall for \(state)")
-            XCTAssertLessThanOrEqual(image.size.width, 40, "Menu bar image too wide for \(state)")
+        for animation in DogAnimation.allCases {
+            let frames = player.menuBarFrames(for: animation)
+            XCTAssertFalse(frames.isEmpty, "Missing menu bar frames for \(animation)")
+            for frame in frames {
+                XCTAssertLessThanOrEqual(frame.size.height, 22, "Menu bar frame too tall for \(animation)")
+                XCTAssertLessThanOrEqual(frame.size.width, 40, "Menu bar frame too wide for \(animation)")
+            }
         }
     }
 
     func testIdleDoesNotUseTheMultiPoseReferenceSheet() {
-        XCTAssertNotEqual(DogAnimationPlayer.resourceURL(for: .idle), DogAnimationPlayer.canonicalReferenceURL())
+        XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .idle).contains { $0 == DogAnimationPlayer.canonicalReferenceURL() })
     }
 
-    func testMotionStatesHaveDifferentCadences() {
+    func testFrameIndexLoopsThroughTheSequence() {
+        XCTAssertEqual(DogAnimationPlayer.frameIndex(elapsed: 0, frameDuration: 0.1, frameCount: 4), 0)
+        XCTAssertEqual(DogAnimationPlayer.frameIndex(elapsed: 0.25, frameDuration: 0.1, frameCount: 4), 2)
+        XCTAssertEqual(DogAnimationPlayer.frameIndex(elapsed: 0.45, frameDuration: 0.1, frameCount: 4), 0)
+        XCTAssertEqual(DogAnimationPlayer.frameIndex(elapsed: 5, frameDuration: 0.1, frameCount: 1), 0)
+    }
+
+    func testSpinPlaysOnceAndSettlesOnItsLastFrame() {
+        let player = DogAnimationPlayer()
+        let frameCount = player.frames(for: .spin).count
+        let duration = player.frameDuration(for: .spin)
+
+        XCTAssertFalse(player.loops(.spin))
+        XCTAssertEqual(duration * Double(frameCount), DogAnimationDirector.spinDuration, accuracy: 0.01)
+        XCTAssertEqual(
+            DogAnimationPlayer.frameIndex(elapsed: 10, frameDuration: duration, frameCount: frameCount, loops: false),
+            frameCount - 1
+        )
+    }
+
+    func testFastMotionsCycleFasterThanCalmOnes() {
         let player = DogAnimationPlayer()
 
-        XCTAssertNotEqual(player.frameDuration(for: .walk), player.frameDuration(for: .run))
-        XCTAssertNotEqual(player.frameDuration(for: .run), player.frameDuration(for: .rest))
+        XCTAssertLessThan(player.frameDuration(for: .run), player.frameDuration(for: .walk))
+        XCTAssertLessThan(player.frameDuration(for: .walk), player.frameDuration(for: .rest))
     }
 }

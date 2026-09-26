@@ -31,13 +31,14 @@ final class DogStateMachineTests: XCTestCase {
         XCTAssertEqual(machine.state(for: input(session: 29 * 60)), .run)
     }
 
-    func testActivePuppyPlaysAfterThirtyMinutesOutsideWarningWindow() {
-        XCTAssertEqual(machine.state(for: input(session: 30 * 60)), .play)
+    func testLongSessionKeepsRunningInsteadOfPlaying() {
+        XCTAssertEqual(machine.state(for: input(session: 30 * 60)), .run)
+        XCTAssertEqual(machine.state(for: input(session: 90 * 60)), .run)
     }
 
-    func testWarningWindowMapsToJump() {
-        XCTAssertEqual(machine.state(for: input(session: 30 * 60, untilBreak: 5 * 60)), .jump)
-        XCTAssertEqual(machine.state(for: input(session: 30 * 60, untilBreak: 0)), .jump)
+    func testWarningWindowMapsToPounce() {
+        XCTAssertEqual(machine.state(for: input(session: 30 * 60, untilBreak: 5 * 60)), .pounce)
+        XCTAssertEqual(machine.state(for: input(session: 30 * 60, untilBreak: 0)), .pounce)
     }
 
     func testBreakMapsToRest() {

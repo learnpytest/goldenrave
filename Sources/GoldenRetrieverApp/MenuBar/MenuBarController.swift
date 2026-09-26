@@ -9,6 +9,11 @@ final class MenuBarController: NSObject {
     private let statusItem: NSStatusItem
     private let popover = NSPopover()
     private var runtimeSubscription: AnyCancellable?
+    private let player = DogAnimationPlayer()
+    private var frameTimer: Timer?
+    private var currentAnimation: DogAnimation?
+    private var animationStartedAt = Date()
+    private var shownFrame: (animation: DogAnimation, index: Int)?
 
     init(runtime: AppRuntime) {
         self.runtime = runtime
@@ -34,9 +39,16 @@ final class MenuBarController: NSObject {
         }
 
         refresh()
+
+        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.renderFrame()
+            }
+        }
     }
 
     deinit {
+        frameTimer?.invalidate()
         runtimeSubscription?.cancel()
         NSStatusBar.system.removeStatusItem(statusItem)
     }
@@ -48,7 +60,7 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
-        button?.image = statusImage(for: runtime.dogState)
+        renderFrame()
         button?.toolTip = configuration.accessibilityLabel
         button?.setAccessibilityLabel(configuration.accessibilityLabel)
 
@@ -97,21 +109,39 @@ final class MenuBarController: NSObject {
                 snapshot: runtime.snapshot,
                 dogState: runtime.dogState,
                 nextBreak: runtime.nextBreak,
+                breakEndsAt: runtime.breakEndsAt,
+                remindersPaused: runtime.remindersPaused,
+                playbackAt: runtime.dogPlayback(at:),
                 onStartBreak: runtime.startBreak,
                 onPostpone: runtime.postpone,
                 onPauseReminders: runtime.pauseReminders,
+                onResumeReminders: runtime.resumeReminders,
+                onEndBreak: runtime.endBreak,
                 onOpenStatistics: runtime.openStatistics,
                 onOpenSettings: runtime.openSettings
             )
         }
     }
 
-    private func statusImage(for state: DogState) -> NSImage? {
-        guard let image = DogAnimationPlayer().menuBarImage(for: state) else {
-            return fallbackImage()
+    private func renderFrame(now: Date = Date()) {
+        let playback = runtime.dogPlayback(at: now)
+        let animation = playback.animation
+        if animation != currentAnimation {
+            currentAnimation = animation
+            animationStartedAt = playback.startedAt ?? now
         }
-        image.isTemplate = false
-        return image
+        let frames = player.menuBarFrames(for: animation)
+        let index = DogAnimationPlayer.frameIndex(
+            elapsed: now.timeIntervalSince(animationStartedAt),
+            frameDuration: player.frameDuration(for: animation),
+            frameCount: frames.count,
+            loops: player.loops(animation)
+        )
+        if let shownFrame, shownFrame.animation == animation, shownFrame.index == index {
+            return
+        }
+        shownFrame = (animation, index)
+        statusItem.button?.image = frames.isEmpty ? fallbackImage() : frames[index]
     }
 
     private func fallbackImage() -> NSImage? {

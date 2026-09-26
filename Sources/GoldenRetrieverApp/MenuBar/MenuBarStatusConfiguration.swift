@@ -20,9 +20,7 @@ struct MenuBarStatusConfiguration: Equatable {
             "walk"
         case .run:
             "run"
-        case .play:
-            "play"
-        case .jump:
+        case .pounce:
             "jump"
         case .rest:
             "rest"
