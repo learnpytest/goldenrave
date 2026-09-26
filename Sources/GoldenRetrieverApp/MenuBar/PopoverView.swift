@@ -2,17 +2,29 @@ import GoldenRetrieverCore
 import SwiftUI
 
 enum PopoverControl: Equatable {
-    case startBreak
+    case start(BreakActivity)
     case pauseReminders
     case resumeReminders
     case endBreak
 
     var title: String {
         switch self {
-        case .startBreak: "開始休息"
-        case .pauseReminders: "暫停休息提醒"
-        case .resumeReminders: "恢復休息提醒"
-        case .endBreak: "提早結束休息"
+        case .start(.rest): "休息"
+        case .start(.play): "陪玩"
+        case .start(.walk): "散步"
+        case .pauseReminders: "暫停"
+        case .resumeReminders: "恢復"
+        case .endBreak: "提早結束"
+        }
+    }
+}
+
+extension BreakActivity {
+    var ongoingTitle: String {
+        switch self {
+        case .rest: "休息中"
+        case .play: "陪玩中"
+        case .walk: "散步中"
         }
     }
 }
@@ -22,9 +34,10 @@ public struct PopoverView: View {
     public let dogState: DogState
     public let nextBreak: Date?
     public let breakEndsAt: Date?
+    public let breakActivity: BreakActivity?
     public let remindersPaused: Bool
     public let playbackAt: ((Date) -> DogAnimationPlayback)?
-    public var onStartBreak: () -> Void
+    public var onStart: (BreakActivity) -> Void
     public var onPauseReminders: () -> Void
     public var onResumeReminders: () -> Void
     public var onEndBreak: () -> Void
@@ -36,9 +49,10 @@ public struct PopoverView: View {
         dogState: DogState,
         nextBreak: Date? = nil,
         breakEndsAt: Date? = nil,
+        breakActivity: BreakActivity? = nil,
         remindersPaused: Bool = false,
         playbackAt: ((Date) -> DogAnimationPlayback)? = nil,
-        onStartBreak: @escaping () -> Void = {},
+        onStart: @escaping (BreakActivity) -> Void = { _ in },
         onPauseReminders: @escaping () -> Void = {},
         onResumeReminders: @escaping () -> Void = {},
         onEndBreak: @escaping () -> Void = {},
@@ -49,9 +63,10 @@ public struct PopoverView: View {
         self.dogState = dogState
         self.nextBreak = nextBreak
         self.breakEndsAt = breakEndsAt
+        self.breakActivity = breakActivity
         self.remindersPaused = remindersPaused
         self.playbackAt = playbackAt
-        self.onStartBreak = onStartBreak
+        self.onStart = onStart
         self.onPauseReminders = onPauseReminders
         self.onResumeReminders = onResumeReminders
         self.onEndBreak = onEndBreak
@@ -75,7 +90,6 @@ public struct PopoverView: View {
             }
             Divider()
             metric("這次連續使用", Self.format(snapshot.currentSession))
-            metric("今天累積使用", Self.format(snapshot.todayTotal))
             breakMetric
             HStack {
                 ForEach(controls, id: \.title) { control in
@@ -95,10 +109,8 @@ public struct PopoverView: View {
         if isOnBreak {
             return [.endBreak]
         }
-        if remindersPaused {
-            return [.startBreak, .resumeReminders]
-        }
-        return [.startBreak, .pauseReminders]
+        let activities = BreakActivity.allCases.map(PopoverControl.start)
+        return activities + [remindersPaused ? .resumeReminders : .pauseReminders]
     }
 
     static func remainingBreakMinutes(until endsAt: Date, now: Date) -> Int {
@@ -117,17 +129,17 @@ public struct PopoverView: View {
     private var breakMetric: some View {
         if let breakEndsAt {
             let minutes = Self.remainingBreakMinutes(until: breakEndsAt, now: Date())
-            metric("休息中", "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
+            metric((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
-            metric("下次休息", "休息提醒已暫停")
+            metric("下次陪我", "已暫停")
         } else {
-            metric("下次休息", nextBreak.map(Self.timeString) ?? "尚未排程")
+            metric("下次陪我", nextBreak.map(Self.timeString) ?? "尚未排程")
         }
     }
 
     private func perform(_ control: PopoverControl) {
         switch control {
-        case .startBreak: onStartBreak()
+        case .start(let activity): onStart(activity)
         case .pauseReminders: onPauseReminders()
         case .resumeReminders: onResumeReminders()
         case .endBreak: onEndBreak()
@@ -139,8 +151,14 @@ public struct PopoverView: View {
         case .idle: "等你回來"
         case .walk: "慢慢走，先熱身"
         case .run: "跑起來了！"
-        case .pounce: "該休息囉！"
-        case .rest: "正在休息"
+        case .pounce: "該陪我囉！休息、陪玩或散步都好"
+        case .rest:
+            switch breakActivity ?? .rest {
+            case .rest: "正在休息"
+            case .play: "一起玩！"
+            case .walk: "散步中"
+            }
+        case .relaxing: "自己玩，不吵你"
         }
     }
 

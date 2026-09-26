@@ -23,8 +23,4 @@ final class MenuBarStatusConfigurationTests: XCTestCase {
         XCTAssertEqual(configuration.imageResourceName, "rest")
         XCTAssertEqual(configuration.title, "00:00")
     }
-
-    func testConfigurationReservesVisibleMenuBarSpace() {
-        XCTAssertGreaterThan(MenuBarStatusConfiguration.minimumLength, 0)
-    }
 }

@@ -5,17 +5,20 @@ public struct DogStateInput: Equatable, Sendable {
     public let sessionDuration: TimeInterval
     public let secondsUntilBreak: TimeInterval?
     public let isOnBreak: Bool
+    public let remindersPaused: Bool
 
     public init(
         isActive: Bool,
         sessionDuration: TimeInterval,
         secondsUntilBreak: TimeInterval?,
-        isOnBreak: Bool
+        isOnBreak: Bool,
+        remindersPaused: Bool = false
     ) {
         self.isActive = isActive
         self.sessionDuration = sessionDuration
         self.secondsUntilBreak = secondsUntilBreak
         self.isOnBreak = isOnBreak
+        self.remindersPaused = remindersPaused
     }
 }
 
@@ -32,6 +35,9 @@ public struct DogStateMachine: Sendable {
         }
         guard input.isActive else {
             return .idle
+        }
+        if input.remindersPaused {
+            return .relaxing
         }
         if let secondsUntilBreak = input.secondsUntilBreak,
            secondsUntilBreak <= policy.warningWindow {

@@ -20,6 +20,7 @@ final class AppRuntime: ObservableObject {
     private let activitySource = SystemActivitySource()
     private var timer: Timer?
     @Published private(set) var breakEndsAt: Date?
+    @Published private(set) var breakActivity: BreakActivity?
     @Published private(set) var remindersPaused = false
     private var activeSessionStart: Date?
     private var animationDirector = DogAnimationDirector()
@@ -51,6 +52,7 @@ final class AppRuntime: ObservableObject {
         guard var dependencies else { return }
         if let breakEndsAt, now >= breakEndsAt {
             self.breakEndsAt = nil
+            breakActivity = nil
             animationDirector.breakCompleted(at: now, withBall: Bool.random())
         }
         let sample = activitySource.sample(at: now)
@@ -90,16 +92,18 @@ final class AppRuntime: ObservableObject {
             isActive: snapshot.isActive,
             sessionDuration: snapshot.currentSession,
             secondsUntilBreak: secondsUntilBreak,
-            isOnBreak: isOnBreak
+            isOnBreak: isOnBreak,
+            remindersPaused: remindersPaused
         ))
         self.dependencies = dependencies
     }
 
-    func startBreak() {
+    func startBreak(_ activity: BreakActivity = .rest) {
         guard let dependencies else { return }
         let now = Date()
         breakEndsAt = now.addingTimeInterval(dependencies.scheduler.policy.restInterval)
-        animationDirector.breakStarted(at: now)
+        breakActivity = activity
+        animationDirector.breakStarted(at: now, activity: activity)
         nextBreak = nil
         dogState = .rest
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: now, action: .started))
@@ -119,6 +123,7 @@ final class AppRuntime: ObservableObject {
     func pauseReminders() {
         remindersPaused = true
         nextBreak = nil
+        tick()
     }
 
     func resumeReminders() {
@@ -129,6 +134,7 @@ final class AppRuntime: ObservableObject {
     func endBreak() {
         guard let dependencies, breakEndsAt != nil else { return }
         breakEndsAt = nil
+        breakActivity = nil
         animationDirector.breakEndedEarly()
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
         tick()

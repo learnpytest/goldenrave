@@ -25,7 +25,7 @@ final class DogAnimationPlayerTests: XCTestCase {
                 XCTAssertLessThanOrEqual(frame.size.height, DogAnimationPlayer.menuBarHeight, "too tall: \(animation)")
                 XCTAssertLessThanOrEqual(frame.size.width, DogAnimationPlayer.menuBarMaxWidth, "too wide: \(animation)")
                 XCTAssertTrue(
-                    frame.size.height >= 20 || frame.size.width >= DogAnimationPlayer.menuBarMaxWidth - 1,
+                    frame.size.height >= DogAnimationPlayer.menuBarHeight - 1 || frame.size.width >= DogAnimationPlayer.menuBarMaxWidth - 1,
                     "The dog should fill the menu bar, got \(frame.size) for \(animation)"
                 )
             }

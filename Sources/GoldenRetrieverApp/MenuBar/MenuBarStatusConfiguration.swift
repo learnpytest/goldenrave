@@ -2,9 +2,6 @@ import Foundation
 import GoldenRetrieverCore
 
 struct MenuBarStatusConfiguration: Equatable {
-    /// Widest menu bar puppy (40pt) plus the "00:00" timer.
-    static let minimumLength: Double = 86
-
     let imageResourceName: String
     let title: String
     let accessibilityLabel: String
@@ -23,7 +20,7 @@ struct MenuBarStatusConfiguration: Equatable {
             "run"
         case .pounce:
             "jump"
-        case .rest:
+        case .rest, .relaxing:
             "rest"
         }
     }

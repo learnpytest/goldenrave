@@ -12,6 +12,8 @@ public enum DogAnimation: String, CaseIterable, Sendable {
     case bellyUp = "belly-up"
     case play
     case playBall = "play-ball"
+    /// Going for a walk together (on a lead), as opposed to the work-session `walk`.
+    case stroll
 }
 
 /// `startedAt` is set for moments so they play from their first frame;
@@ -31,6 +33,11 @@ public struct DogAnimationDirector: Sendable {
     public static let rewardDuration: TimeInterval = 4
     public static let bellyUpCycle: TimeInterval = 75
     public static let bellyUpLength: TimeInterval = 5
+    public static let playSegment: TimeInterval = 8
+    /// Paused reminders: a quiet loop of the puppy's own business.
+    static let relaxingLoop: [(animation: DogAnimation, length: TimeInterval)] = [
+        (.rest, 40), (.bellyUp, 5), (.idle, 30), (.playBall, 8), (.rest, 7)
+    ]
 
     private struct Reward: Sendable {
         let animation: DogAnimation
@@ -38,12 +45,14 @@ public struct DogAnimationDirector: Sendable {
     }
 
     private var breakStartedAt: Date?
+    private var breakActivity: BreakActivity = .rest
     private var reward: Reward?
 
     public init() {}
 
-    public mutating func breakStarted(at date: Date) {
+    public mutating func breakStarted(at date: Date, activity: BreakActivity = .rest) {
         breakStartedAt = date
+        breakActivity = activity
         reward = nil
     }
 
@@ -78,8 +87,35 @@ public struct DogAnimationDirector: Sendable {
         case .pounce:
             return DogAnimationPlayback(animation: .pounce)
         case .rest:
-            return restPlayback(at: now)
+            switch breakActivity {
+            case .rest: return restPlayback(at: now)
+            case .play: return playPlayback(at: now)
+            case .walk: return DogAnimationPlayback(animation: .stroll)
+            }
+        case .relaxing:
+            return relaxingPlayback(at: now)
         }
+    }
+
+    private func playPlayback(at now: Date) -> DogAnimationPlayback {
+        guard let breakStartedAt else { return DogAnimationPlayback(animation: .play) }
+        let elapsed = max(0, now.timeIntervalSince(breakStartedAt))
+        let segment = (elapsed / Self.playSegment).rounded(.down)
+        let startedAt = breakStartedAt.addingTimeInterval(segment * Self.playSegment)
+        let animation: DogAnimation = Int(segment) % 2 == 0 ? .play : .playBall
+        return DogAnimationPlayback(animation: animation, startedAt: startedAt)
+    }
+
+    private func relaxingPlayback(at now: Date) -> DogAnimationPlayback {
+        let cycle = Self.relaxingLoop.reduce(0) { $0 + $1.length }
+        var phase = now.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: cycle)
+        for step in Self.relaxingLoop {
+            if phase < step.length {
+                return DogAnimationPlayback(animation: step.animation, startedAt: now.addingTimeInterval(-phase))
+            }
+            phase -= step.length
+        }
+        return DogAnimationPlayback(animation: .rest)
     }
 
     private func restPlayback(at now: Date) -> DogAnimationPlayback {

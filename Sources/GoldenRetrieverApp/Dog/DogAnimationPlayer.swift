@@ -12,7 +12,8 @@ public struct DogAnimationPlayer: Sendable {
         Self.cleanedFrames(for: animation).map(\.image)
     }
 
-    public static let menuBarHeight: CGFloat = 22
+    /// The menu bar is 22pt thick; 20pt leaves room so nothing is clipped.
+    public static let menuBarHeight: CGFloat = 20
     public static let menuBarMaxWidth: CGFloat = 40
 
     /// Status item buttons draw images at their intrinsic point size, so the
@@ -134,6 +135,7 @@ public struct DogAnimationPlayer: Sendable {
         case .rest: 0.5
         case .bellyUp: 0.25
         case .play, .playBall: 0.12
+        case .stroll: 0.16
         }
     }
 
@@ -165,18 +167,25 @@ public struct DogAnimationPlayer: Sendable {
     }
 
     public static func frameURLs(for animation: DogAnimation) -> [URL] {
-        let bundle = resourceBundle()
-        let prefix = "\(animation.rawValue)-"
-        let sequence = (bundle.urls(forResourcesWithExtension: "png", subdirectory: nil) ?? [])
+        let sequence = sequenceURLs(prefix: animation.rawValue)
+        if !sequence.isEmpty {
+            return sequence
+        }
+        if animation == .stroll {
+            let walking = sequenceURLs(prefix: DogAnimation.walk.rawValue)
+            if !walking.isEmpty { return walking }
+        }
+        return resourceBundle().url(forResource: fallbackPoseName(for: animation), withExtension: "png").map { [$0] } ?? []
+    }
+
+    private static func sequenceURLs(prefix name: String) -> [URL] {
+        let prefix = "\(name)-"
+        return (resourceBundle().urls(forResourcesWithExtension: "png", subdirectory: nil) ?? [])
             .filter { url in
                 let name = url.deletingPathExtension().lastPathComponent
                 return name.hasPrefix(prefix) && Int(name.dropFirst(prefix.count)) != nil
             }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
-        if !sequence.isEmpty {
-            return sequence
-        }
-        return bundle.url(forResource: fallbackPoseName(for: animation), withExtension: "png").map { [$0] } ?? []
     }
 
     public static func canonicalReferenceURL() -> URL? {
@@ -185,7 +194,7 @@ public struct DogAnimationPlayer: Sendable {
 
     private static func fallbackPoseName(for animation: DogAnimation) -> String {
         switch animation {
-        case .walk, .spin: "walk"
+        case .walk, .spin, .stroll: "walk"
         case .run: "run"
         case .pounce: "jump"
         case .idle, .rest, .bellyUp: "rest"
