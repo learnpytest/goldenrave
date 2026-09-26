@@ -45,7 +45,7 @@ public struct StatisticsView: View {
             }
         }
         .padding(20)
-        .frame(width: 320, alignment: .leading)
+        .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .topLeading)
         .task { load() }
     }
 

@@ -45,6 +45,18 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(PopoverView.nextBreakText(nil, now: now), "尚未排程")
     }
 
+    func testPauseAndResumeAreRedPauseAndPlayIcons() {
+        XCTAssertEqual(PopoverControl.pauseReminders.systemImage, "pause.circle.fill")
+        XCTAssertEqual(PopoverControl.pauseReminders.iconColor, .red)
+        XCTAssertEqual(PopoverControl.resumeReminders.systemImage, "play.circle.fill")
+        XCTAssertNil(PopoverControl.start(.rest).systemImage, "activity choices stay as words")
+    }
+
+    func testEveryPopoverScreenSharesOneSquareishSize() {
+        XCTAssertEqual(PopoverLayout.size.width, 340)
+        XCTAssertGreaterThanOrEqual(DogAnimationPlayer.popoverSide, 160, "the puppy gets the middle of the window")
+    }
+
     func testBreakCountdownRoundsUpRemainingMinutes() {
         let now = Date(timeIntervalSince1970: 0)
         let endsAt = now.addingTimeInterval(6 * 60 + 10)

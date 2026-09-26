@@ -82,8 +82,10 @@ final class MenuBarController: NSObject {
 
     private func installPopoverContent() {
         let hostingController = NSHostingController(rootView: popoverRootView())
+        hostingController.sizingOptions = []
         hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
         popover.contentViewController = hostingController
+        popover.contentSize = PopoverLayout.size
     }
 
     @ViewBuilder
