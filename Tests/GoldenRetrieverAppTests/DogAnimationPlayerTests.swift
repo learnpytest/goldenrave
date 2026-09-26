@@ -64,6 +64,24 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertLessThanOrEqual(try XCTUnwrap(frame.representations.first).pixelsHigh, Int(DogAnimationPlayer.popoverSide) * 2)
     }
 
+    /// Guards against drawing into only the bottom-left quarter of the @2x
+    /// bitmap, which made the menu bar and popover puppies half size.
+    func testPreScaledFramesFillTheirWholeBitmap() throws {
+        let player = DogAnimationPlayer()
+        for frames in [player.menuBarFrames(for: .walk), player.popoverFrames(for: .walk)] {
+            let frame = try XCTUnwrap(frames.first)
+            let rep = try XCTUnwrap(frame.representations.first as? NSBitmapImageRep)
+            var minY = rep.pixelsHigh, maxY = -1, maxX = -1
+            for y in 0..<rep.pixelsHigh {
+                for x in 0..<rep.pixelsWide where (rep.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.1 {
+                    minY = min(minY, y); maxY = max(maxY, y); maxX = max(maxX, x)
+                }
+            }
+            XCTAssertGreaterThan(Double(maxY - minY + 1), Double(rep.pixelsHigh) * 0.8, "dog should span the frame height")
+            XCTAssertGreaterThan(Double(maxX + 1), Double(rep.pixelsWide) * 0.8, "dog should reach the right side")
+        }
+    }
+
     func testIdleDoesNotUseTheMultiPoseReferenceSheet() {
         XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .idle).contains { $0 == DogAnimationPlayer.canonicalReferenceURL() })
     }
