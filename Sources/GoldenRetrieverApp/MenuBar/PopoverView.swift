@@ -37,7 +37,7 @@ extension PopoverControl {
 /// Every popover screen shares one size; swapping screens of different
 /// sizes made the popover shrink after returning from settings.
 enum PopoverLayout {
-    static let size = CGSize(width: 320, height: 340)
+    static let size = CGSize(width: 320, height: 310)
 }
 
 extension BreakActivity {
