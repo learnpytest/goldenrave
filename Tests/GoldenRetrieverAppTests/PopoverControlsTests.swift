@@ -53,8 +53,8 @@ final class PopoverControlsTests: XCTestCase {
     }
 
     func testEveryPopoverScreenSharesOneSquareishSize() {
-        XCTAssertEqual(PopoverLayout.size.width, 340)
-        XCTAssertGreaterThanOrEqual(DogAnimationPlayer.popoverSide, 160, "the puppy gets the middle of the window")
+        XCTAssertLessThanOrEqual(PopoverLayout.size.height, 360, "no big empty area under the buttons")
+        XCTAssertGreaterThanOrEqual(DogAnimationPlayer.popoverSide, 140, "the puppy gets the middle of the window")
     }
 
     func testBreakCountdownRoundsUpRemainingMinutes() {

@@ -36,7 +36,7 @@ public struct StatisticsView: View {
             if let loadError {
                 Text(loadError).foregroundStyle(.red)
             } else if total == 0 {
-                ContentUnavailableView("還沒有紀錄", systemImage: "leaf", description: Text("小黃金會在本機累積你的使用時間。"))
+                ContentUnavailableView("還沒有紀錄", systemImage: "leaf", description: Text("小金金會在本機累積你的使用時間。"))
             } else {
                 Text(format(total))
                     .font(.system(size: 30, weight: .semibold, design: .rounded))

@@ -9,7 +9,7 @@ struct MenuBarStatusConfiguration: Equatable {
     init(snapshot: UsageSnapshot, dogState: DogState) {
         imageResourceName = Self.resourceName(for: dogState)
         title = Self.format(snapshot.currentSession)
-        accessibilityLabel = "小黃金目前陪你工作 \(title)"
+        accessibilityLabel = "小金金目前陪你工作 \(title)"
     }
 
     private static func resourceName(for state: DogState) -> String {
