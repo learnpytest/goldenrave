@@ -38,4 +38,13 @@ final class AppPreferencesTests: XCTestCase {
         XCTAssertEqual(relaunched.trackingMode, .detailed)
         XCTAssertEqual(relaunched.breakPolicy, BreakPolicy(workMinutes: 25, restMinutes: 5))
     }
+
+    func testFloatingPuppyPositionIsUnsetUntilDraggedThenRemembered() {
+        let preferences = AppPreferences(defaults: defaults)
+        XCTAssertNil(preferences.floatingPuppyOrigin)
+
+        preferences.floatingPuppyOrigin = CGPoint(x: 120, y: 340)
+
+        XCTAssertEqual(AppPreferences(defaults: defaults).floatingPuppyOrigin, CGPoint(x: 120, y: 340))
+    }
 }
