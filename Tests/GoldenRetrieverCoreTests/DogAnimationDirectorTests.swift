@@ -93,14 +93,13 @@ final class DogAnimationDirectorTests: XCTestCase {
         XCTAssertEqual(director.animation(for: .rest, at: start.addingTimeInterval(30)), .stroll)
     }
 
-    func testRelaxingPuppyOnlyDoesQuietThingsAndNeverPounces() {
+    func testRelaxingPuppyAlwaysKeepsItsBallAndNeverPounces() {
         let director = DogAnimationDirector()
         let seen = Set((0..<200).map { director.animation(for: .relaxing, at: start.addingTimeInterval(Double($0))) })
 
         XCTAssertFalse(seen.contains(.pounce))
         XCTAssertFalse(seen.contains(.run))
-        XCTAssertTrue(seen.isSubset(of: [.rest, .bellyUp, .idle, .playBall]))
-        XCTAssertGreaterThan(seen.count, 1, "the puppy should do more than one thing")
+        XCTAssertEqual(seen, [.playBall], "self-play must keep a ball visible throughout the loop")
     }
 
     func testInvitationPouncesOnceThenShowsTheLineAnimation() {
