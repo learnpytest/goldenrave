@@ -15,16 +15,46 @@ public struct DogAnimationPlayer: Sendable {
     }
 
     /// Status item buttons draw images at their intrinsic point size, so the
-    /// frames must already be menu-bar sized.
+    /// frames must already be menu-bar sized. They are rasterized at @2x once:
+    /// keeping the 512px source and only shrinking `size` made every frame
+    /// swap downsample the full bitmap (19% CPU measured 2026-09-26).
     public func menuBarFrames(for animation: DogAnimation, height: CGFloat = 18) -> [NSImage] {
         Self.cache.value(forKey: "\(animation.rawValue)@\(height)") {
             frames(for: animation).compactMap { source in
-                guard source.size.height > 0, let image = source.copy() as? NSImage else { return nil }
-                let width = (height * source.size.width / source.size.height).rounded()
-                image.size = NSSize(width: width, height: height)
-                return image
+                guard source.size.height > 0 else { return nil }
+                let size = NSSize(
+                    width: (height * source.size.width / source.size.height).rounded(),
+                    height: height
+                )
+                return Self.rasterize(source, to: size, scale: 2)
             }
         }
+    }
+
+    private static func rasterize(_ source: NSImage, to size: NSSize, scale: CGFloat) -> NSImage? {
+        guard let rep = NSBitmapImageRep(
+            bitmapDataPlanes: nil,
+            pixelsWide: Int(size.width * scale),
+            pixelsHigh: Int(size.height * scale),
+            bitsPerSample: 8,
+            samplesPerPixel: 4,
+            hasAlpha: true,
+            isPlanar: false,
+            colorSpaceName: .deviceRGB,
+            bytesPerRow: 0,
+            bitsPerPixel: 0
+        ), let context = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
+        rep.size = size
+
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = context
+        context.imageInterpolation = .high
+        source.draw(in: NSRect(origin: .zero, size: size))
+        NSGraphicsContext.restoreGraphicsState()
+
+        let image = NSImage(size: size)
+        image.addRepresentation(rep)
+        return image
     }
 
     public func frameDuration(for animation: DogAnimation) -> TimeInterval {
@@ -38,6 +68,15 @@ public struct DogAnimationPlayer: Sendable {
         case .bellyUp: 0.25
         case .play, .playBall: 0.12
         }
+    }
+
+    /// Each status item image swap is replicated to Control Center on macOS 26
+    /// (NSStatusItem _windowNeedsReplicantUpdate dominated a 2026-09-26 sample),
+    /// so the 18pt menu bar runs slower than the popover. Spin keeps its timing
+    /// so it still finishes within the spin moment.
+    public func menuBarFrameDuration(for animation: DogAnimation) -> TimeInterval {
+        let duration = frameDuration(for: animation)
+        return animation == .spin ? duration : max(duration * 2.5, 0.25)
     }
 
     /// Spin ends lying down, so it plays once and holds its last frame.
