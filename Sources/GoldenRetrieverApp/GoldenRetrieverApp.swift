@@ -137,43 +137,23 @@ final class AppRuntime: ObservableObject {
     var store: (any LocalStore)? { dependencies?.store }
 }
 
+@MainActor
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    private let runtime = AppRuntime()
+    private var menuBarController: MenuBarController?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        menuBarController = MenuBarController(runtime: runtime)
+    }
+}
+
 @main
 struct GoldenRetrieverApp: App {
-    @StateObject private var runtime = AppRuntime()
+    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     var body: some Scene {
-        MenuBarExtra {
-            if runtime.showStatistics, let store = runtime.store {
-                StatisticsView(store: store, range: .today)
-                    .overlay(alignment: .topTrailing) {
-                        Button("返回", action: runtime.closeSecondaryView)
-                            .buttonStyle(.link)
-                            .padding()
-                    }
-            } else if runtime.showSettings {
-                SettingsView(
-                    mode: Binding(
-                        get: { runtime.trackingMode },
-                        set: runtime.setTrackingMode
-                    ),
-                    onClose: runtime.closeSecondaryView,
-                    onDeleteData: runtime.deleteAllData
-                )
-            } else {
-                PopoverView(
-                    snapshot: runtime.snapshot,
-                    dogState: runtime.dogState,
-                    nextBreak: runtime.nextBreak,
-                    onStartBreak: runtime.startBreak,
-                    onPostpone: runtime.postpone,
-                    onPauseReminders: runtime.pauseReminders,
-                    onOpenStatistics: runtime.openStatistics,
-                    onOpenSettings: runtime.openSettings
-                )
-            }
-        } label: {
-            MenuBarView(snapshot: runtime.snapshot, dogState: runtime.dogState)
+        Settings {
+            EmptyView()
         }
-        .menuBarExtraStyle(.window)
     }
 }
