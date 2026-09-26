@@ -109,6 +109,7 @@ public struct DogAnimationDirector: Sendable {
     private func relaxingPlayback(at now: Date) -> DogAnimationPlayback {
         let cycle = Self.relaxingLoop.reduce(0) { $0 + $1.length }
         var phase = now.timeIntervalSinceReferenceDate.truncatingRemainder(dividingBy: cycle)
+        if phase < 0 { phase += cycle }
         for step in Self.relaxingLoop {
             if phase < step.length {
                 return DogAnimationPlayback(animation: step.animation, startedAt: now.addingTimeInterval(-phase))
