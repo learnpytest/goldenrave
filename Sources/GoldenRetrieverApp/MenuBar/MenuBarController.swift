@@ -31,6 +31,13 @@ final class MenuBarController: NSObject {
 
         popover.behavior = .transient
         popover.animates = true
+        // Built once and kept: the root view observes the runtime, so updates
+        // re-render in place. Rebuilding the controller on every change made
+        // the open popover flash.
+        let hostingController = NSHostingController(rootView: PopoverRootView(runtime: runtime))
+        hostingController.sizingOptions = []
+        popover.contentViewController = hostingController
+        popover.contentSize = PopoverLayout.size
 
         runtimeSubscription = runtime.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -64,9 +71,6 @@ final class MenuBarController: NSObject {
         button?.toolTip = configuration.accessibilityLabel
         button?.setAccessibilityLabel(configuration.accessibilityLabel)
 
-        if popover.isShown {
-            installPopoverContent()
-        }
     }
 
     @objc private func togglePopover(_ sender: Any?) {
@@ -76,63 +80,7 @@ final class MenuBarController: NSObject {
             return
         }
 
-        installPopoverContent()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
-    }
-
-    private func installPopoverContent() {
-        let hostingController = NSHostingController(rootView: popoverRootView())
-        hostingController.sizingOptions = []
-        hostingController.view.layer?.backgroundColor = NSColor.clear.cgColor
-        popover.contentViewController = hostingController
-        popover.contentSize = PopoverLayout.size
-    }
-
-    @ViewBuilder
-    private func popoverRootView() -> some View {
-        if runtime.showStatistics, let store = runtime.store {
-            StatisticsView(store: store, range: .today)
-                .overlay(alignment: .topTrailing) {
-                    Button("返回", action: runtime.openSettings)
-                        .buttonStyle(.link)
-                        .padding()
-                }
-        } else if runtime.showSettings {
-            SettingsView(
-                mode: Binding(
-                    get: { self.runtime.trackingMode },
-                    set: self.runtime.setTrackingMode
-                ),
-                workMinutes: Binding(
-                    get: { self.runtime.workMinutes },
-                    set: { self.runtime.setBreakMinutes(work: $0, rest: self.runtime.restMinutes) }
-                ),
-                restMinutes: Binding(
-                    get: { self.runtime.restMinutes },
-                    set: { self.runtime.setBreakMinutes(work: self.runtime.workMinutes, rest: $0) }
-                ),
-                isAwaitingPermission: self.runtime.isAwaitingDetailedPermission,
-                onClose: runtime.closeSecondaryView,
-                onOpenStatistics: runtime.openStatistics,
-                onDeleteData: runtime.deleteAllData
-            )
-        } else {
-            PopoverView(
-                snapshot: runtime.snapshot,
-                dogState: runtime.dogState,
-                nextBreak: runtime.nextBreak,
-                breakEndsAt: runtime.breakEndsAt,
-                breakActivity: runtime.breakActivity,
-                remindersPaused: runtime.remindersPaused,
-                invitationText: runtime.invitationText(at: Date()),
-                playbackAt: runtime.dogPlayback(at:),
-                onStart: { [runtime] activity in runtime.startBreak(activity) },
-                onPauseReminders: runtime.pauseReminders,
-                onResumeReminders: runtime.resumeReminders,
-                onEndBreak: runtime.endBreak,
-                onOpenSettings: runtime.openSettings
-            )
-        }
     }
 
     private func renderFrame(now: Date = Date()) {
@@ -157,6 +105,57 @@ final class MenuBarController: NSObject {
     }
 
     private func fallbackImage() -> NSImage? {
-        NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "小黃金")
+        NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "小金金")
+    }
+}
+
+@MainActor
+private struct PopoverRootView: View {
+    @ObservedObject var runtime: AppRuntime
+
+    var body: some View {
+        if runtime.showStatistics, let store = runtime.store {
+            StatisticsView(store: store, range: .today)
+                .overlay(alignment: .topTrailing) {
+                    Button("返回", action: runtime.openSettings)
+                        .buttonStyle(.link)
+                        .padding()
+                }
+        } else if runtime.showSettings {
+            SettingsView(
+                mode: Binding(
+                    get: { runtime.trackingMode },
+                    set: runtime.setTrackingMode
+                ),
+                workMinutes: Binding(
+                    get: { runtime.workMinutes },
+                    set: { runtime.setBreakMinutes(work: $0, rest: runtime.restMinutes) }
+                ),
+                restMinutes: Binding(
+                    get: { runtime.restMinutes },
+                    set: { runtime.setBreakMinutes(work: runtime.workMinutes, rest: $0) }
+                ),
+                isAwaitingPermission: runtime.isAwaitingDetailedPermission,
+                onClose: runtime.closeSecondaryView,
+                onOpenStatistics: runtime.openStatistics,
+                onDeleteData: runtime.deleteAllData
+            )
+        } else {
+            PopoverView(
+                snapshot: runtime.snapshot,
+                dogState: runtime.dogState,
+                nextBreak: runtime.nextBreak,
+                breakEndsAt: runtime.breakEndsAt,
+                breakActivity: runtime.breakActivity,
+                remindersPaused: runtime.remindersPaused,
+                invitationText: runtime.invitationText(at: Date()),
+                playbackAt: runtime.dogPlayback(at:),
+                onStart: { [runtime] activity in runtime.startBreak(activity) },
+                onPauseReminders: runtime.pauseReminders,
+                onResumeReminders: runtime.resumeReminders,
+                onEndBreak: runtime.endBreak,
+                onOpenSettings: runtime.openSettings
+            )
+        }
     }
 }

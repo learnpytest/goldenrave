@@ -26,7 +26,7 @@ public struct DogAnimationPlayer: Sendable {
         fittedFrames(for: animation, height: Self.menuBarHeight, maxWidth: Self.menuBarMaxWidth)
     }
 
-    public static let popoverSide: CGFloat = 170
+    public static let popoverSide: CGFloat = 150
 
     /// The popover redraws every frame; drawing the 512px sources each time
     /// cost ~8% CPU while it was open, so it gets pre-scaled frames too.

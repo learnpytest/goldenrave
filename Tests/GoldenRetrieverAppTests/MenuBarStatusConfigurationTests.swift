@@ -11,7 +11,7 @@ final class MenuBarStatusConfigurationTests: XCTestCase {
 
         XCTAssertEqual(configuration.imageResourceName, "run")
         XCTAssertEqual(configuration.title, "00:42")
-        XCTAssertEqual(configuration.accessibilityLabel, "小黃金目前陪你工作 00:42")
+        XCTAssertEqual(configuration.accessibilityLabel, "小金金目前陪你工作 00:42")
     }
 
     func testConfigurationClampsNegativeDurationAndUsesRestImage() {

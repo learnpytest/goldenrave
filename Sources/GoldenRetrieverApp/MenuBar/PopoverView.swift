@@ -37,7 +37,7 @@ extension PopoverControl {
 /// Every popover screen shares one size; swapping screens of different
 /// sizes made the popover shrink after returning from settings.
 enum PopoverLayout {
-    static let size = CGSize(width: 340, height: 400)
+    static let size = CGSize(width: 320, height: 340)
 }
 
 extension BreakActivity {
@@ -97,15 +97,17 @@ public struct PopoverView: View {
 
     public var body: some View {
         VStack(spacing: 12) {
-            HStack(alignment: .top) {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("小黃金陪伴中")
-                        .font(.headline)
-                    Text(stateDescription)
-                        .foregroundStyle(.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer()
+            VStack(spacing: 4) {
+                Text("小金金陪伴中")
+                    .font(.headline)
+                Text(stateDescription)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 24)
+            .frame(maxWidth: .infinity)
+            .overlay(alignment: .topTrailing) {
                 Button(action: onOpenSettings) {
                     Image(systemName: "gearshape")
                         .font(.title3)
@@ -182,9 +184,9 @@ public struct PopoverView: View {
             let minutes = Self.remainingBreakMinutes(until: breakEndsAt, now: Date())
             metric((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
-            metric("下次陪我", "已暫停")
+            metric("喘口氣", "已暫停")
         } else {
-            metric("下次陪我", Self.nextBreakText(nextBreak, now: Date()))
+            metric("喘口氣", Self.nextBreakText(nextBreak, now: Date()))
         }
     }
 
