@@ -16,7 +16,6 @@ final class MenuBarController: NSObject {
         super.init()
 
         statusItem.isVisible = true
-        diagnostic("init visible=\(statusItem.isVisible) button=\(statusItem.button != nil)")
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover(_:))
         statusItem.button?.imagePosition = .imageLeading
@@ -50,7 +49,6 @@ final class MenuBarController: NSObject {
         button?.image = statusImage(for: runtime.dogState)
         button?.toolTip = configuration.accessibilityLabel
         button?.setAccessibilityLabel(configuration.accessibilityLabel)
-        diagnostic("refresh visible=\(statusItem.isVisible) title=\(configuration.title)")
 
         if popover.isShown {
             installPopoverContent()
@@ -118,17 +116,5 @@ final class MenuBarController: NSObject {
 
     private func fallbackImage() -> NSImage? {
         NSImage(systemSymbolName: "pawprint.fill", accessibilityDescription: "小黃金")
-    }
-
-    private func diagnostic(_ message: String) {
-        let url = URL(fileURLWithPath: "/tmp/golden-status-item-debug.log")
-        let data = Data((message + "\n").utf8)
-        if let handle = try? FileHandle(forWritingTo: url) {
-            handle.seekToEndOfFile()
-            handle.write(data)
-            try? handle.close()
-        } else {
-            try? data.write(to: url)
-        }
     }
 }
