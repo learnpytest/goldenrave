@@ -28,4 +28,8 @@ if [[ ! -d "$RESOURCE_BUNDLE" ]]; then
 fi
 
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+if ! codesign -d -r- "$APP_PATH" 2>&1 | grep -q 'designated => identifier "com.rachelchen.GoldenRetriever"'; then
+    echo "error: designated requirement is not pinned to the bundle identifier; Accessibility grants would reset on every build" >&2
+    exit 1
+fi
 echo "app bundle verification passed: $APP_PATH"

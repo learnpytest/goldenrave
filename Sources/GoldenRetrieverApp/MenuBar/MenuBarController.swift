@@ -101,6 +101,15 @@ final class MenuBarController: NSObject {
                     get: { self.runtime.trackingMode },
                     set: self.runtime.setTrackingMode
                 ),
+                workMinutes: Binding(
+                    get: { self.runtime.workMinutes },
+                    set: { self.runtime.setBreakMinutes(work: $0, rest: self.runtime.restMinutes) }
+                ),
+                restMinutes: Binding(
+                    get: { self.runtime.restMinutes },
+                    set: { self.runtime.setBreakMinutes(work: self.runtime.workMinutes, rest: $0) }
+                ),
+                isAwaitingPermission: self.runtime.isAwaitingDetailedPermission,
                 onClose: runtime.closeSecondaryView,
                 onDeleteData: runtime.deleteAllData
             )
@@ -113,7 +122,6 @@ final class MenuBarController: NSObject {
                 remindersPaused: runtime.remindersPaused,
                 playbackAt: runtime.dogPlayback(at:),
                 onStartBreak: runtime.startBreak,
-                onPostpone: runtime.postpone,
                 onPauseReminders: runtime.pauseReminders,
                 onResumeReminders: runtime.resumeReminders,
                 onEndBreak: runtime.endBreak,

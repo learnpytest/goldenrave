@@ -9,18 +9,13 @@ final class PopoverControlsTests: XCTestCase {
         )
     }
 
-    func testWorkingWithScheduledBreakOffersStartPostponeAndPause() {
-        XCTAssertEqual(
-            PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: true),
-            [.startBreak, .postpone, .pauseReminders]
-        )
-    }
-
-    func testWorkingWithoutScheduledBreakHidesPostpone() {
-        XCTAssertEqual(
-            PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: false),
-            [.startBreak, .pauseReminders]
-        )
+    func testWorkingOffersStartAndPauseWithoutAnyPostpone() {
+        for hasScheduledBreak in [true, false] {
+            XCTAssertEqual(
+                PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: hasScheduledBreak),
+                [.startBreak, .pauseReminders]
+            )
+        }
     }
 
     func testPausedRemindersCanBeResumed() {
@@ -28,10 +23,6 @@ final class PopoverControlsTests: XCTestCase {
             PopoverView.controls(isOnBreak: false, remindersPaused: true, hasScheduledBreak: false),
             [.startBreak, .resumeReminders]
         )
-    }
-
-    func testPostponeLabelSaysWhatIsPostponed() {
-        XCTAssertEqual(PopoverControl.postpone.title, "休息延後 10 分鐘")
     }
 
     func testReminderButtonsSayTheyAreAboutBreakReminders() {

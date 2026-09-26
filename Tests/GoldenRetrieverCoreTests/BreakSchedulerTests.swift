@@ -13,6 +13,23 @@ final class BreakSchedulerTests: XCTestCase {
         XCTAssertEqual(BreakPolicy().restInterval, 10 * 60)
     }
 
+    func testCustomMinutesSetWorkAndRestAndKeepTheWarningInsideTheWorkInterval() {
+        let pomodoro = BreakPolicy(workMinutes: 25, restMinutes: 5)
+        XCTAssertEqual(pomodoro.workInterval, 25 * 60)
+        XCTAssertEqual(pomodoro.restInterval, 5 * 60)
+        XCTAssertEqual(pomodoro.warningWindow, 5 * 60)
+
+        let short = BreakPolicy(workMinutes: 10, restMinutes: 3)
+        XCTAssertLessThan(short.warningWindow, short.workInterval / 2)
+    }
+
+    func testCustomMinutesAreClampedToSaneRanges() {
+        let policy = BreakPolicy(workMinutes: 0, restMinutes: 500)
+
+        XCTAssertEqual(policy.workInterval, Double(BreakPolicy.workMinutesRange.lowerBound) * 60)
+        XCTAssertEqual(policy.restInterval, Double(BreakPolicy.restMinutesRange.upperBound) * 60)
+    }
+
     func testPostponingMovesDueDateByRestInterval() {
         let scheduler = BreakScheduler()
 

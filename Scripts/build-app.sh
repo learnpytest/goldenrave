@@ -30,7 +30,12 @@ cp -R "$RESOURCE_BUNDLE" "$APP_DIR/Contents/Resources/"
 
 # SwiftPM's executable carries a linker ad-hoc signature, but the assembled
 # app bundle needs its own resource seal before it is distributed.
-codesign --force --deep --sign - "$APP_DIR"
+# An ad-hoc signature's default designated requirement is the build's cdhash,
+# so an Accessibility grant stops matching after every rebuild; pin it to the
+# bundle identifier so the grant survives updates.
+codesign --force --deep --sign - \
+    --requirements '=designated => identifier "com.rachelchen.GoldenRetriever"' \
+    "$APP_DIR"
 bash "$ROOT_DIR/Scripts/verify-app-bundle.sh" "$APP_DIR"
 
 echo "$APP_DIR"

@@ -3,7 +3,6 @@ import SwiftUI
 
 enum PopoverControl: Equatable {
     case startBreak
-    case postpone
     case pauseReminders
     case resumeReminders
     case endBreak
@@ -11,7 +10,6 @@ enum PopoverControl: Equatable {
     var title: String {
         switch self {
         case .startBreak: "開始休息"
-        case .postpone: "休息延後 10 分鐘"
         case .pauseReminders: "暫停休息提醒"
         case .resumeReminders: "恢復休息提醒"
         case .endBreak: "提早結束休息"
@@ -27,7 +25,6 @@ public struct PopoverView: View {
     public let remindersPaused: Bool
     public let playbackAt: ((Date) -> DogAnimationPlayback)?
     public var onStartBreak: () -> Void
-    public var onPostpone: () -> Void
     public var onPauseReminders: () -> Void
     public var onResumeReminders: () -> Void
     public var onEndBreak: () -> Void
@@ -42,7 +39,6 @@ public struct PopoverView: View {
         remindersPaused: Bool = false,
         playbackAt: ((Date) -> DogAnimationPlayback)? = nil,
         onStartBreak: @escaping () -> Void = {},
-        onPostpone: @escaping () -> Void = {},
         onPauseReminders: @escaping () -> Void = {},
         onResumeReminders: @escaping () -> Void = {},
         onEndBreak: @escaping () -> Void = {},
@@ -56,7 +52,6 @@ public struct PopoverView: View {
         self.remindersPaused = remindersPaused
         self.playbackAt = playbackAt
         self.onStartBreak = onStartBreak
-        self.onPostpone = onPostpone
         self.onPauseReminders = onPauseReminders
         self.onResumeReminders = onResumeReminders
         self.onEndBreak = onEndBreak
@@ -103,7 +98,7 @@ public struct PopoverView: View {
         if remindersPaused {
             return [.startBreak, .resumeReminders]
         }
-        return hasScheduledBreak ? [.startBreak, .postpone, .pauseReminders] : [.startBreak, .pauseReminders]
+        return [.startBreak, .pauseReminders]
     }
 
     static func remainingBreakMinutes(until endsAt: Date, now: Date) -> Int {
@@ -133,7 +128,6 @@ public struct PopoverView: View {
     private func perform(_ control: PopoverControl) {
         switch control {
         case .startBreak: onStartBreak()
-        case .postpone: onPostpone()
         case .pauseReminders: onPauseReminders()
         case .resumeReminders: onResumeReminders()
         case .endBreak: onEndBreak()

@@ -12,6 +12,9 @@ final class AppRuntime: ObservableObject {
     @Published var showStatistics = false
     @Published var showSettings = false
     @Published private(set) var trackingMode: TrackingMode = .privateMode
+    @Published private(set) var isAwaitingDetailedPermission = false
+    @Published private(set) var workMinutes: Int
+    @Published private(set) var restMinutes: Int
 
     private var dependencies: AppDependencies?
     private let activitySource = SystemActivitySource()
@@ -20,10 +23,17 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var remindersPaused = false
     private var activeSessionStart: Date?
     private var animationDirector = DogAnimationDirector()
+    private let preferences = AppPreferences()
+    private var permissionTimer: Timer?
 
     init() {
+        workMinutes = preferences.workMinutes
+        restMinutes = preferences.restMinutes
         dependencies = try? AppDependencies.live()
         trackingMode = dependencies?.trackingController.mode ?? .privateMode
+        if dependencies?.trackingController.isAwaitingPermission == true {
+            waitForDetailedPermission()
+        }
         tick()
         timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -34,6 +44,7 @@ final class AppRuntime: ObservableObject {
 
     deinit {
         timer?.invalidate()
+        permissionTimer?.invalidate()
     }
 
     func tick(now: Date = Date()) {
@@ -94,10 +105,15 @@ final class AppRuntime: ObservableObject {
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: now, action: .started))
     }
 
-    func postpone() {
-        guard let dependencies, let due = nextBreak else { return }
-        nextBreak = dependencies.scheduler.apply(.postponed, at: due)
-        try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .postponed))
+    func setBreakMinutes(work: Int, rest: Int) {
+        let policy = BreakPolicy(workMinutes: work, restMinutes: rest)
+        workMinutes = Int(policy.workInterval / 60)
+        restMinutes = Int(policy.restInterval / 60)
+        preferences.workMinutes = workMinutes
+        preferences.restMinutes = restMinutes
+        dependencies?.scheduler = BreakScheduler(policy: policy)
+        nextBreak = nil
+        tick()
     }
 
     func pauseReminders() {
@@ -145,9 +161,38 @@ final class AppRuntime: ObservableObject {
             } else {
                 dependencies.trackingController.disableDetailedMode()
             }
-            trackingMode = dependencies.trackingController.mode
         } catch {
-            trackingMode = dependencies.trackingController.mode
+            waitForDetailedPermission()
+        }
+        syncTrackingMode()
+    }
+
+    /// Accessibility is granted in System Settings after our request returns,
+    /// so poll briefly instead of making the user pick Detailed again.
+    private func waitForDetailedPermission() {
+        permissionTimer?.invalidate()
+        let deadline = Date().addingTimeInterval(5 * 60)
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
+            Task { @MainActor [weak self] in
+                guard let self, let controller = self.dependencies?.trackingController else {
+                    timer.invalidate()
+                    return
+                }
+                controller.refreshPermission()
+                if !controller.isAwaitingPermission || Date() > deadline {
+                    timer.invalidate()
+                }
+                self.syncTrackingMode()
+            }
+        }
+    }
+
+    private func syncTrackingMode() {
+        guard let controller = dependencies?.trackingController else { return }
+        trackingMode = controller.mode
+        isAwaitingDetailedPermission = controller.isAwaitingPermission
+        if !controller.isAwaitingPermission {
+            preferences.trackingMode = controller.mode
         }
     }
 
@@ -168,6 +213,15 @@ private struct SettingsSceneView: View {
                 get: { runtime.trackingMode },
                 set: runtime.setTrackingMode
             ),
+            workMinutes: Binding(
+                get: { runtime.workMinutes },
+                set: { runtime.setBreakMinutes(work: $0, rest: runtime.restMinutes) }
+            ),
+            restMinutes: Binding(
+                get: { runtime.restMinutes },
+                set: { runtime.setBreakMinutes(work: runtime.workMinutes, rest: $0) }
+            ),
+            isAwaitingPermission: runtime.isAwaitingDetailedPermission,
             onClose: { NSApp.keyWindow?.close() },
             onDeleteData: runtime.deleteAllData
         )

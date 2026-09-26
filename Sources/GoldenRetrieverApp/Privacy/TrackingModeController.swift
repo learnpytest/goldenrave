@@ -42,6 +42,9 @@ public struct DetailedActivityPermissionError: Error, Equatable, LocalizedError,
 
 public final class TrackingModeController {
     public private(set) var mode: TrackingMode
+    /// Set after Detailed was requested without Accessibility permission, so
+    /// granting it later in System Settings switches the mode without another click.
+    public private(set) var isAwaitingPermission = false
 
     private let reader: DetailedActivityReader
     private let permission: any PermissionCoordinator
@@ -56,22 +59,39 @@ public final class TrackingModeController {
         self.reader = reader
         self.permission = permission
         self.store = store
-        self.mode = mode
+        if mode == .detailed, !permission.canReadDetailedActivity {
+            self.mode = .privateMode
+            self.isAwaitingPermission = true
+        } else {
+            self.mode = mode
+        }
     }
 
     public func enableDetailedMode() throws {
         guard permission.canReadDetailedActivity else {
             permission.requestDetailedActivityPermission()
             guard permission.canReadDetailedActivity else {
+                isAwaitingPermission = true
                 throw DetailedActivityPermissionError()
             }
             return try enableDetailedMode()
         }
+        isAwaitingPermission = false
         mode = .detailed
     }
 
     public func disableDetailedMode() {
+        isAwaitingPermission = false
         mode = .privateMode
+    }
+
+    /// Returns true when a pending Detailed request just became active.
+    @discardableResult
+    public func refreshPermission() -> Bool {
+        guard isAwaitingPermission, permission.canReadDetailedActivity else { return false }
+        isAwaitingPermission = false
+        mode = .detailed
+        return true
     }
 
     @discardableResult
