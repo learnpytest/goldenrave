@@ -36,6 +36,7 @@ public struct PopoverView: View {
     public let breakEndsAt: Date?
     public let breakActivity: BreakActivity?
     public let remindersPaused: Bool
+    public let invitationText: String?
     public let playbackAt: ((Date) -> DogAnimationPlayback)?
     public var onStart: (BreakActivity) -> Void
     public var onPauseReminders: () -> Void
@@ -50,6 +51,7 @@ public struct PopoverView: View {
         breakEndsAt: Date? = nil,
         breakActivity: BreakActivity? = nil,
         remindersPaused: Bool = false,
+        invitationText: String? = nil,
         playbackAt: ((Date) -> DogAnimationPlayback)? = nil,
         onStart: @escaping (BreakActivity) -> Void = { _ in },
         onPauseReminders: @escaping () -> Void = {},
@@ -63,6 +65,7 @@ public struct PopoverView: View {
         self.breakEndsAt = breakEndsAt
         self.breakActivity = breakActivity
         self.remindersPaused = remindersPaused
+        self.invitationText = invitationText
         self.playbackAt = playbackAt
         self.onStart = onStart
         self.onPauseReminders = onPauseReminders
@@ -83,6 +86,7 @@ public struct PopoverView: View {
                         .font(.headline)
                     Text(stateDescription)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer()
                 Button(action: onOpenSettings) {
@@ -159,7 +163,7 @@ public struct PopoverView: View {
         case .idle: "等你回來"
         case .walk: "慢慢走，先熱身"
         case .run: "跑起來了！"
-        case .pounce: "該陪我囉！休息、陪玩或散步都好"
+        case .pounce: invitationText ?? BreakInvitation.lines[0].text
         case .rest:
             switch breakActivity ?? .rest {
             case .rest: "正在休息"

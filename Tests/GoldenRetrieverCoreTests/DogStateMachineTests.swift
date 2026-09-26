@@ -47,6 +47,11 @@ final class DogStateMachineTests: XCTestCase {
         XCTAssertEqual(machine.state(for: paused), .relaxing)
     }
 
+    func testStopsInvitingTenMinutesAfterTheBreakWasDue() {
+        XCTAssertEqual(machine.state(for: input(session: 60 * 60, untilBreak: -9 * 60)), .pounce)
+        XCTAssertEqual(machine.state(for: input(session: 60 * 60, untilBreak: -10 * 60)), .run)
+    }
+
     func testBreakMapsToRest() {
         XCTAssertEqual(machine.state(for: input(session: 30 * 60, onBreak: true)), .rest)
     }

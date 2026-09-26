@@ -122,6 +122,7 @@ final class MenuBarController: NSObject {
                 breakEndsAt: runtime.breakEndsAt,
                 breakActivity: runtime.breakActivity,
                 remindersPaused: runtime.remindersPaused,
+                invitationText: runtime.invitationText(at: Date()),
                 playbackAt: runtime.dogPlayback(at:),
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,
