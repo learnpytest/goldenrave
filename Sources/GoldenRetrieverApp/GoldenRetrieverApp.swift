@@ -203,46 +203,31 @@ final class AppRuntime: ObservableObject {
     var store: (any LocalStore)? { dependencies?.store }
 }
 
-@MainActor
-private struct SettingsSceneView: View {
-    @ObservedObject var runtime: AppRuntime
-
-    var body: some View {
-        SettingsView(
-            mode: Binding(
-                get: { runtime.trackingMode },
-                set: runtime.setTrackingMode
-            ),
-            workMinutes: Binding(
-                get: { runtime.workMinutes },
-                set: { runtime.setBreakMinutes(work: $0, rest: runtime.restMinutes) }
-            ),
-            restMinutes: Binding(
-                get: { runtime.restMinutes },
-                set: { runtime.setBreakMinutes(work: runtime.workMinutes, rest: $0) }
-            ),
-            isAwaitingPermission: runtime.isAwaitingDetailedPermission,
-            onClose: { NSApp.keyWindow?.close() },
-            onDeleteData: runtime.deleteAllData
-        )
+/// An AppKit entry point: with SwiftUI's `App`, the only scene was `Settings`,
+/// which macOS opened as a window on every launch and kept re-laying out
+/// (~10% CPU sampled 2026-09-26). Settings live in the menu bar popover.
+@main
+enum GoldenRetrieverMain {
+    static func main() {
+        MainActor.assumeIsolated {
+            let app = NSApplication.shared
+            app.setActivationPolicy(.accessory)
+            app.delegate = AppDelegate.shared
+            app.run()
+        }
     }
 }
 
-@main
 @MainActor
-struct GoldenRetrieverApp: App {
-    private let runtime: AppRuntime
-    private let menuBarController: MenuBarController
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    static let shared = AppDelegate()
 
-    init() {
+    private var runtime: AppRuntime?
+    private var menuBarController: MenuBarController?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
         let runtime = AppRuntime()
         self.runtime = runtime
         menuBarController = MenuBarController(runtime: runtime)
-    }
-
-    var body: some Scene {
-        Settings {
-            SettingsSceneView(runtime: runtime)
-        }
     }
 }
