@@ -12,7 +12,9 @@ final class MenuBarController: NSObject {
 
     init(runtime: AppRuntime) {
         self.runtime = runtime
-        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        statusItem = NSStatusBar.system.statusItem(
+            withLength: CGFloat(MenuBarStatusConfiguration.minimumLength)
+        )
         super.init()
 
         statusItem.isVisible = true

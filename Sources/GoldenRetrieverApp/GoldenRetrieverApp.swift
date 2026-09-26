@@ -1,3 +1,4 @@
+import AppKit
 import Combine
 import Foundation
 import GoldenRetrieverCore
@@ -137,18 +138,37 @@ final class AppRuntime: ObservableObject {
     var store: (any LocalStore)? { dependencies?.store }
 }
 
+@MainActor
+private struct SettingsSceneView: View {
+    @ObservedObject var runtime: AppRuntime
+
+    var body: some View {
+        SettingsView(
+            mode: Binding(
+                get: { runtime.trackingMode },
+                set: runtime.setTrackingMode
+            ),
+            onClose: { NSApp.keyWindow?.close() },
+            onDeleteData: runtime.deleteAllData
+        )
+    }
+}
+
 @main
 @MainActor
 struct GoldenRetrieverApp: App {
+    private let runtime: AppRuntime
     private let menuBarController: MenuBarController
 
     init() {
-        menuBarController = MenuBarController(runtime: AppRuntime())
+        let runtime = AppRuntime()
+        self.runtime = runtime
+        menuBarController = MenuBarController(runtime: runtime)
     }
 
     var body: some Scene {
         Settings {
-            EmptyView()
+            SettingsSceneView(runtime: runtime)
         }
     }
 }
