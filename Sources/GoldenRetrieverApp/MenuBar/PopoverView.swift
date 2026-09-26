@@ -41,7 +41,6 @@ public struct PopoverView: View {
     public var onPauseReminders: () -> Void
     public var onResumeReminders: () -> Void
     public var onEndBreak: () -> Void
-    public var onOpenStatistics: () -> Void
     public var onOpenSettings: () -> Void
 
     public init(
@@ -56,7 +55,6 @@ public struct PopoverView: View {
         onPauseReminders: @escaping () -> Void = {},
         onResumeReminders: @escaping () -> Void = {},
         onEndBreak: @escaping () -> Void = {},
-        onOpenStatistics: @escaping () -> Void = {},
         onOpenSettings: @escaping () -> Void = {}
     ) {
         self.snapshot = snapshot
@@ -70,7 +68,6 @@ public struct PopoverView: View {
         self.onPauseReminders = onPauseReminders
         self.onResumeReminders = onResumeReminders
         self.onEndBreak = onEndBreak
-        self.onOpenStatistics = onOpenStatistics
         self.onOpenSettings = onOpenSettings
     }
 
@@ -87,6 +84,15 @@ public struct PopoverView: View {
                     Text(stateDescription)
                         .foregroundStyle(.secondary)
                 }
+                Spacer()
+                Button(action: onOpenSettings) {
+                    Image(systemName: "gearshape")
+                        .font(.title3)
+                }
+                .buttonStyle(.borderless)
+                .help("設定")
+                .accessibilityLabel("設定")
+                .frame(maxHeight: .infinity, alignment: .top)
             }
             Divider()
             metric("這次連續使用", Self.format(snapshot.currentSession))
@@ -95,10 +101,6 @@ public struct PopoverView: View {
                 ForEach(controls, id: \.title) { control in
                     Button(control.title) { perform(control) }
                 }
-            }
-            HStack {
-                Button("查看統計", action: onOpenStatistics)
-                Button("設定", action: onOpenSettings)
             }
         }
         .padding(16)
@@ -111,6 +113,12 @@ public struct PopoverView: View {
         }
         let activities = BreakActivity.allCases.map(PopoverControl.start)
         return activities + [remindersPaused ? .resumeReminders : .pauseReminders]
+    }
+
+    /// A reminder that is already due reads "現在", never a time in the past.
+    static func nextBreakText(_ nextBreak: Date?, now: Date) -> String {
+        guard let nextBreak else { return "尚未排程" }
+        return nextBreak <= now ? "現在" : timeString(nextBreak)
     }
 
     static func remainingBreakMinutes(until endsAt: Date, now: Date) -> Int {
@@ -133,7 +141,7 @@ public struct PopoverView: View {
         } else if remindersPaused {
             metric("下次陪我", "已暫停")
         } else {
-            metric("下次陪我", nextBreak.map(Self.timeString) ?? "尚未排程")
+            metric("下次陪我", Self.nextBreakText(nextBreak, now: Date()))
         }
     }
 
@@ -176,7 +184,7 @@ public struct PopoverView: View {
         return String(format: "%d 分 %02d 秒", total / 60, total % 60)
     }
 
-    private static func timeString(_ date: Date) -> String {
+    static func timeString(_ date: Date) -> String {
         date.formatted(date: .omitted, time: .shortened)
     }
 }

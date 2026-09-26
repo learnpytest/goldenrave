@@ -33,6 +33,18 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停")
     }
 
+    func testADueReminderReadsNowInsteadOfAPastTime() {
+        let now = Date(timeIntervalSince1970: 1_000_000)
+
+        XCTAssertEqual(PopoverView.nextBreakText(now.addingTimeInterval(-7 * 60), now: now), "現在")
+        XCTAssertEqual(PopoverView.nextBreakText(now, now: now), "現在")
+        XCTAssertEqual(
+            PopoverView.nextBreakText(now.addingTimeInterval(10 * 60), now: now),
+            PopoverView.timeString(now.addingTimeInterval(10 * 60))
+        )
+        XCTAssertEqual(PopoverView.nextBreakText(nil, now: now), "尚未排程")
+    }
+
     func testBreakCountdownRoundsUpRemainingMinutes() {
         let now = Date(timeIntervalSince1970: 0)
         let endsAt = now.addingTimeInterval(6 * 60 + 10)

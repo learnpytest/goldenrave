@@ -7,6 +7,7 @@ public struct SettingsView: View {
     @Binding private var restMinutes: Int
     private let isAwaitingPermission: Bool
     private let onClose: () -> Void
+    private let onOpenStatistics: () -> Void
     private let onDeleteData: () -> Void
     @State private var showingDeleteConfirmation = false
 
@@ -16,6 +17,7 @@ public struct SettingsView: View {
         restMinutes: Binding<Int> = .constant(10),
         isAwaitingPermission: Bool = false,
         onClose: @escaping () -> Void = {},
+        onOpenStatistics: @escaping () -> Void = {},
         onDeleteData: @escaping () -> Void = {}
     ) {
         self._mode = mode
@@ -23,6 +25,7 @@ public struct SettingsView: View {
         self._restMinutes = restMinutes
         self.isAwaitingPermission = isAwaitingPermission
         self.onClose = onClose
+        self.onOpenStatistics = onOpenStatistics
         self.onDeleteData = onDeleteData
     }
 
@@ -51,6 +54,7 @@ public struct SettingsView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            Button("查看統計", action: onOpenStatistics)
             Button("清除本機資料", role: .destructive) {
                 showingDeleteConfirmation = true
             }
