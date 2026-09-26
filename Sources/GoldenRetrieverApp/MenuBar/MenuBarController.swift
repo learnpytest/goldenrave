@@ -15,6 +15,7 @@ final class MenuBarController: NSObject {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
 
+        statusItem.isVisible = true
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover(_:))
         statusItem.button?.imagePosition = .imageLeading

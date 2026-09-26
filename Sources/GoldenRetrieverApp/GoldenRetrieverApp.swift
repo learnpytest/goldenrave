@@ -137,19 +137,14 @@ final class AppRuntime: ObservableObject {
     var store: (any LocalStore)? { dependencies?.store }
 }
 
-@MainActor
-final class AppDelegate: NSObject, NSApplicationDelegate {
-    private let runtime = AppRuntime()
-    private var menuBarController: MenuBarController?
-
-    func applicationDidFinishLaunching(_ notification: Notification) {
-        menuBarController = MenuBarController(runtime: runtime)
-    }
-}
-
 @main
+@MainActor
 struct GoldenRetrieverApp: App {
-    @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
+    private let menuBarController: MenuBarController
+
+    init() {
+        menuBarController = MenuBarController(runtime: AppRuntime())
+    }
 
     var body: some Scene {
         Settings {
