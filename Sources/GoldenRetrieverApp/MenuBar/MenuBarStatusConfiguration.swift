@@ -16,9 +16,7 @@ struct MenuBarStatusConfiguration: Equatable {
 
     private static func resourceName(for state: DogState) -> String {
         switch state {
-        case .idle:
-            "golden-retriever-puppy-reference"
-        case .walk:
+        case .idle, .walk:
             "walk"
         case .run:
             "run"

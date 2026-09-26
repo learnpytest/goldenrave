@@ -107,11 +107,9 @@ final class MenuBarController: NSObject {
     }
 
     private func statusImage(for state: DogState) -> NSImage? {
-        guard let url = DogAnimationPlayer.resourceURL(for: state),
-              let image = NSImage(contentsOf: url) else {
+        guard let image = DogAnimationPlayer().menuBarImage(for: state) else {
             return fallbackImage()
         }
-        image.size = NSSize(width: 18, height: 18)
         image.isTemplate = false
         return image
     }

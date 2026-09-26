@@ -19,3 +19,9 @@ jobs:
           name: GoldenRetriever-macOS
           path: dist
           if-no-files-found: error
+      - name: Upload macOS disk image
+        uses: actions/upload-artifact@v4
+        with:
+          name: GoldenRetriever-macOS-dmg
+          path: dist/GoldenRetriever.dmg
+          if-no-files-found: error

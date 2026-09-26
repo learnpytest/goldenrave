@@ -12,3 +12,6 @@ swift build -c release
 
 echo "== App bundle =="
 bash Scripts/build-app.sh release
+
+echo "== Disk image =="
+bash Scripts/build-dmg.sh
