@@ -46,6 +46,7 @@ public struct DogAnimationDirector: Sendable {
 
     private var breakStartedAt: Date?
     private var breakActivity: BreakActivity = .rest
+    private var invitationStartedAt: Date?
     private var reward: Reward?
 
     public init() {}
@@ -60,6 +61,10 @@ public struct DogAnimationDirector: Sendable {
     public mutating func breakCompleted(at date: Date, withBall: Bool) {
         breakStartedAt = nil
         reward = Reward(animation: withBall ? .playBall : .play, until: date.addingTimeInterval(Self.rewardDuration))
+    }
+
+    public mutating func invitation(startedAt date: Date?) {
+        invitationStartedAt = date
     }
 
     public mutating func breakEndedEarly() {
@@ -85,7 +90,11 @@ public struct DogAnimationDirector: Sendable {
         case .run:
             return DogAnimationPlayback(animation: .run)
         case .pounce:
-            return DogAnimationPlayback(animation: .pounce)
+            guard let start = invitationStartedAt else { return DogAnimationPlayback(animation: .pounce) }
+            return DogAnimationPlayback(
+                animation: BreakInvitation.animation(since: start, now: now),
+                startedAt: BreakInvitation.segmentStart(since: start, now: now)
+            )
         case .rest:
             switch breakActivity {
             case .rest: return restPlayback(at: now)

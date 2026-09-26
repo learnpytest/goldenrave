@@ -21,6 +21,7 @@ final class AppRuntime: ObservableObject {
     private var timer: Timer?
     @Published private(set) var breakEndsAt: Date?
     @Published private(set) var breakActivity: BreakActivity?
+    @Published private(set) var invitationStartedAt: Date?
     @Published private(set) var remindersPaused = false
     private var activeSessionStart: Date?
     private var animationDirector = DogAnimationDirector()
@@ -87,6 +88,22 @@ final class AppRuntime: ObservableObject {
         } else if sample.kind == .idle {
             nextBreak = nil
         }
+        var invitationStart: Date?
+        if let due = nextBreak, !remindersPaused, !isOnBreak, sample.kind == .active {
+            let warning = dependencies.scheduler.policy.warningWindow
+            switch BreakInvitation.phase(due: due, warningWindow: warning, now: now) {
+            case .notYet:
+                break
+            case .inviting(let since):
+                invitationStart = since
+            case .gaveUp:
+                nextBreak = BreakInvitation.nextDue(afterGivingUpAt: now, warningWindow: warning)
+            }
+        }
+        if invitationStartedAt != invitationStart {
+            invitationStartedAt = invitationStart
+        }
+        animationDirector.invitation(startedAt: invitationStart)
         let secondsUntilBreak = nextBreak?.timeIntervalSince(now)
         dogState = DogStateMachine(policy: dependencies.scheduler.policy).state(for: DogStateInput(
             isActive: snapshot.isActive,
@@ -103,6 +120,8 @@ final class AppRuntime: ObservableObject {
         let now = Date()
         breakEndsAt = now.addingTimeInterval(dependencies.scheduler.policy.restInterval)
         breakActivity = activity
+        invitationStartedAt = nil
+        animationDirector.invitation(startedAt: nil)
         animationDirector.breakStarted(at: now, activity: activity)
         nextBreak = nil
         dogState = .rest
@@ -138,6 +157,10 @@ final class AppRuntime: ObservableObject {
         animationDirector.breakEndedEarly()
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
         tick()
+    }
+
+    func invitationText(at date: Date) -> String? {
+        invitationStartedAt.map { BreakInvitation.line(since: $0, now: date).text }
     }
 
     func dogPlayback(at date: Date) -> DogAnimationPlayback {

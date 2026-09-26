@@ -40,7 +40,8 @@ public struct DogStateMachine: Sendable {
             return .relaxing
         }
         if let secondsUntilBreak = input.secondsUntilBreak,
-           secondsUntilBreak <= policy.warningWindow {
+           secondsUntilBreak <= policy.warningWindow,
+           secondsUntilBreak > -BreakInvitation.overdueGrace {
             return .pounce
         }
         if input.sessionDuration < 5 * 60 {

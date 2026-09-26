@@ -36,12 +36,12 @@ public struct PopoverView: View {
     public let breakEndsAt: Date?
     public let breakActivity: BreakActivity?
     public let remindersPaused: Bool
+    public let invitationText: String?
     public let playbackAt: ((Date) -> DogAnimationPlayback)?
     public var onStart: (BreakActivity) -> Void
     public var onPauseReminders: () -> Void
     public var onResumeReminders: () -> Void
     public var onEndBreak: () -> Void
-    public var onOpenStatistics: () -> Void
     public var onOpenSettings: () -> Void
 
     public init(
@@ -51,12 +51,12 @@ public struct PopoverView: View {
         breakEndsAt: Date? = nil,
         breakActivity: BreakActivity? = nil,
         remindersPaused: Bool = false,
+        invitationText: String? = nil,
         playbackAt: ((Date) -> DogAnimationPlayback)? = nil,
         onStart: @escaping (BreakActivity) -> Void = { _ in },
         onPauseReminders: @escaping () -> Void = {},
         onResumeReminders: @escaping () -> Void = {},
         onEndBreak: @escaping () -> Void = {},
-        onOpenStatistics: @escaping () -> Void = {},
         onOpenSettings: @escaping () -> Void = {}
     ) {
         self.snapshot = snapshot
@@ -65,12 +65,12 @@ public struct PopoverView: View {
         self.breakEndsAt = breakEndsAt
         self.breakActivity = breakActivity
         self.remindersPaused = remindersPaused
+        self.invitationText = invitationText
         self.playbackAt = playbackAt
         self.onStart = onStart
         self.onPauseReminders = onPauseReminders
         self.onResumeReminders = onResumeReminders
         self.onEndBreak = onEndBreak
-        self.onOpenStatistics = onOpenStatistics
         self.onOpenSettings = onOpenSettings
     }
 
@@ -86,7 +86,17 @@ public struct PopoverView: View {
                         .font(.headline)
                     Text(stateDescription)
                         .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
+                Spacer()
+                Button(action: onOpenSettings) {
+                    Image(systemName: "gearshape")
+                        .font(.title3)
+                }
+                .buttonStyle(.borderless)
+                .help("設定")
+                .accessibilityLabel("設定")
+                .frame(maxHeight: .infinity, alignment: .top)
             }
             Divider()
             metric("這次連續使用", Self.format(snapshot.currentSession))
@@ -95,10 +105,6 @@ public struct PopoverView: View {
                 ForEach(controls, id: \.title) { control in
                     Button(control.title) { perform(control) }
                 }
-            }
-            HStack {
-                Button("查看統計", action: onOpenStatistics)
-                Button("設定", action: onOpenSettings)
             }
         }
         .padding(16)
@@ -111,6 +117,12 @@ public struct PopoverView: View {
         }
         let activities = BreakActivity.allCases.map(PopoverControl.start)
         return activities + [remindersPaused ? .resumeReminders : .pauseReminders]
+    }
+
+    /// A reminder that is already due reads "現在", never a time in the past.
+    static func nextBreakText(_ nextBreak: Date?, now: Date) -> String {
+        guard let nextBreak else { return "尚未排程" }
+        return nextBreak <= now ? "現在" : timeString(nextBreak)
     }
 
     static func remainingBreakMinutes(until endsAt: Date, now: Date) -> Int {
@@ -133,7 +145,7 @@ public struct PopoverView: View {
         } else if remindersPaused {
             metric("下次陪我", "已暫停")
         } else {
-            metric("下次陪我", nextBreak.map(Self.timeString) ?? "尚未排程")
+            metric("下次陪我", Self.nextBreakText(nextBreak, now: Date()))
         }
     }
 
@@ -151,7 +163,7 @@ public struct PopoverView: View {
         case .idle: "等你回來"
         case .walk: "慢慢走，先熱身"
         case .run: "跑起來了！"
-        case .pounce: "該陪我囉！休息、陪玩或散步都好"
+        case .pounce: invitationText ?? BreakInvitation.lines[0].text
         case .rest:
             switch breakActivity ?? .rest {
             case .rest: "正在休息"
@@ -176,7 +188,7 @@ public struct PopoverView: View {
         return String(format: "%d 分 %02d 秒", total / 60, total % 60)
     }
 
-    private static func timeString(_ date: Date) -> String {
+    static func timeString(_ date: Date) -> String {
         date.formatted(date: .omitted, time: .shortened)
     }
 }

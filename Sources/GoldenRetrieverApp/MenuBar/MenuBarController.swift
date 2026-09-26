@@ -91,7 +91,7 @@ final class MenuBarController: NSObject {
         if runtime.showStatistics, let store = runtime.store {
             StatisticsView(store: store, range: .today)
                 .overlay(alignment: .topTrailing) {
-                    Button("返回", action: runtime.closeSecondaryView)
+                    Button("返回", action: runtime.openSettings)
                         .buttonStyle(.link)
                         .padding()
                 }
@@ -111,6 +111,7 @@ final class MenuBarController: NSObject {
                 ),
                 isAwaitingPermission: self.runtime.isAwaitingDetailedPermission,
                 onClose: runtime.closeSecondaryView,
+                onOpenStatistics: runtime.openStatistics,
                 onDeleteData: runtime.deleteAllData
             )
         } else {
@@ -121,12 +122,12 @@ final class MenuBarController: NSObject {
                 breakEndsAt: runtime.breakEndsAt,
                 breakActivity: runtime.breakActivity,
                 remindersPaused: runtime.remindersPaused,
+                invitationText: runtime.invitationText(at: Date()),
                 playbackAt: runtime.dogPlayback(at:),
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,
                 onResumeReminders: runtime.resumeReminders,
                 onEndBreak: runtime.endBreak,
-                onOpenStatistics: runtime.openStatistics,
                 onOpenSettings: runtime.openSettings
             )
         }

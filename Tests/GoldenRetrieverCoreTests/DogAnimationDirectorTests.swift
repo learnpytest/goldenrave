@@ -103,6 +103,15 @@ final class DogAnimationDirectorTests: XCTestCase {
         XCTAssertGreaterThan(seen.count, 1, "the puppy should do more than one thing")
     }
 
+    func testInvitationPouncesOnceThenShowsTheLineAnimation() {
+        var director = DogAnimationDirector()
+        director.invitation(startedAt: start)
+
+        XCTAssertEqual(director.playback(for: .pounce, at: start.addingTimeInterval(3)), DogAnimationPlayback(animation: .pounce, startedAt: start))
+        let later = start.addingTimeInterval(BreakInvitation.pounceLength + 2)
+        XCTAssertEqual(director.animation(for: .pounce, at: later), BreakInvitation.line(since: start, now: later).animation)
+    }
+
     func testEndingABreakEarlyEarnsNoReward() {
         var director = DogAnimationDirector()
         director.breakStarted(at: start)
