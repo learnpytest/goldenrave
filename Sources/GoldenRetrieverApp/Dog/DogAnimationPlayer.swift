@@ -38,6 +38,16 @@ public struct DogAnimationPlayer: Sendable {
         resourceBundle().url(forResource: "golden-retriever-puppy-reference", withExtension: "png")
     }
 
+    /// MenuBarExtra labels draw images at their intrinsic point size and ignore
+    /// SwiftUI `.frame`, so the image itself must already be menu-bar sized.
+    public func menuBarImage(for state: DogState, height: CGFloat = 18) -> NSImage? {
+        guard let source = loadImage(for: state), source.size.height > 0 else { return nil }
+        let image = source.copy() as? NSImage ?? source
+        let width = (height * source.size.width / source.size.height).rounded()
+        image.size = NSSize(width: width, height: height)
+        return image
+    }
+
     private func loadImage(for state: DogState) -> NSImage? {
         guard let url = Self.resourceURL(for: state) else { return nil }
         return NSImage(contentsOf: url)
@@ -45,9 +55,7 @@ public struct DogAnimationPlayer: Sendable {
 
     private static func resourceName(for state: DogState) -> String {
         switch state {
-        case .idle:
-            "golden-retriever-puppy-reference"
-        case .walk:
+        case .idle, .walk:
             "walk"
         case .run:
             "run"
