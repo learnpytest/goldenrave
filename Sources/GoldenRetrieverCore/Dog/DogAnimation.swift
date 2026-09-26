@@ -14,6 +14,8 @@ public enum DogAnimation: String, CaseIterable, Sendable {
     case playBall = "play-ball"
     /// Going for a walk together (on a lead), as opposed to the work-session `walk`.
     case stroll
+    /// Sitting up with front paws reaching out, asking for a hug.
+    case cuddle
 }
 
 /// `startedAt` is set for moments so they play from their first frame;

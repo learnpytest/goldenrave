@@ -139,6 +139,7 @@ public struct DogAnimationPlayer: Sendable {
         case .bellyUp: 0.25
         case .play, .playBall: 0.12
         case .stroll: 0.16
+        case .cuddle: 0.2
         }
     }
 
@@ -174,11 +175,20 @@ public struct DogAnimationPlayer: Sendable {
         if !sequence.isEmpty {
             return sequence
         }
-        if animation == .stroll {
-            let walking = sequenceURLs(prefix: DogAnimation.walk.rawValue)
-            if !walking.isEmpty { return walking }
+        if let standIn = standInSequence(for: animation) {
+            let frames = sequenceURLs(prefix: standIn.rawValue)
+            if !frames.isEmpty { return frames }
         }
         return resourceBundle().url(forResource: fallbackPoseName(for: animation), withExtension: "png").map { [$0] } ?? []
+    }
+
+    /// Animations whose own frames are not drawn yet borrow a close sequence.
+    private static func standInSequence(for animation: DogAnimation) -> DogAnimation? {
+        switch animation {
+        case .stroll: .walk
+        case .cuddle: .bellyUp
+        default: nil
+        }
     }
 
     private static func sequenceURLs(prefix name: String) -> [URL] {
@@ -200,7 +210,7 @@ public struct DogAnimationPlayer: Sendable {
         case .walk, .spin, .stroll: "walk"
         case .run: "run"
         case .pounce: "jump"
-        case .idle, .rest, .bellyUp: "rest"
+        case .idle, .rest, .bellyUp, .cuddle: "rest"
         case .play, .playBall: "play"
         }
     }
