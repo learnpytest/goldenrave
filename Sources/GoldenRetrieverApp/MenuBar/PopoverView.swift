@@ -19,6 +19,27 @@ enum PopoverControl: Equatable {
     }
 }
 
+extension PopoverControl {
+    /// Pause and resume are media-style icons; the activity choices stay text.
+    var systemImage: String? {
+        switch self {
+        case .pauseReminders: "pause.circle.fill"
+        case .resumeReminders: "play.circle.fill"
+        default: nil
+        }
+    }
+
+    var iconColor: Color {
+        self == .pauseReminders ? .red : .green
+    }
+}
+
+/// Every popover screen shares one size; swapping screens of different
+/// sizes made the popover shrink after returning from settings.
+enum PopoverLayout {
+    static let size = CGSize(width: 340, height: 400)
+}
+
 extension BreakActivity {
     var ongoingTitle: String {
         switch self {
@@ -75,13 +96,9 @@ public struct PopoverView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                DogAnimationView(playbackAt: playbackAt ?? { [dogState] date in
-                    DogAnimationDirector().playback(for: dogState, at: date)
-                })
-                    .frame(width: 90, height: 90)
-                VStack(alignment: .leading) {
+        VStack(spacing: 12) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 4) {
                     Text("小黃金陪伴中")
                         .font(.headline)
                     Text(stateDescription)
@@ -96,19 +113,41 @@ public struct PopoverView: View {
                 .buttonStyle(.borderless)
                 .help("設定")
                 .accessibilityLabel("設定")
-                .frame(maxHeight: .infinity, alignment: .top)
             }
-            Divider()
-            metric("這次連續使用", Self.format(snapshot.currentSession))
-            breakMetric
-            HStack {
+            DogAnimationView(playbackAt: playbackAt ?? { [dogState] date in
+                DogAnimationDirector().playback(for: dogState, at: date)
+            })
+                .frame(width: DogAnimationPlayer.popoverSide, height: DogAnimationPlayer.popoverSide)
+                .frame(maxWidth: .infinity)
+            VStack(spacing: 6) {
+                metric("這次連續使用", Self.format(snapshot.currentSession))
+                breakMetric
+            }
+            HStack(spacing: 8) {
                 ForEach(controls, id: \.title) { control in
-                    Button(control.title) { perform(control) }
+                    controlButton(control)
                 }
             }
+            .frame(maxWidth: .infinity)
         }
         .padding(16)
-        .frame(width: 320)
+        .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .top)
+    }
+
+    @ViewBuilder
+    private func controlButton(_ control: PopoverControl) -> some View {
+        if let icon = control.systemImage {
+            Button { perform(control) } label: {
+                Image(systemName: icon)
+                    .font(.title2)
+                    .foregroundStyle(control.iconColor)
+            }
+            .buttonStyle(.borderless)
+            .help(control.title)
+            .accessibilityLabel(control.title)
+        } else {
+            Button(control.title) { perform(control) }
+        }
     }
 
     static func controls(isOnBreak: Bool, remindersPaused: Bool, hasScheduledBreak: Bool) -> [PopoverControl] {
