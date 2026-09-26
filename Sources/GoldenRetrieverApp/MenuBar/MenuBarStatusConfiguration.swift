@@ -2,6 +2,8 @@ import Foundation
 import GoldenRetrieverCore
 
 struct MenuBarStatusConfiguration: Equatable {
+    static let minimumLength: Double = 72
+
     let imageResourceName: String
     let title: String
     let accessibilityLabel: String
