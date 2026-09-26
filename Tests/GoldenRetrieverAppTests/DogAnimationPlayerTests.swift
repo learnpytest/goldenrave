@@ -28,6 +28,14 @@ final class DogAnimationPlayerTests: XCTestCase {
         }
     }
 
+    func testMenuBarFramesArePreRenderedAtMenuBarResolution() throws {
+        let frame = try XCTUnwrap(DogAnimationPlayer().menuBarFrames(for: .run).first)
+        let rep = try XCTUnwrap(frame.representations.first)
+
+        XCTAssertEqual(frame.representations.count, 1)
+        XCTAssertLessThanOrEqual(rep.pixelsHigh, 18 * 2, "Menu bar frames should not keep the full-size bitmap")
+    }
+
     func testIdleDoesNotUseTheMultiPoseReferenceSheet() {
         XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .idle).contains { $0 == DogAnimationPlayer.canonicalReferenceURL() })
     }
