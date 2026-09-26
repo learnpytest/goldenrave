@@ -5,7 +5,7 @@ import GoldenRetrieverCore
 public struct SystemActivitySource: ActivitySource {
     /// kCGAnyInputEventType. Querying `.null` measures time since the last
     /// null event, which is minutes old even while the user is typing.
-    static let anyInputEventType = CGEventType(rawValue: ~UInt32(0))!
+    public static let anyInputEventType = CGEventType(rawValue: ~UInt32(0))!
 
     public let idleThreshold: TimeInterval
     private let secondsSinceLastInput: () -> TimeInterval
