@@ -14,10 +14,10 @@ public struct DogAnimationView: View {
     }
 
     public var body: some View {
-        TimelineView(.periodic(from: .now, by: 0.05)) { context in
+        TimelineView(.periodic(from: .now, by: 0.06)) { context in
             let playback = playbackAt(context.date)
             let animation = playback.animation
-            let frames = player.frames(for: animation)
+            let frames = player.popoverFrames(for: animation)
             if frames.isEmpty {
                 Image(systemName: "pawprint.fill")
                     .resizable()
@@ -31,8 +31,7 @@ public struct DogAnimationView: View {
                     loops: player.loops(animation)
                 )
                 Image(nsImage: frames[index])
-                    .resizable()
-                    .scaledToFit()
+                    .interpolation(.high)
             }
         }
     }

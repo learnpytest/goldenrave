@@ -22,15 +22,27 @@ public struct DogAnimationPlayer: Sendable {
     /// source and only shrinking `size` made every frame swap downsample the
     /// full bitmap (19% CPU measured 2026-09-26).
     public func menuBarFrames(for animation: DogAnimation) -> [NSImage] {
-        Self.cache.value(forKey: "\(animation.rawValue)@menubar") {
+        fittedFrames(for: animation, height: Self.menuBarHeight, maxWidth: Self.menuBarMaxWidth)
+    }
+
+    public static let popoverSide: CGFloat = 90
+
+    /// The popover redraws every frame; drawing the 512px sources each time
+    /// cost ~8% CPU while it was open, so it gets pre-scaled frames too.
+    public func popoverFrames(for animation: DogAnimation) -> [NSImage] {
+        fittedFrames(for: animation, height: Self.popoverSide, maxWidth: Self.popoverSide)
+    }
+
+    private func fittedFrames(for animation: DogAnimation, height targetHeight: CGFloat, maxWidth: CGFloat) -> [NSImage] {
+        Self.cache.value(forKey: "\(animation.rawValue)@\(targetHeight)x\(maxWidth)") {
             let cleaned = Self.cleanedFrames(for: animation)
             guard let box = cleaned.compactMap(\.box).reduce(nil, { partial, next in partial?.union(next) ?? next })
             else { return [] }
             let boxWidth = CGFloat(box.maxX - box.minX + 1)
             let boxHeight = CGFloat(box.maxY - box.minY + 1)
-            var size = NSSize(width: (Self.menuBarHeight * boxWidth / boxHeight).rounded(), height: Self.menuBarHeight)
-            if size.width > Self.menuBarMaxWidth {
-                size = NSSize(width: Self.menuBarMaxWidth, height: (Self.menuBarMaxWidth * boxHeight / boxWidth).rounded())
+            var size = NSSize(width: (targetHeight * boxWidth / boxHeight).rounded(), height: targetHeight)
+            if size.width > maxWidth {
+                size = NSSize(width: maxWidth, height: (maxWidth * boxHeight / boxWidth).rounded())
             }
             return cleaned.compactMap { frame in
                 let pixelHeight = frame.pixelHeight

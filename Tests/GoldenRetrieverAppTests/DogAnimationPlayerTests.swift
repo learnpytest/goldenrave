@@ -55,6 +55,15 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertEqual(player.menuBarFrameDuration(for: .spin), player.frameDuration(for: .spin))
     }
 
+    func testPopoverFramesArePreScaledToThePopoverSize() throws {
+        let frames = DogAnimationPlayer().popoverFrames(for: .walk)
+        let frame = try XCTUnwrap(frames.first)
+
+        XCTAssertLessThanOrEqual(frame.size.height, DogAnimationPlayer.popoverSide)
+        XCTAssertLessThanOrEqual(frame.size.width, DogAnimationPlayer.popoverSide)
+        XCTAssertLessThanOrEqual(try XCTUnwrap(frame.representations.first).pixelsHigh, Int(DogAnimationPlayer.popoverSide) * 2)
+    }
+
     func testIdleDoesNotUseTheMultiPoseReferenceSheet() {
         XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .idle).contains { $0 == DogAnimationPlayer.canonicalReferenceURL() })
     }
