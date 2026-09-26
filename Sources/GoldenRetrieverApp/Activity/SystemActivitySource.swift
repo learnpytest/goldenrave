@@ -3,18 +3,28 @@ import Foundation
 import GoldenRetrieverCore
 
 public struct SystemActivitySource: ActivitySource {
-    public let idleThreshold: TimeInterval
+    /// kCGAnyInputEventType. Querying `.null` measures time since the last
+    /// null event, which is minutes old even while the user is typing.
+    public static let anyInputEventType = CGEventType(rawValue: ~UInt32(0))!
 
-    public init(idleThreshold: TimeInterval = 60) {
+    public let idleThreshold: TimeInterval
+    private let secondsSinceLastInput: () -> TimeInterval
+
+    public init(
+        idleThreshold: TimeInterval = 60,
+        secondsSinceLastInput: @escaping () -> TimeInterval = {
+            CGEventSource.secondsSinceLastEventType(
+                .combinedSessionState,
+                eventType: SystemActivitySource.anyInputEventType
+            )
+        }
+    ) {
         self.idleThreshold = idleThreshold
+        self.secondsSinceLastInput = secondsSinceLastInput
     }
 
     public func sample(at date: Date) -> ActivitySample {
-        let idleSeconds = CGEventSource.secondsSinceLastEventType(
-            .combinedSessionState,
-            eventType: .null
-        )
-        let kind: ActivityKind = idleSeconds >= idleThreshold ? .idle : .active
+        let kind: ActivityKind = secondsSinceLastInput() >= idleThreshold ? .idle : .active
         return ActivitySample(timestamp: date, kind: kind)
     }
 }
