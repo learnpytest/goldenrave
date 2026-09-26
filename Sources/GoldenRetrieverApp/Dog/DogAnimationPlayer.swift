@@ -70,6 +70,15 @@ public struct DogAnimationPlayer: Sendable {
         }
     }
 
+    /// Each status item image swap is replicated to Control Center on macOS 26
+    /// (NSStatusItem _windowNeedsReplicantUpdate dominated a 2026-09-26 sample),
+    /// so the 18pt menu bar runs slower than the popover. Spin keeps its timing
+    /// so it still finishes within the spin moment.
+    public func menuBarFrameDuration(for animation: DogAnimation) -> TimeInterval {
+        let duration = frameDuration(for: animation)
+        return animation == .spin ? duration : max(duration * 2.5, 0.25)
+    }
+
     /// Spin ends lying down, so it plays once and holds its last frame.
     public func loops(_ animation: DogAnimation) -> Bool {
         animation != .spin

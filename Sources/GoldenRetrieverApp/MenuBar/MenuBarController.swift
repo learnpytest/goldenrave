@@ -40,7 +40,7 @@ final class MenuBarController: NSObject {
 
         refresh()
 
-        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.05, repeats: true) { [weak self] _ in
+        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.renderFrame()
             }
@@ -133,7 +133,7 @@ final class MenuBarController: NSObject {
         let frames = player.menuBarFrames(for: animation)
         let index = DogAnimationPlayer.frameIndex(
             elapsed: now.timeIntervalSince(animationStartedAt),
-            frameDuration: player.frameDuration(for: animation),
+            frameDuration: player.menuBarFrameDuration(for: animation),
             frameCount: frames.count,
             loops: player.loops(animation)
         )

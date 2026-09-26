@@ -36,6 +36,16 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertLessThanOrEqual(rep.pixelsHigh, 18 * 2, "Menu bar frames should not keep the full-size bitmap")
     }
 
+    func testMenuBarSwapsFramesAtMostFourTimesASecondButRunStaysFasterThanWalk() {
+        let player = DogAnimationPlayer()
+
+        for animation in DogAnimation.allCases where animation != .spin {
+            XCTAssertGreaterThanOrEqual(player.menuBarFrameDuration(for: animation), 0.25, "\(animation)")
+        }
+        XCTAssertLessThan(player.menuBarFrameDuration(for: .run), player.menuBarFrameDuration(for: .walk))
+        XCTAssertEqual(player.menuBarFrameDuration(for: .spin), player.frameDuration(for: .spin))
+    }
+
     func testIdleDoesNotUseTheMultiPoseReferenceSheet() {
         XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .idle).contains { $0 == DogAnimationPlayer.canonicalReferenceURL() })
     }
