@@ -29,7 +29,7 @@ final class DogAnimationPlayerTests: XCTestCase {
                     "The dog should fill the menu bar, got \(frame.size) for \(animation)"
                 )
             }
-            XCTAssertEqual(Set(frames.map(\.size)).count, 1, "Frames of \(animation) should share one size")
+            XCTAssertTrue(frames.allSatisfy { $0.size == frames[0].size }, "Frames of \(animation) should share one size")
         }
     }
 
