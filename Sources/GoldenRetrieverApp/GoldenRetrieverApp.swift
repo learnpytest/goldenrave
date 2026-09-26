@@ -138,42 +138,17 @@ final class AppRuntime: ObservableObject {
 }
 
 @main
+@MainActor
 struct GoldenRetrieverApp: App {
-    @StateObject private var runtime = AppRuntime()
+    private let menuBarController: MenuBarController
+
+    init() {
+        menuBarController = MenuBarController(runtime: AppRuntime())
+    }
 
     var body: some Scene {
-        MenuBarExtra {
-            if runtime.showStatistics, let store = runtime.store {
-                StatisticsView(store: store, range: .today)
-                    .overlay(alignment: .topTrailing) {
-                        Button("返回", action: runtime.closeSecondaryView)
-                            .buttonStyle(.link)
-                            .padding()
-                    }
-            } else if runtime.showSettings {
-                SettingsView(
-                    mode: Binding(
-                        get: { runtime.trackingMode },
-                        set: runtime.setTrackingMode
-                    ),
-                    onClose: runtime.closeSecondaryView,
-                    onDeleteData: runtime.deleteAllData
-                )
-            } else {
-                PopoverView(
-                    snapshot: runtime.snapshot,
-                    dogState: runtime.dogState,
-                    nextBreak: runtime.nextBreak,
-                    onStartBreak: runtime.startBreak,
-                    onPostpone: runtime.postpone,
-                    onPauseReminders: runtime.pauseReminders,
-                    onOpenStatistics: runtime.openStatistics,
-                    onOpenSettings: runtime.openSettings
-                )
-            }
-        } label: {
-            MenuBarView(snapshot: runtime.snapshot, dogState: runtime.dogState)
+        Settings {
+            EmptyView()
         }
-        .menuBarExtraStyle(.window)
     }
 }
