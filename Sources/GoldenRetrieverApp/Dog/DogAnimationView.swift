@@ -2,20 +2,21 @@ import GoldenRetrieverCore
 import SwiftUI
 
 public struct DogAnimationView: View {
-    private let animationAt: (Date) -> DogAnimation
+    private let playbackAt: (Date) -> DogAnimationPlayback
     private let player: DogAnimationPlayer
 
     public init(
-        animationAt: @escaping (Date) -> DogAnimation,
+        playbackAt: @escaping (Date) -> DogAnimationPlayback,
         player: DogAnimationPlayer = DogAnimationPlayer()
     ) {
-        self.animationAt = animationAt
+        self.playbackAt = playbackAt
         self.player = player
     }
 
     public var body: some View {
         TimelineView(.periodic(from: .now, by: 0.05)) { context in
-            let animation = animationAt(context.date)
+            let playback = playbackAt(context.date)
+            let animation = playback.animation
             let frames = player.frames(for: animation)
             if frames.isEmpty {
                 Image(systemName: "pawprint.fill")
@@ -24,9 +25,10 @@ public struct DogAnimationView: View {
                     .foregroundStyle(.orange)
             } else {
                 let index = DogAnimationPlayer.frameIndex(
-                    elapsed: context.date.timeIntervalSinceReferenceDate,
+                    elapsed: context.date.timeIntervalSince(playback.startedAt ?? Date(timeIntervalSinceReferenceDate: 0)),
                     frameDuration: player.frameDuration(for: animation),
-                    frameCount: frames.count
+                    frameCount: frames.count,
+                    loops: player.loops(animation)
                 )
                 Image(nsImage: frames[index])
                     .resizable()

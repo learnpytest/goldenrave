@@ -49,6 +49,32 @@ final class DogAnimationDirectorTests: XCTestCase {
         XCTAssertEqual(director.animation(for: .idle, at: start.addingTimeInterval(1)), .play)
     }
 
+    func testMomentsReportWhenTheyStartedSoTheyPlayFromTheFirstFrame() {
+        var director = DogAnimationDirector()
+        director.breakStarted(at: start)
+
+        XCTAssertEqual(
+            director.playback(for: .rest, at: start.addingTimeInterval(1)),
+            DogAnimationPlayback(animation: .spin, startedAt: start)
+        )
+
+        let bellyUpStart = start.addingTimeInterval(
+            DogAnimationDirector.spinDuration + DogAnimationDirector.bellyUpCycle - DogAnimationDirector.bellyUpLength
+        )
+        XCTAssertEqual(
+            director.playback(for: .rest, at: bellyUpStart.addingTimeInterval(2)).startedAt?.timeIntervalSince1970 ?? 0,
+            bellyUpStart.timeIntervalSince1970,
+            accuracy: 0.001
+        )
+
+        director.breakCompleted(at: start, withBall: true)
+        XCTAssertEqual(
+            director.playback(for: .walk, at: start.addingTimeInterval(1)),
+            DogAnimationPlayback(animation: .playBall, startedAt: start)
+        )
+        XCTAssertNil(director.playback(for: .walk, at: start.addingTimeInterval(10)).startedAt)
+    }
+
     func testEndingABreakEarlyEarnsNoReward() {
         var director = DogAnimationDirector()
         director.breakStarted(at: start)

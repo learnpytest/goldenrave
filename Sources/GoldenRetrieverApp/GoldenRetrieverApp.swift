@@ -118,8 +118,8 @@ final class AppRuntime: ObservableObject {
         tick()
     }
 
-    func dogAnimation(at date: Date) -> DogAnimation {
-        animationDirector.animation(for: dogState, at: date)
+    func dogPlayback(at date: Date) -> DogAnimationPlayback {
+        animationDirector.playback(for: dogState, at: date)
     }
 
     func openStatistics() {

@@ -39,6 +39,19 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertEqual(DogAnimationPlayer.frameIndex(elapsed: 5, frameDuration: 0.1, frameCount: 1), 0)
     }
 
+    func testSpinPlaysOnceAndSettlesOnItsLastFrame() {
+        let player = DogAnimationPlayer()
+        let frameCount = player.frames(for: .spin).count
+        let duration = player.frameDuration(for: .spin)
+
+        XCTAssertFalse(player.loops(.spin))
+        XCTAssertEqual(duration * Double(frameCount), DogAnimationDirector.spinDuration, accuracy: 0.01)
+        XCTAssertEqual(
+            DogAnimationPlayer.frameIndex(elapsed: 10, frameDuration: duration, frameCount: frameCount, loops: false),
+            frameCount - 1
+        )
+    }
+
     func testFastMotionsCycleFasterThanCalmOnes() {
         let player = DogAnimationPlayer()
 

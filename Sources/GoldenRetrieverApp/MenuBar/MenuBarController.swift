@@ -111,7 +111,7 @@ final class MenuBarController: NSObject {
                 nextBreak: runtime.nextBreak,
                 breakEndsAt: runtime.breakEndsAt,
                 remindersPaused: runtime.remindersPaused,
-                animationAt: runtime.dogAnimation(at:),
+                playbackAt: runtime.dogPlayback(at:),
                 onStartBreak: runtime.startBreak,
                 onPostpone: runtime.postpone,
                 onPauseReminders: runtime.pauseReminders,
@@ -124,16 +124,18 @@ final class MenuBarController: NSObject {
     }
 
     private func renderFrame(now: Date = Date()) {
-        let animation = runtime.dogAnimation(at: now)
+        let playback = runtime.dogPlayback(at: now)
+        let animation = playback.animation
         if animation != currentAnimation {
             currentAnimation = animation
-            animationStartedAt = now
+            animationStartedAt = playback.startedAt ?? now
         }
         let frames = player.menuBarFrames(for: animation)
         let index = DogAnimationPlayer.frameIndex(
             elapsed: now.timeIntervalSince(animationStartedAt),
             frameDuration: player.frameDuration(for: animation),
-            frameCount: frames.count
+            frameCount: frames.count,
+            loops: player.loops(animation)
         )
         if let shownFrame, shownFrame.animation == animation, shownFrame.index == index {
             return

@@ -33,17 +33,27 @@ public struct DogAnimationPlayer: Sendable {
         case .walk: 0.14
         case .run: 0.08
         case .pounce: 0.1
-        case .spin: 0.1
+        case .spin: DogAnimationDirector.spinDuration / 12
         case .rest: 0.5
         case .bellyUp: 0.25
         case .play, .playBall: 0.12
         }
     }
 
-    public static func frameIndex(elapsed: TimeInterval, frameDuration: TimeInterval, frameCount: Int) -> Int {
+    /// Spin ends lying down, so it plays once and holds its last frame.
+    public func loops(_ animation: DogAnimation) -> Bool {
+        animation != .spin
+    }
+
+    public static func frameIndex(
+        elapsed: TimeInterval,
+        frameDuration: TimeInterval,
+        frameCount: Int,
+        loops: Bool = true
+    ) -> Int {
         guard frameCount > 1, frameDuration > 0 else { return 0 }
         let step = Int((max(0, elapsed) / frameDuration).rounded(.down))
-        return step % frameCount
+        return loops ? step % frameCount : min(step, frameCount - 1)
     }
 
     public static func frameURLs(for animation: DogAnimation) -> [URL] {

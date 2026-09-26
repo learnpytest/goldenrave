@@ -25,7 +25,7 @@ public struct PopoverView: View {
     public let nextBreak: Date?
     public let breakEndsAt: Date?
     public let remindersPaused: Bool
-    public let animationAt: ((Date) -> DogAnimation)?
+    public let playbackAt: ((Date) -> DogAnimationPlayback)?
     public var onStartBreak: () -> Void
     public var onPostpone: () -> Void
     public var onPauseReminders: () -> Void
@@ -40,7 +40,7 @@ public struct PopoverView: View {
         nextBreak: Date? = nil,
         breakEndsAt: Date? = nil,
         remindersPaused: Bool = false,
-        animationAt: ((Date) -> DogAnimation)? = nil,
+        playbackAt: ((Date) -> DogAnimationPlayback)? = nil,
         onStartBreak: @escaping () -> Void = {},
         onPostpone: @escaping () -> Void = {},
         onPauseReminders: @escaping () -> Void = {},
@@ -54,7 +54,7 @@ public struct PopoverView: View {
         self.nextBreak = nextBreak
         self.breakEndsAt = breakEndsAt
         self.remindersPaused = remindersPaused
-        self.animationAt = animationAt
+        self.playbackAt = playbackAt
         self.onStartBreak = onStartBreak
         self.onPostpone = onPostpone
         self.onPauseReminders = onPauseReminders
@@ -67,8 +67,8 @@ public struct PopoverView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                DogAnimationView(animationAt: animationAt ?? { [dogState] date in
-                    DogAnimationDirector().animation(for: dogState, at: date)
+                DogAnimationView(playbackAt: playbackAt ?? { [dogState] date in
+                    DogAnimationDirector().playback(for: dogState, at: date)
                 })
                     .frame(width: 90, height: 90)
                 VStack(alignment: .leading) {
