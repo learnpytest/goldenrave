@@ -97,9 +97,13 @@ final class MenuBarController: NSObject {
                 snapshot: runtime.snapshot,
                 dogState: runtime.dogState,
                 nextBreak: runtime.nextBreak,
+                breakEndsAt: runtime.breakEndsAt,
+                remindersPaused: runtime.remindersPaused,
                 onStartBreak: runtime.startBreak,
                 onPostpone: runtime.postpone,
                 onPauseReminders: runtime.pauseReminders,
+                onResumeReminders: runtime.resumeReminders,
+                onEndBreak: runtime.endBreak,
                 onOpenStatistics: runtime.openStatistics,
                 onOpenSettings: runtime.openSettings
             )

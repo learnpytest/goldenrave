@@ -16,8 +16,8 @@ final class AppRuntime: ObservableObject {
     private var dependencies: AppDependencies?
     private let activitySource = SystemActivitySource()
     private var timer: Timer?
-    private var breakEndsAt: Date?
-    private var remindersPaused = false
+    @Published private(set) var breakEndsAt: Date?
+    @Published private(set) var remindersPaused = false
     private var activeSessionStart: Date?
 
     init() {
@@ -100,6 +100,18 @@ final class AppRuntime: ObservableObject {
     func pauseReminders() {
         remindersPaused = true
         nextBreak = nil
+    }
+
+    func resumeReminders() {
+        remindersPaused = false
+        tick()
+    }
+
+    func endBreak() {
+        guard let dependencies, breakEndsAt != nil else { return }
+        breakEndsAt = nil
+        try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
+        tick()
     }
 
     func openStatistics() {
