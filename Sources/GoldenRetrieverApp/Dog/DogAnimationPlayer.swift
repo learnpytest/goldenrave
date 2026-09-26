@@ -112,13 +112,16 @@ public struct DogAnimationPlayer: Sendable {
             bytesPerRow: 0,
             bitsPerPixel: 0
         ), let context = NSGraphicsContext(bitmapImageRep: rep) else { return nil }
-        rep.size = size
 
+        // The context's coordinates are the bitmap's pixels, so fill the pixel
+        // rect; drawing into the point rect filled only the bottom-left quarter.
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = context
         context.imageInterpolation = .high
-        source.draw(in: NSRect(origin: .zero, size: size), from: crop, operation: .sourceOver, fraction: 1)
+        let pixelRect = NSRect(x: 0, y: 0, width: CGFloat(rep.pixelsWide), height: CGFloat(rep.pixelsHigh))
+        source.draw(in: pixelRect, from: crop, operation: .sourceOver, fraction: 1)
         NSGraphicsContext.restoreGraphicsState()
+        rep.size = size
 
         let image = NSImage(size: size)
         image.addRepresentation(rep)
