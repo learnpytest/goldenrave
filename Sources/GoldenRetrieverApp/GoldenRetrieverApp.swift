@@ -12,18 +12,29 @@ final class AppRuntime: ObservableObject {
     @Published var showStatistics = false
     @Published var showSettings = false
     @Published private(set) var trackingMode: TrackingMode = .privateMode
+    @Published private(set) var isAwaitingDetailedPermission = false
+    @Published private(set) var workMinutes: Int
+    @Published private(set) var restMinutes: Int
 
     private var dependencies: AppDependencies?
     private let activitySource = SystemActivitySource()
     private var timer: Timer?
     @Published private(set) var breakEndsAt: Date?
+    @Published private(set) var breakActivity: BreakActivity?
     @Published private(set) var remindersPaused = false
     private var activeSessionStart: Date?
     private var animationDirector = DogAnimationDirector()
+    private let preferences = AppPreferences()
+    private var permissionTimer: Timer?
 
     init() {
+        workMinutes = preferences.workMinutes
+        restMinutes = preferences.restMinutes
         dependencies = try? AppDependencies.live()
         trackingMode = dependencies?.trackingController.mode ?? .privateMode
+        if dependencies?.trackingController.isAwaitingPermission == true {
+            waitForDetailedPermission()
+        }
         tick()
         timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -34,12 +45,14 @@ final class AppRuntime: ObservableObject {
 
     deinit {
         timer?.invalidate()
+        permissionTimer?.invalidate()
     }
 
     func tick(now: Date = Date()) {
         guard var dependencies else { return }
         if let breakEndsAt, now >= breakEndsAt {
             self.breakEndsAt = nil
+            breakActivity = nil
             animationDirector.breakCompleted(at: now, withBall: Bool.random())
         }
         let sample = activitySource.sample(at: now)
@@ -79,30 +92,38 @@ final class AppRuntime: ObservableObject {
             isActive: snapshot.isActive,
             sessionDuration: snapshot.currentSession,
             secondsUntilBreak: secondsUntilBreak,
-            isOnBreak: isOnBreak
+            isOnBreak: isOnBreak,
+            remindersPaused: remindersPaused
         ))
         self.dependencies = dependencies
     }
 
-    func startBreak() {
+    func startBreak(_ activity: BreakActivity = .rest) {
         guard let dependencies else { return }
         let now = Date()
         breakEndsAt = now.addingTimeInterval(dependencies.scheduler.policy.restInterval)
-        animationDirector.breakStarted(at: now)
+        breakActivity = activity
+        animationDirector.breakStarted(at: now, activity: activity)
         nextBreak = nil
         dogState = .rest
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: now, action: .started))
     }
 
-    func postpone() {
-        guard let dependencies, let due = nextBreak else { return }
-        nextBreak = dependencies.scheduler.apply(.postponed, at: due)
-        try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .postponed))
+    func setBreakMinutes(work: Int, rest: Int) {
+        let policy = BreakPolicy(workMinutes: work, restMinutes: rest)
+        workMinutes = Int(policy.workInterval / 60)
+        restMinutes = Int(policy.restInterval / 60)
+        preferences.workMinutes = workMinutes
+        preferences.restMinutes = restMinutes
+        dependencies?.scheduler = BreakScheduler(policy: policy)
+        nextBreak = nil
+        tick()
     }
 
     func pauseReminders() {
         remindersPaused = true
         nextBreak = nil
+        tick()
     }
 
     func resumeReminders() {
@@ -113,6 +134,7 @@ final class AppRuntime: ObservableObject {
     func endBreak() {
         guard let dependencies, breakEndsAt != nil else { return }
         breakEndsAt = nil
+        breakActivity = nil
         animationDirector.breakEndedEarly()
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
         tick()
@@ -145,9 +167,38 @@ final class AppRuntime: ObservableObject {
             } else {
                 dependencies.trackingController.disableDetailedMode()
             }
-            trackingMode = dependencies.trackingController.mode
         } catch {
-            trackingMode = dependencies.trackingController.mode
+            waitForDetailedPermission()
+        }
+        syncTrackingMode()
+    }
+
+    /// Accessibility is granted in System Settings after our request returns,
+    /// so poll briefly instead of making the user pick Detailed again.
+    private func waitForDetailedPermission() {
+        permissionTimer?.invalidate()
+        let deadline = Date().addingTimeInterval(5 * 60)
+        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
+            Task { @MainActor [weak self] in
+                guard let self, let controller = self.dependencies?.trackingController else {
+                    timer.invalidate()
+                    return
+                }
+                controller.refreshPermission()
+                if !controller.isAwaitingPermission || Date() > deadline {
+                    timer.invalidate()
+                }
+                self.syncTrackingMode()
+            }
+        }
+    }
+
+    private func syncTrackingMode() {
+        guard let controller = dependencies?.trackingController else { return }
+        trackingMode = controller.mode
+        isAwaitingDetailedPermission = controller.isAwaitingPermission
+        if !controller.isAwaitingPermission {
+            preferences.trackingMode = controller.mode
         }
     }
 
@@ -158,37 +209,31 @@ final class AppRuntime: ObservableObject {
     var store: (any LocalStore)? { dependencies?.store }
 }
 
-@MainActor
-private struct SettingsSceneView: View {
-    @ObservedObject var runtime: AppRuntime
-
-    var body: some View {
-        SettingsView(
-            mode: Binding(
-                get: { runtime.trackingMode },
-                set: runtime.setTrackingMode
-            ),
-            onClose: { NSApp.keyWindow?.close() },
-            onDeleteData: runtime.deleteAllData
-        )
+/// An AppKit entry point: with SwiftUI's `App`, the only scene was `Settings`,
+/// which macOS opened as a window on every launch and kept re-laying out
+/// (~10% CPU sampled 2026-09-26). Settings live in the menu bar popover.
+@main
+enum GoldenRetrieverMain {
+    static func main() {
+        MainActor.assumeIsolated {
+            let app = NSApplication.shared
+            app.setActivationPolicy(.accessory)
+            app.delegate = AppDelegate.shared
+            app.run()
+        }
     }
 }
 
-@main
 @MainActor
-struct GoldenRetrieverApp: App {
-    private let runtime: AppRuntime
-    private let menuBarController: MenuBarController
+final class AppDelegate: NSObject, NSApplicationDelegate {
+    static let shared = AppDelegate()
 
-    init() {
+    private var runtime: AppRuntime?
+    private var menuBarController: MenuBarController?
+
+    func applicationDidFinishLaunching(_ notification: Notification) {
         let runtime = AppRuntime()
         self.runtime = runtime
         menuBarController = MenuBarController(runtime: runtime)
-    }
-
-    var body: some Scene {
-        Settings {
-            SettingsSceneView(runtime: runtime)
-        }
     }
 }

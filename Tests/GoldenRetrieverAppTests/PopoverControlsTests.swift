@@ -1,42 +1,36 @@
+import GoldenRetrieverCore
 import XCTest
 @testable import GoldenRetrieverApp
 
 final class PopoverControlsTests: XCTestCase {
-    func testOnBreakOnlyOffersEndingTheBreakEarly() {
+    func testOnBreakOnlyOffersEndingItEarly() {
         XCTAssertEqual(
             PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false),
             [.endBreak]
         )
     }
 
-    func testWorkingWithScheduledBreakOffersStartPostponeAndPause() {
-        XCTAssertEqual(
-            PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: true),
-            [.startBreak, .postpone, .pauseReminders]
-        )
+    func testWorkingLetsTheUserChooseRestPlayOrWalkAndPause() {
+        for hasScheduledBreak in [true, false] {
+            XCTAssertEqual(
+                PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: hasScheduledBreak),
+                [.start(.rest), .start(.play), .start(.walk), .pauseReminders]
+            )
+        }
     }
 
-    func testWorkingWithoutScheduledBreakHidesPostpone() {
-        XCTAssertEqual(
-            PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: false),
-            [.startBreak, .pauseReminders]
-        )
-    }
-
-    func testPausedRemindersCanBeResumed() {
+    func testPausedCanBeResumed() {
         XCTAssertEqual(
             PopoverView.controls(isOnBreak: false, remindersPaused: true, hasScheduledBreak: false),
-            [.startBreak, .resumeReminders]
+            [.start(.rest), .start(.play), .start(.walk), .resumeReminders]
         )
     }
 
-    func testPostponeLabelSaysWhatIsPostponed() {
-        XCTAssertEqual(PopoverControl.postpone.title, "休息延後 10 分鐘")
-    }
-
-    func testReminderButtonsSayTheyAreAboutBreakReminders() {
-        XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停休息提醒")
-        XCTAssertEqual(PopoverControl.resumeReminders.title, "恢復休息提醒")
+    func testButtonsUseShortLabels() {
+        XCTAssertEqual(PopoverControl.start(.rest).title, "休息")
+        XCTAssertEqual(PopoverControl.start(.play).title, "陪玩")
+        XCTAssertEqual(PopoverControl.start(.walk).title, "散步")
+        XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停")
     }
 
     func testBreakCountdownRoundsUpRemainingMinutes() {

@@ -75,6 +75,34 @@ final class DogAnimationDirectorTests: XCTestCase {
         XCTAssertNil(director.playback(for: .walk, at: start.addingTimeInterval(10)).startedAt)
     }
 
+    func testPlayingTogetherAlternatesPlayAndBall() {
+        var director = DogAnimationDirector()
+        director.breakStarted(at: start, activity: .play)
+
+        XCTAssertEqual(director.animation(for: .rest, at: start.addingTimeInterval(1)), .play)
+        XCTAssertEqual(
+            director.animation(for: .rest, at: start.addingTimeInterval(DogAnimationDirector.playSegment + 1)),
+            .playBall
+        )
+    }
+
+    func testGoingForAWalkStrolls() {
+        var director = DogAnimationDirector()
+        director.breakStarted(at: start, activity: .walk)
+
+        XCTAssertEqual(director.animation(for: .rest, at: start.addingTimeInterval(30)), .stroll)
+    }
+
+    func testRelaxingPuppyOnlyDoesQuietThingsAndNeverPounces() {
+        let director = DogAnimationDirector()
+        let seen = Set((0..<200).map { director.animation(for: .relaxing, at: start.addingTimeInterval(Double($0))) })
+
+        XCTAssertFalse(seen.contains(.pounce))
+        XCTAssertFalse(seen.contains(.run))
+        XCTAssertTrue(seen.isSubset(of: [.rest, .bellyUp, .idle, .playBall]))
+        XCTAssertGreaterThan(seen.count, 1, "the puppy should do more than one thing")
+    }
+
     func testEndingABreakEarlyEarnsNoReward() {
         var director = DogAnimationDirector()
         director.breakStarted(at: start)

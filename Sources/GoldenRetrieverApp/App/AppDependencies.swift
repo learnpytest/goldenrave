@@ -3,7 +3,7 @@ import GoldenRetrieverCore
 public struct AppDependencies {
     public var activityEngine: ActivityEngine
     public let store: any LocalStore
-    public let scheduler: BreakScheduler
+    public var scheduler: BreakScheduler
     public let trackingController: TrackingModeController
     public let notificationPresenter: any NotificationPresenter
 
@@ -22,18 +22,20 @@ public struct AppDependencies {
     }
 
     public static func live() throws -> AppDependencies {
+        let preferences = AppPreferences()
         let store = try SwiftDataLocalStore.makeDefault()
         let permission = SystemPermissionCoordinator()
         let reader = FrontmostAppReader(permission: permission)
         let trackingController = TrackingModeController(
             reader: reader,
             permission: permission,
-            store: store
+            store: store,
+            mode: preferences.trackingMode
         )
         return AppDependencies(
             activityEngine: ActivityEngine(),
             store: store,
-            scheduler: BreakScheduler(),
+            scheduler: BreakScheduler(policy: preferences.breakPolicy),
             trackingController: trackingController,
             notificationPresenter: UserNotificationPresenter()
         )

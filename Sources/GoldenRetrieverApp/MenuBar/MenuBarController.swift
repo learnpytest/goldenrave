@@ -17,16 +17,16 @@ final class MenuBarController: NSObject {
 
     init(runtime: AppRuntime) {
         self.runtime = runtime
-        statusItem = NSStatusBar.system.statusItem(
-            withLength: CGFloat(MenuBarStatusConfiguration.minimumLength)
-        )
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         super.init()
 
         statusItem.isVisible = true
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover(_:))
         statusItem.button?.imagePosition = .imageLeading
-        statusItem.button?.imageScaling = .scaleProportionallyDown
+        // Frames are already menu-bar sized; letting AppKit scale them down
+        // to fit a fixed-length item is what made the puppy tiny.
+        statusItem.button?.imageScaling = .scaleNone
         statusItem.button?.font = .monospacedDigitSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
 
         popover.behavior = .transient
@@ -101,6 +101,15 @@ final class MenuBarController: NSObject {
                     get: { self.runtime.trackingMode },
                     set: self.runtime.setTrackingMode
                 ),
+                workMinutes: Binding(
+                    get: { self.runtime.workMinutes },
+                    set: { self.runtime.setBreakMinutes(work: $0, rest: self.runtime.restMinutes) }
+                ),
+                restMinutes: Binding(
+                    get: { self.runtime.restMinutes },
+                    set: { self.runtime.setBreakMinutes(work: self.runtime.workMinutes, rest: $0) }
+                ),
+                isAwaitingPermission: self.runtime.isAwaitingDetailedPermission,
                 onClose: runtime.closeSecondaryView,
                 onDeleteData: runtime.deleteAllData
             )
@@ -110,10 +119,10 @@ final class MenuBarController: NSObject {
                 dogState: runtime.dogState,
                 nextBreak: runtime.nextBreak,
                 breakEndsAt: runtime.breakEndsAt,
+                breakActivity: runtime.breakActivity,
                 remindersPaused: runtime.remindersPaused,
                 playbackAt: runtime.dogPlayback(at:),
-                onStartBreak: runtime.startBreak,
-                onPostpone: runtime.postpone,
+                onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,
                 onResumeReminders: runtime.resumeReminders,
                 onEndBreak: runtime.endBreak,

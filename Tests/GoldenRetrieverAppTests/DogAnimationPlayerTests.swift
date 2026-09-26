@@ -22,9 +22,14 @@ final class DogAnimationPlayerTests: XCTestCase {
             let frames = player.menuBarFrames(for: animation)
             XCTAssertFalse(frames.isEmpty, "Missing menu bar frames for \(animation)")
             for frame in frames {
-                XCTAssertLessThanOrEqual(frame.size.height, 22, "Menu bar frame too tall for \(animation)")
-                XCTAssertLessThanOrEqual(frame.size.width, 40, "Menu bar frame too wide for \(animation)")
+                XCTAssertLessThanOrEqual(frame.size.height, DogAnimationPlayer.menuBarHeight, "too tall: \(animation)")
+                XCTAssertLessThanOrEqual(frame.size.width, DogAnimationPlayer.menuBarMaxWidth, "too wide: \(animation)")
+                XCTAssertTrue(
+                    frame.size.height >= DogAnimationPlayer.menuBarHeight - 1 || frame.size.width >= DogAnimationPlayer.menuBarMaxWidth - 1,
+                    "The dog should fill the menu bar, got \(frame.size) for \(animation)"
+                )
             }
+            XCTAssertTrue(frames.allSatisfy { $0.size == frames[0].size }, "Frames of \(animation) should share one size")
         }
     }
 
@@ -33,17 +38,30 @@ final class DogAnimationPlayerTests: XCTestCase {
         let rep = try XCTUnwrap(frame.representations.first)
 
         XCTAssertEqual(frame.representations.count, 1)
-        XCTAssertLessThanOrEqual(rep.pixelsHigh, 18 * 2, "Menu bar frames should not keep the full-size bitmap")
+        XCTAssertLessThanOrEqual(rep.pixelsHigh, Int(DogAnimationPlayer.menuBarHeight) * 2, "Menu bar frames should not keep the full-size bitmap")
     }
 
-    func testMenuBarSwapsFramesAtMostFourTimesASecondButRunStaysFasterThanWalk() {
+    func testMenuBarSwapsFramesAtMostAboutSevenTimesASecondButRunStaysFasterThanWalk() {
         let player = DogAnimationPlayer()
 
         for animation in DogAnimation.allCases where animation != .spin {
-            XCTAssertGreaterThanOrEqual(player.menuBarFrameDuration(for: animation), 0.25, "\(animation)")
+            XCTAssertGreaterThanOrEqual(
+                player.menuBarFrameDuration(for: animation),
+                DogAnimationPlayer.menuBarMinimumFrameDuration,
+                "\(animation)"
+            )
         }
         XCTAssertLessThan(player.menuBarFrameDuration(for: .run), player.menuBarFrameDuration(for: .walk))
         XCTAssertEqual(player.menuBarFrameDuration(for: .spin), player.frameDuration(for: .spin))
+    }
+
+    func testPopoverFramesArePreScaledToThePopoverSize() throws {
+        let frames = DogAnimationPlayer().popoverFrames(for: .walk)
+        let frame = try XCTUnwrap(frames.first)
+
+        XCTAssertLessThanOrEqual(frame.size.height, DogAnimationPlayer.popoverSide)
+        XCTAssertLessThanOrEqual(frame.size.width, DogAnimationPlayer.popoverSide)
+        XCTAssertLessThanOrEqual(try XCTUnwrap(frame.representations.first).pixelsHigh, Int(DogAnimationPlayer.popoverSide) * 2)
     }
 
     func testIdleDoesNotUseTheMultiPoseReferenceSheet() {

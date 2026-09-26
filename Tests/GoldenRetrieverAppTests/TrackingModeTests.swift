@@ -37,6 +37,48 @@ final class TrackingModeTests: XCTestCase {
         }
     }
 
+    func testGrantingPermissionAfterTheRequestSwitchesToDetailed() {
+        let permission = FakePermission(canRead: false)
+        let controller = TrackingModeController(reader: FakeReader(), permission: permission, store: FakeStore())
+
+        XCTAssertThrowsError(try controller.enableDetailedMode())
+        XCTAssertTrue(controller.isAwaitingPermission)
+        XCTAssertFalse(controller.refreshPermission())
+
+        permission.canReadDetailedActivity = true
+        XCTAssertTrue(controller.refreshPermission())
+        XCTAssertEqual(controller.mode, .detailed)
+        XCTAssertFalse(controller.isAwaitingPermission)
+    }
+
+    func testChoosingPrivateCancelsAPendingDetailedRequest() {
+        let permission = FakePermission(canRead: false)
+        let controller = TrackingModeController(reader: FakeReader(), permission: permission, store: FakeStore())
+
+        XCTAssertThrowsError(try controller.enableDetailedMode())
+        controller.disableDetailedMode()
+        permission.canReadDetailedActivity = true
+
+        XCTAssertFalse(controller.refreshPermission())
+        XCTAssertEqual(controller.mode, .privateMode)
+    }
+
+    func testRestoringDetailedWithoutPermissionWaitsForIt() {
+        let permission = FakePermission(canRead: false)
+        let controller = TrackingModeController(
+            reader: FakeReader(),
+            permission: permission,
+            store: FakeStore(),
+            mode: .detailed
+        )
+
+        XCTAssertEqual(controller.mode, .privateMode)
+        XCTAssertTrue(controller.isAwaitingPermission)
+        permission.canReadDetailedActivity = true
+        XCTAssertTrue(controller.refreshPermission())
+        XCTAssertEqual(controller.mode, .detailed)
+    }
+
     func testPrivateModeNeverCallsReaderOrStoresSegment() throws {
         let reader = FakeReader()
         let permission = FakePermission(canRead: true)

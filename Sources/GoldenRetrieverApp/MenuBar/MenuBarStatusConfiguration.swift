@@ -2,8 +2,6 @@ import Foundation
 import GoldenRetrieverCore
 
 struct MenuBarStatusConfiguration: Equatable {
-    static let minimumLength: Double = 72
-
     let imageResourceName: String
     let title: String
     let accessibilityLabel: String
@@ -22,7 +20,7 @@ struct MenuBarStatusConfiguration: Equatable {
             "run"
         case .pounce:
             "jump"
-        case .rest:
+        case .rest, .relaxing:
             "rest"
         }
     }
