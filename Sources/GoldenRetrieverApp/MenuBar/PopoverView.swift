@@ -12,8 +12,8 @@ enum PopoverControl: Equatable {
         switch self {
         case .startBreak: "開始休息"
         case .postpone: "休息延後 10 分鐘"
-        case .pauseReminders: "暫停提醒"
-        case .resumeReminders: "恢復提醒"
+        case .pauseReminders: "暫停休息提醒"
+        case .resumeReminders: "恢復休息提醒"
         case .endBreak: "提早結束休息"
         }
     }
@@ -25,6 +25,7 @@ public struct PopoverView: View {
     public let nextBreak: Date?
     public let breakEndsAt: Date?
     public let remindersPaused: Bool
+    public let animationAt: ((Date) -> DogAnimation)?
     public var onStartBreak: () -> Void
     public var onPostpone: () -> Void
     public var onPauseReminders: () -> Void
@@ -39,6 +40,7 @@ public struct PopoverView: View {
         nextBreak: Date? = nil,
         breakEndsAt: Date? = nil,
         remindersPaused: Bool = false,
+        animationAt: ((Date) -> DogAnimation)? = nil,
         onStartBreak: @escaping () -> Void = {},
         onPostpone: @escaping () -> Void = {},
         onPauseReminders: @escaping () -> Void = {},
@@ -52,6 +54,7 @@ public struct PopoverView: View {
         self.nextBreak = nextBreak
         self.breakEndsAt = breakEndsAt
         self.remindersPaused = remindersPaused
+        self.animationAt = animationAt
         self.onStartBreak = onStartBreak
         self.onPostpone = onPostpone
         self.onPauseReminders = onPauseReminders
@@ -64,7 +67,9 @@ public struct PopoverView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
-                DogAnimationView(state: dogState)
+                DogAnimationView(animationAt: animationAt ?? { [dogState] date in
+                    DogAnimationDirector().animation(for: dogState, at: date)
+                })
                     .frame(width: 90, height: 90)
                 VStack(alignment: .leading) {
                     Text("小黃金陪伴中")
@@ -119,7 +124,7 @@ public struct PopoverView: View {
             let minutes = Self.remainingBreakMinutes(until: breakEndsAt, now: Date())
             metric("休息中", "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
-            metric("下次休息", "提醒已暫停")
+            metric("下次休息", "休息提醒已暫停")
         } else {
             metric("下次休息", nextBreak.map(Self.timeString) ?? "尚未排程")
         }
@@ -140,8 +145,7 @@ public struct PopoverView: View {
         case .idle: "等你回來"
         case .walk: "慢慢走，先熱身"
         case .run: "跑起來了！"
-        case .play: "玩得很開心"
-        case .jump: "快要休息囉"
+        case .pounce: "該休息囉！"
         case .rest: "正在休息"
         }
     }

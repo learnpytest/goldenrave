@@ -35,14 +35,11 @@ public struct DogStateMachine: Sendable {
         }
         if let secondsUntilBreak = input.secondsUntilBreak,
            secondsUntilBreak <= policy.warningWindow {
-            return .jump
+            return .pounce
         }
         if input.sessionDuration < 5 * 60 {
             return .walk
         }
-        if input.sessionDuration < 30 * 60 {
-            return .run
-        }
-        return .play
+        return .run
     }
 }

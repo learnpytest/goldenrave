@@ -18,7 +18,9 @@ public struct MenuBarView: View {
 
     public var body: some View {
         HStack(spacing: 5) {
-            DogAnimationView(state: dogState, player: player)
+            DogAnimationView(animationAt: { [dogState] date in
+                DogAnimationDirector().animation(for: dogState, at: date)
+            }, player: player)
                 .frame(width: 22, height: 22)
             Text(Self.format(snapshot.currentSession))
                 .monospacedDigit()

@@ -1,72 +1,81 @@
 import AppKit
+import Foundation
 import GoldenRetrieverCore
-import SwiftUI
 
 public struct DogAnimationPlayer: Sendable {
     public init() {}
 
-    public func frames(for state: DogState) -> [Image] {
-        guard let image = loadImage(for: state) else { return [] }
-        return [Image(nsImage: image)]
-    }
-
-    public func frameDuration(for state: DogState) -> Duration {
-        switch state {
-        case .idle:
-            .milliseconds(1_400)
-        case .walk:
-            .milliseconds(240)
-        case .run:
-            .milliseconds(120)
-        case .play:
-            .milliseconds(350)
-        case .jump:
-            .milliseconds(400)
-        case .rest:
-            .seconds(2)
+    /// Frames are `<animation>-01.png`, `<animation>-02.png`, … (SwiftPM flattens
+    /// the resource folders, so names must be unique). Until an animation has
+    /// its frames, the existing single pose for that state is shown.
+    public func frames(for animation: DogAnimation) -> [NSImage] {
+        Self.cache.value(forKey: animation.rawValue) {
+            Self.frameURLs(for: animation).compactMap(NSImage.init(contentsOf:))
         }
     }
 
-    public static func resourceURL(for state: DogState) -> URL? {
-        resourceBundle().url(
-            forResource: resourceName(for: state),
-            withExtension: "png"
-        )
+    /// Status item buttons draw images at their intrinsic point size, so the
+    /// frames must already be menu-bar sized.
+    public func menuBarFrames(for animation: DogAnimation, height: CGFloat = 18) -> [NSImage] {
+        Self.cache.value(forKey: "\(animation.rawValue)@\(height)") {
+            frames(for: animation).compactMap { source in
+                guard source.size.height > 0, let image = source.copy() as? NSImage else { return nil }
+                let width = (height * source.size.width / source.size.height).rounded()
+                image.size = NSSize(width: width, height: height)
+                return image
+            }
+        }
+    }
+
+    public func frameDuration(for animation: DogAnimation) -> TimeInterval {
+        switch animation {
+        case .idle: 0.6
+        case .walk: 0.14
+        case .run: 0.08
+        case .pounce: 0.1
+        case .spin: 0.1
+        case .rest: 0.5
+        case .bellyUp: 0.25
+        case .play, .playBall: 0.12
+        }
+    }
+
+    public static func frameIndex(elapsed: TimeInterval, frameDuration: TimeInterval, frameCount: Int) -> Int {
+        guard frameCount > 1, frameDuration > 0 else { return 0 }
+        let step = Int((max(0, elapsed) / frameDuration).rounded(.down))
+        return step % frameCount
+    }
+
+    public static func frameURLs(for animation: DogAnimation) -> [URL] {
+        let bundle = resourceBundle()
+        let prefix = "\(animation.rawValue)-"
+        let sequence = (bundle.urls(forResourcesWithExtension: "png", subdirectory: nil) ?? [])
+            .filter { url in
+                let name = url.deletingPathExtension().lastPathComponent
+                return name.hasPrefix(prefix) && Int(name.dropFirst(prefix.count)) != nil
+            }
+            .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        if !sequence.isEmpty {
+            return sequence
+        }
+        return bundle.url(forResource: fallbackPoseName(for: animation), withExtension: "png").map { [$0] } ?? []
     }
 
     public static func canonicalReferenceURL() -> URL? {
         resourceBundle().url(forResource: "golden-retriever-puppy-reference", withExtension: "png")
     }
 
-    /// MenuBarExtra labels draw images at their intrinsic point size and ignore
-    /// SwiftUI `.frame`, so the image itself must already be menu-bar sized.
-    public func menuBarImage(for state: DogState, height: CGFloat = 18) -> NSImage? {
-        guard let source = loadImage(for: state), source.size.height > 0 else { return nil }
-        let image = source.copy() as? NSImage ?? source
-        let width = (height * source.size.width / source.size.height).rounded()
-        image.size = NSSize(width: width, height: height)
-        return image
-    }
-
-    private func loadImage(for state: DogState) -> NSImage? {
-        guard let url = Self.resourceURL(for: state) else { return nil }
-        return NSImage(contentsOf: url)
-    }
-
-    private static func resourceName(for state: DogState) -> String {
-        switch state {
-        case .idle, .walk:
-            "walk"
-        case .run:
-            "run"
-        case .play:
-            "play"
-        case .jump:
-            "jump"
-        case .rest:
-            "rest"
+    private static func fallbackPoseName(for animation: DogAnimation) -> String {
+        switch animation {
+        case .walk, .spin: "walk"
+        case .run: "run"
+        case .pounce: "jump"
+        case .idle, .rest, .bellyUp: "rest"
+        case .play, .playBall: "play"
         }
     }
+
+    private static let cache = FrameCache()
 
     private static func resourceBundle() -> Bundle {
         let bundleName = "GoldenRetriever_GoldenRetrieverApp.bundle"
@@ -83,5 +92,23 @@ public struct DogAnimationPlayer: Sendable {
 
         return Bundle.module
     }
+}
 
+private final class FrameCache: @unchecked Sendable {
+    private let lock = NSLock()
+    private var storage: [String: [NSImage]] = [:]
+
+    func value(forKey key: String, make: () -> [NSImage]) -> [NSImage] {
+        lock.lock()
+        if let cached = storage[key] {
+            lock.unlock()
+            return cached
+        }
+        lock.unlock()
+        let made = make()
+        lock.lock()
+        storage[key] = made
+        lock.unlock()
+        return made
+    }
 }

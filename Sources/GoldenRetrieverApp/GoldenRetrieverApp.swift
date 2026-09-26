@@ -19,6 +19,7 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var breakEndsAt: Date?
     @Published private(set) var remindersPaused = false
     private var activeSessionStart: Date?
+    private var animationDirector = DogAnimationDirector()
 
     init() {
         dependencies = try? AppDependencies.live()
@@ -39,6 +40,7 @@ final class AppRuntime: ObservableObject {
         guard var dependencies else { return }
         if let breakEndsAt, now >= breakEndsAt {
             self.breakEndsAt = nil
+            animationDirector.breakCompleted(at: now, withBall: Bool.random())
         }
         let sample = activitySource.sample(at: now)
         let previousSnapshot = snapshot
@@ -86,6 +88,7 @@ final class AppRuntime: ObservableObject {
         guard let dependencies else { return }
         let now = Date()
         breakEndsAt = now.addingTimeInterval(dependencies.scheduler.policy.restInterval)
+        animationDirector.breakStarted(at: now)
         nextBreak = nil
         dogState = .rest
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: now, action: .started))
@@ -110,8 +113,13 @@ final class AppRuntime: ObservableObject {
     func endBreak() {
         guard let dependencies, breakEndsAt != nil else { return }
         breakEndsAt = nil
+        animationDirector.breakEndedEarly()
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
         tick()
+    }
+
+    func dogAnimation(at date: Date) -> DogAnimation {
+        animationDirector.animation(for: dogState, at: date)
     }
 
     func openStatistics() {

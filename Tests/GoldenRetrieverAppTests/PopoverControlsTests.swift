@@ -34,6 +34,11 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(PopoverControl.postpone.title, "休息延後 10 分鐘")
     }
 
+    func testReminderButtonsSayTheyAreAboutBreakReminders() {
+        XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停休息提醒")
+        XCTAssertEqual(PopoverControl.resumeReminders.title, "恢復休息提醒")
+    }
+
     func testBreakCountdownRoundsUpRemainingMinutes() {
         let now = Date(timeIntervalSince1970: 0)
         let endsAt = now.addingTimeInterval(6 * 60 + 10)
