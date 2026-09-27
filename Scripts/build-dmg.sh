@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
-APP_PATH="${1:-$ROOT_DIR/dist/GoldenRetriever.app}"
-DMG_PATH="${2:-$ROOT_DIR/dist/GoldenRetriever.dmg}"
+APP_PATH="${1:-$ROOT_DIR/dist/goldenrave.app}"
+DMG_PATH="${2:-$ROOT_DIR/dist/goldenrave.dmg}"
 
 if [[ ! -d "$APP_PATH" ]]; then
     echo "error: app bundle not found: $APP_PATH" >&2
@@ -20,7 +20,7 @@ ln -s /Applications "$STAGING_DIR/Applications"
 
 rm -f "$DMG_PATH"
 hdiutil create \
-    -volname "Golden Retriever" \
+    -volname "goldenrave" \
     -srcfolder "$STAGING_DIR" \
     -fs HFS+ \
     -format UDZO \

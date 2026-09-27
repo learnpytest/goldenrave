@@ -1,6 +1,6 @@
 # Privacy notes
 
-Golden Retriever is local-first and macOS-only.
+goldenrave is local-first and macOS-only.
 
 ## Stored fields
 

@@ -9,7 +9,7 @@ swift build -c "$CONFIGURATION"
 
 BIN_PATH="$(swift build --show-bin-path -c "$CONFIGURATION")"
 EXECUTABLE="$BIN_PATH/GoldenRetrieverApp"
-APP_DIR="$ROOT_DIR/dist/GoldenRetriever.app"
+APP_DIR="$ROOT_DIR/dist/goldenrave.app"
 
 if [[ ! -x "$EXECUTABLE" ]]; then
     echo "error: expected executable was not built: $EXECUTABLE" >&2
