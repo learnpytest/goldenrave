@@ -295,7 +295,8 @@ public struct PopoverView: View {
         case .idle: "等你回來"
         case .walk: "慢慢走，先熱身"
         case .run: "跑起來了！"
-        case .pounce: invitationTextAt?(date) ?? invitationText ?? BreakInvitation.lines[0].text
+        case .pounce:
+            FloatingPuppyPlacement.remainder(invitationTextAt?(date) ?? invitationText ?? BreakInvitation.lines[0].text)
         case .rest:
             switch breakActivity ?? .rest {
             case .rest: "正在休息"

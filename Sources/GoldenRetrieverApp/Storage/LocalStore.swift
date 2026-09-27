@@ -6,8 +6,17 @@ public protocol LocalStore {
     func save(session: UsageRecord) throws
     func save(breakEvent: BreakEventRecord) throws
     func dailyTotal(on date: Date) throws -> TimeInterval
+    /// Detailed mode only: time per app in [start, end), most used first.
+    func appUsage(from start: Date, to end: Date) throws -> [AppUsage]
     func exportCSV() throws -> Data
     func deleteAll() throws
+}
+
+public struct AppUsage: Equatable, Sendable {
+    public let appName: String
+    public let seconds: TimeInterval
+    /// The app's most-sampled window titles, at most two.
+    public let topWindows: [String]
 }
 
 public enum LocalStoreError: Error, Equatable {
@@ -52,6 +61,32 @@ public final class SwiftDataLocalStore: LocalStore, DetailedActivityStore {
     public func save(segment: ActivitySegment) throws {
         context.insert(DetailedActivityModel(segment: segment))
         try context.save()
+    }
+
+    /// Detailed mode samples the frontmost app once per `AppRuntime` tick,
+    /// so each stored segment stands for that much time.
+    public static let detailedSampleInterval: TimeInterval = 15
+
+    public func appUsage(from start: Date, to end: Date) throws -> [AppUsage] {
+        let descriptor = FetchDescriptor<DetailedActivityModel>(
+            predicate: #Predicate { $0.timestamp >= start && $0.timestamp < end }
+        )
+        let segments = try context.fetch(descriptor)
+        return Dictionary(grouping: segments, by: \.appName)
+            .map { appName, samples in
+                let titleCounts = Dictionary(grouping: samples.compactMap(\.windowTitle).filter { !$0.isEmpty }, by: { $0 })
+                    .mapValues(\.count)
+                let topWindows = titleCounts
+                    .sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
+                    .prefix(2)
+                    .map(\.key)
+                return AppUsage(
+                    appName: appName,
+                    seconds: Double(samples.count) * Self.detailedSampleInterval,
+                    topWindows: topWindows
+                )
+            }
+            .sorted { $0.seconds != $1.seconds ? $0.seconds > $1.seconds : $0.appName < $1.appName }
     }
 
     public func dailyTotal(on date: Date) throws -> TimeInterval {
