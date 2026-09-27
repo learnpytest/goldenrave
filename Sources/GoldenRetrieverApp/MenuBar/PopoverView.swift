@@ -120,8 +120,12 @@ public struct PopoverView: View {
     public var body: some View {
         VStack(spacing: 0) {
             ZStack {
-                Text("小金金陪伴中")
-                    .font(.system(size: 20, weight: .heavy))
+                HStack(spacing: 6) {
+                    Text("小金金陪伴中")
+                        .font(.system(size: 20, weight: .heavy))
+                    // Pause / resume the reminders from the title they belong to.
+                    reminderToggle
+                }
                 HStack {
                     Spacer()
                     Button(action: onOpenSettings) {
@@ -146,12 +150,8 @@ public struct PopoverView: View {
                 .padding(.top, 4)
                 .padding(.bottom, 14)
             CreamBlock {
-                VStack(spacing: 10) {
-                    HStack(spacing: 8) {
-                        statusRow("這次連續使用", Self.format(snapshot.currentSession))
-                        // Same width as the pause button below, so both times line up.
-                        Color.clear.frame(width: Self.toggleSide, height: 1)
-                    }
+                VStack(spacing: 8) {
+                    statusRow("這次連續使用", Self.format(snapshot.currentSession))
                     breakMetric
                 }
             }
@@ -278,28 +278,20 @@ public struct PopoverView: View {
             let minutes = Self.remainingBreakMinutes(until: breakEndsAt, now: Date())
             statusRow((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
-            HStack(spacing: 8) {
-                statusRow("下次喘口氣", "已暫停")
-                reminderToggle
-            }
+            statusRow("下次喘口氣", "已暫停")
         } else if invitationText != nil {
             let row = Self.breakRow(nextBreak: nextBreak, isInviting: true, now: Date())
             HStack(spacing: 6) {
                 Image(systemName: "pawprint.fill")
                 Text(row.title).fontWeight(.semibold)
                 Spacer()
-                Text(row.value).font(.system(size: 16, weight: .bold)).monospacedDigit()
-                reminderToggle
-                    .padding(.leading, 2)
+                Text(row.value).font(.system(size: 14, weight: .bold)).monospacedDigit()
             }
-            .font(.system(size: 14))
+            .font(.system(size: 12))
             .foregroundStyle(PanelStyle.orange)
         } else {
             let row = Self.breakRow(nextBreak: nextBreak, isInviting: false, now: Date())
-            HStack(spacing: 8) {
-                statusRow(row.title, row.value)
-                reminderToggle
-            }
+            statusRow(row.title, row.value)
         }
     }
 
@@ -307,7 +299,7 @@ public struct PopoverView: View {
     static let blockInset: CGFloat = 15
     static let toggleSide: CGFloat = 18
 
-    /// Pause / resume sit beside the break time they control.
+    /// Pause / resume.
     @ViewBuilder
     private var reminderToggle: some View {
         ForEach(controls.filter { $0.systemImage != nil }, id: \.title) { control in
@@ -385,10 +377,10 @@ public struct PopoverView: View {
     private func statusRow(_ title: String, _ value: String) -> some View {
         HStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 14))
+                .font(.system(size: 12))
             Spacer()
             Text(value)
-                .font(.system(size: 16, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .monospacedDigit()
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)

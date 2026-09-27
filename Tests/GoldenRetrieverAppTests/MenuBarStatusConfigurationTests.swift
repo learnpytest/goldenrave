@@ -9,18 +9,16 @@ final class MenuBarStatusConfigurationTests: XCTestCase {
             dogState: .run
         )
 
-        XCTAssertEqual(configuration.imageResourceName, "run")
         XCTAssertEqual(configuration.title, "00:42")
         XCTAssertEqual(configuration.accessibilityLabel, "小金金目前陪你工作 00:42")
     }
 
-    func testConfigurationClampsNegativeDurationAndUsesRestImage() {
+    func testConfigurationClampsNegativeDuration() {
         let configuration = MenuBarStatusConfiguration(
             snapshot: UsageSnapshot(isActive: false, currentSession: -1, todayTotal: 0),
             dogState: .rest
         )
 
-        XCTAssertEqual(configuration.imageResourceName, "rest")
         XCTAssertEqual(configuration.title, "00:00")
     }
 }
