@@ -209,14 +209,15 @@ public struct PopoverView: View {
             .help(control.title)
             .accessibilityLabel(control.title)
         } else {
-            let isPrimary = control == .start(.play)
+            // No highlighted choice: none of them is running until tapped, and a
+            // tap switches to the ongoing-break screen.
             Button { perform(control) } label: {
                 Text(control.title)
                     .font(.system(size: 12, weight: .heavy))
-                    .foregroundStyle(isPrimary ? Color.white : PanelStyle.chipText)
+                    .foregroundStyle(PanelStyle.chipText)
                     .padding(.horizontal, 13)
                     .padding(.vertical, 8)
-                    .background(isPrimary ? PanelStyle.orange : PanelStyle.chip, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .background(PanelStyle.chip, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
             }
             .buttonStyle(.plain)
         }
