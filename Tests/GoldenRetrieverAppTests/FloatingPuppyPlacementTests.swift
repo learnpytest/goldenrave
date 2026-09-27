@@ -1,5 +1,6 @@
 import XCTest
 @testable import GoldenRetrieverApp
+import GoldenRetrieverCore
 
 final class FloatingPuppyPlacementTests: XCTestCase {
     private let size = CGSize(width: 180, height: 160)
@@ -41,6 +42,11 @@ final class FloatingPuppyPlacementTests: XCTestCase {
 
     func testThePopoverContinuesTheBubbleWithTheSecondHalf() {
         XCTAssertEqual(FloatingPuppyPlacement.remainder("我有點想你了，有空來摸摸我嗎？"), "…有空來摸摸我嗎？")
-        XCTAssertEqual(FloatingPuppyPlacement.remainder("我幫你看著時間"), "我幫你看著時間", "a line the bubble already shows whole stays whole")
+        XCTAssertEqual(FloatingPuppyPlacement.remainder("我幫你看著時間"), "…我幫你看著時間", "the popover line always follows an ellipsis")
+    }
+
+    func testTheDepletedLineSplitsBetweenBubbleAndPopover() {
+        XCTAssertEqual(FloatingPuppyPlacement.teaser(BreakInvitation.depletedLine), "金金沒電了…")
+        XCTAssertEqual(FloatingPuppyPlacement.remainder(BreakInvitation.depletedLine), "…等你來摸摸就能充電")
     }
 }

@@ -100,4 +100,24 @@ final class LocalStoreTests: XCTestCase {
         try store.saveOngoing(session: UsageRecord(start: date(100), end: date(110), activeSeconds: 10, mode: .privateMode))
         XCTAssertEqual(try store.dailyTotal(on: date(0)), 40, accuracy: 0.001, "a new session after finishing is a new record")
     }
+
+    func testFirstDetailedSampleDateIsTheEarliestSample() throws {
+        let store = try makeStore()
+        XCTAssertNil(try store.firstDetailedSampleDate())
+
+        try store.save(segment: ActivitySegment(timestamp: date(500), appName: "Arc", windowTitle: nil, browserURL: nil))
+        try store.save(segment: ActivitySegment(timestamp: date(100), appName: "Arc", windowTitle: nil, browserURL: nil))
+
+        XCTAssertEqual(try store.firstDetailedSampleDate(), date(100))
+    }
+
+    func testFirstSessionDateIsTheEarliestSession() throws {
+        let store = try makeStore()
+        XCTAssertNil(try store.firstSessionDate())
+
+        try store.save(session: UsageRecord(start: date(900), end: date(910), activeSeconds: 10, mode: .privateMode))
+        try store.save(session: UsageRecord(start: date(300), end: date(310), activeSeconds: 10, mode: .privateMode))
+
+        XCTAssertEqual(try store.firstSessionDate(), date(300))
+    }
 }

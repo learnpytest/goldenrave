@@ -3,10 +3,10 @@ import XCTest
 @testable import GoldenRetrieverApp
 
 final class PopoverControlsTests: XCTestCase {
-    func testOnBreakOnlyOffersEndingItEarly() {
+    func testABreakCanSwitchActivityOrStopButNotEndEarly() {
         XCTAssertEqual(
             PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false),
-            [.endBreak]
+            [.start(.rest), .start(.play), .start(.walk), .stopActivity]
         )
     }
 
@@ -45,15 +45,9 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(PopoverView.nextBreakText(nil, now: now), "尚未排程")
     }
 
-    func testPauseAndResumeAreRedPauseAndPlayIcons() {
-        XCTAssertEqual(PopoverControl.pauseReminders.systemImage, "pause.circle.fill")
-        XCTAssertEqual(PopoverControl.pauseReminders.iconColor, .red)
-        XCTAssertEqual(PopoverControl.resumeReminders.systemImage, "play.circle.fill")
-        XCTAssertNil(PopoverControl.start(.rest).systemImage, "activity choices stay as words")
-    }
-
     func testThePanelIsCompactNowThatThePuppyLivesInTheMenuBar() {
         XCTAssertLessThanOrEqual(PopoverLayout.size.height, 300, "no empty space where the puppy used to be")
+        XCTAssertLessThan(PopoverLayout.mainHeight(showsActionRow: false), PopoverLayout.mainHeight(showsActionRow: true))
     }
 
     func testPetVisibilityOffersHideAndShow() {
@@ -88,5 +82,41 @@ final class PopoverControlsTests: XCTestCase {
 
         XCTAssertEqual(row.title, "下次喘口氣")
         XCTAssertEqual(row.value, PopoverView.timeString(planned))
+    }
+
+
+    func testEveryControlIsAnIconTitledForTooltips() {
+        let all: [PopoverControl] = [.start(.rest), .start(.play), .start(.walk), .pauseReminders, .resumeReminders, .stopActivity, .resumeActivity]
+        XCTAssertEqual(Set(all.map(\.systemImage)).count, all.count, "each control has its own icon")
+        XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停")
+    }
+
+    func testPausedRemindersKeepTheirWayBackAndABreakCanStillEndEarly() {
+        let paused = PopoverView.controls(isOnBreak: false, remindersPaused: true, hasScheduledBreak: false)
+        let onBreak = PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false)
+
+        XCTAssertEqual(PopoverView.visibleControls(paused, isInviting: false), [.resumeReminders])
+        XCTAssertEqual(PopoverView.visibleControls(onBreak, isInviting: false, isOnBreak: true), onBreak)
+    }
+
+    func testBreakChoicesShowOnlyWhenTheBreakIsDue() {
+        let working = PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: true)
+
+        XCTAssertEqual(PopoverView.visibleControls(working, isInviting: false), [], "pause waits for the break too")
+        XCTAssertEqual(PopoverView.visibleControls(working, isInviting: true), [.start(.rest), .start(.play), .start(.walk), .pauseReminders])
+    }
+
+    func testAStoppedActivityOffersToContinue() {
+        XCTAssertEqual(
+            PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false, activityPaused: true).last,
+            .resumeActivity
+        )
+    }
+
+    func testTheChoiceRowOnlyShowsWhenThereIsSomethingToChoose() {
+        XCTAssertFalse(PopoverView.showsActionRow(isInviting: false, isOnBreak: false, remindersPaused: false))
+        XCTAssertTrue(PopoverView.showsActionRow(isInviting: true, isOnBreak: false, remindersPaused: false))
+        XCTAssertTrue(PopoverView.showsActionRow(isInviting: false, isOnBreak: true, remindersPaused: false))
+        XCTAssertTrue(PopoverView.showsActionRow(isInviting: false, isOnBreak: false, remindersPaused: true), "恢復 stays reachable")
     }
 }

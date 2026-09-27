@@ -71,6 +71,19 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
+        let size = runtime.showSettings || runtime.showStatistics
+            ? PopoverLayout.size
+            : CGSize(
+                width: PopoverLayout.mainWidth,
+                height: PopoverLayout.mainHeight(showsActionRow: PopoverView.showsActionRow(
+                    isInviting: runtime.invitationStartedAt != nil,
+                    isOnBreak: runtime.breakEndsAt != nil,
+                    remindersPaused: runtime.remindersPaused
+                ))
+            )
+        if popover.contentSize != size {
+            popover.contentSize = size
+        }
         if runtime.invitationStartedAt != nil, runtime.showsPet {
             floatingPuppy?.show()
         } else {
@@ -157,7 +170,13 @@ private struct PopoverRootView: View {
     @ViewBuilder
     private var content: some View {
         if runtime.showStatistics, let store = runtime.store {
-            StatisticsView(store: store, range: .today, onClose: runtime.openSettings)
+            StatisticsView(
+                store: store,
+                range: .today,
+                isDetailed: runtime.trackingMode == .detailed,
+                onEnableDetailed: { [runtime] in runtime.setTrackingMode(.detailed) },
+                onClose: runtime.closeSecondaryView
+            )
         } else if runtime.showSettings {
             SettingsView(
                 mode: Binding(
@@ -172,9 +191,12 @@ private struct PopoverRootView: View {
                     get: { runtime.restMinutes },
                     set: { runtime.setBreakMinutes(work: runtime.workMinutes, rest: $0) }
                 ),
+                showsPet: Binding(
+                    get: { runtime.showsPet },
+                    set: runtime.setShowsPet
+                ),
                 isAwaitingPermission: runtime.isAwaitingDetailedPermission,
                 onClose: runtime.closeSecondaryView,
-                onOpenStatistics: runtime.openStatistics,
                 onDeleteData: runtime.deleteAllData
             )
         } else {
@@ -184,16 +206,16 @@ private struct PopoverRootView: View {
                 nextBreak: runtime.nextBreak,
                 breakEndsAt: runtime.breakEndsAt,
                 breakActivity: runtime.breakActivity,
+                breakActivityPaused: runtime.breakActivityPaused,
                 remindersPaused: runtime.remindersPaused,
                 invitationText: runtime.invitationText(at: Date()),
                 invitationTextAt: runtime.invitationText(at:),
-                showsPet: runtime.showsPet,
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,
                 onResumeReminders: runtime.resumeReminders,
-                onEndBreak: runtime.endBreak,
+                onSetBreakActivityPaused: runtime.setBreakActivityPaused,
                 onOpenSettings: runtime.openSettings,
-                onSetShowsPet: runtime.setShowsPet
+                onOpenStatistics: runtime.openStatistics
             )
         }
     }

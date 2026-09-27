@@ -9,6 +9,8 @@ public enum DogAnimation: String, CaseIterable, Sendable {
     case pounce
     case spin
     case rest
+    /// Side-lying, fully sprawled asleep after working past the break invitation.
+    case depleted
     case bellyUp = "belly-up"
     case play
     case playBall = "play-ball"
@@ -52,6 +54,7 @@ public struct DogAnimationDirector: Sendable {
 
     private var breakStartedAt: Date?
     private var breakActivity: BreakActivity = .rest
+    private var breakActivityPaused = false
     private var invitationStartedAt: Date?
     private var reward: Reward?
 
@@ -60,7 +63,13 @@ public struct DogAnimationDirector: Sendable {
     public mutating func breakStarted(at date: Date, activity: BreakActivity = .rest) {
         breakStartedAt = date
         breakActivity = activity
+        breakActivityPaused = false
         reward = nil
+    }
+
+    /// ⏹ during a break stops the activity; the break time keeps running.
+    public mutating func breakActivity(paused: Bool) {
+        breakActivityPaused = paused
     }
 
     /// Only a break that ran its full length earns the play reward.
@@ -102,11 +111,14 @@ public struct DogAnimationDirector: Sendable {
                 startedAt: BreakInvitation.segmentStart(since: start, now: now)
             )
         case .rest:
+            if breakActivityPaused { return DogAnimationPlayback(animation: .waiting) }
             switch breakActivity {
             case .rest: return restPlayback(at: now)
             case .play: return playPlayback(at: now)
             case .walk: return DogAnimationPlayback(animation: .stroll)
             }
+        case .depleted:
+            return DogAnimationPlayback(animation: .depleted)
         case .relaxing:
             return relaxingPlayback(at: now)
         }

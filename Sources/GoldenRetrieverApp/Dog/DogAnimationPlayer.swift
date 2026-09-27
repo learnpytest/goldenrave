@@ -136,6 +136,7 @@ public struct DogAnimationPlayer: Sendable {
         case .pounce: 0.1
         case .spin: DogAnimationDirector.spinDuration / 12
         case .rest: 0.5
+        case .depleted: 0.8
         case .bellyUp: 0.25
         case .play, .playBall: 0.12
         case .stroll: 0.16
@@ -182,25 +183,9 @@ public struct DogAnimationPlayer: Sendable {
         return loops ? step % frameCount : min(step, frameCount - 1)
     }
 
+    /// Every animation ships its own numbered frames.
     public static func frameURLs(for animation: DogAnimation) -> [URL] {
-        let sequence = sequenceURLs(prefix: animation.rawValue)
-        if !sequence.isEmpty {
-            return sequence
-        }
-        if let standIn = standInSequence(for: animation) {
-            let frames = sequenceURLs(prefix: standIn.rawValue)
-            if !frames.isEmpty { return frames }
-        }
-        return resourceBundle().url(forResource: fallbackPoseName(for: animation), withExtension: "png").map { [$0] } ?? []
-    }
-
-    /// Animations whose own frames are not drawn yet borrow a close sequence.
-    private static func standInSequence(for animation: DogAnimation) -> DogAnimation? {
-        switch animation {
-        case .stroll: .walk
-        case .cuddle: .bellyUp
-        default: nil
-        }
+        sequenceURLs(prefix: animation.rawValue)
     }
 
     private static func sequenceURLs(prefix name: String) -> [URL] {
@@ -215,16 +200,6 @@ public struct DogAnimationPlayer: Sendable {
 
     public static func canonicalReferenceURL() -> URL? {
         resourceBundle().url(forResource: "golden-retriever-puppy-reference", withExtension: "png")
-    }
-
-    private static func fallbackPoseName(for animation: DogAnimation) -> String {
-        switch animation {
-        case .walk, .spin, .stroll: "walk"
-        case .run: "run"
-        case .pounce: "jump"
-        case .idle, .rest, .bellyUp, .cuddle, .waiting, .timeWatch: "rest"
-        case .play, .playBall: "play"
-        }
     }
 
     private static let cache = FrameCache()

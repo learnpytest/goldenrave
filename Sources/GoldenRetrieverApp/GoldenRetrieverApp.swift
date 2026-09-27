@@ -22,9 +22,14 @@ final class AppRuntime: ObservableObject {
     private var timer: Timer?
     @Published private(set) var breakEndsAt: Date?
     @Published private(set) var breakActivity: BreakActivity?
+    @Published private(set) var breakActivityPaused = false
     @Published private(set) var invitationStartedAt: Date?
     @Published private(set) var remindersPaused = false
+    /// Set after the puppy gives up inviting a break; cleared when a break starts.
+    private var puppyIsDepleted = false
     private var activeSessionStart: Date?
+    /// When the last break ended; 連續使用 counts from here.
+    private var workCountsFrom: Date?
     private var animationDirector = DogAnimationDirector()
     private let preferences = AppPreferences()
     private var permissionTimer: Timer?
@@ -56,11 +61,26 @@ final class AppRuntime: ObservableObject {
         if let breakEndsAt, now >= breakEndsAt {
             self.breakEndsAt = nil
             breakActivity = nil
+            breakActivityPaused = false
+            workCountsFrom = now
             animationDirector.breakCompleted(at: now, withBall: Bool.random())
         }
         let sample = activitySource.sample(at: now)
         let previousSnapshot = snapshot
-        snapshot = dependencies.activityEngine.ingest(sample)
+        let engineSnapshot = dependencies.activityEngine.ingest(sample)
+        if engineSnapshot.currentSession == 0 {
+            workCountsFrom = nil
+        }
+        snapshot = UsageSnapshot(
+            isActive: engineSnapshot.isActive,
+            currentSession: WorkSessionClock.session(
+                engineSession: engineSnapshot.currentSession,
+                isOnBreak: breakEndsAt != nil,
+                countsFrom: workCountsFrom,
+                now: now
+            ),
+            todayTotal: engineSnapshot.todayTotal
+        )
         if sample.kind == .active {
             if activeSessionStart == nil {
                 activeSessionStart = now
@@ -99,7 +119,9 @@ final class AppRuntime: ObservableObject {
                 nextBreak = dependencies.scheduler.nextBreak(after: sessionStart)
             }
         } else if sample.kind == .idle {
+            // Stepping away counts as the rest 小金金 was waiting for.
             nextBreak = nil
+            puppyIsDepleted = false
         }
         var invitationStart: Date?
         if let due = nextBreak, !remindersPaused, !isOnBreak, sample.kind == .active {
@@ -110,7 +132,10 @@ final class AppRuntime: ObservableObject {
             case .inviting(let since):
                 invitationStart = since
             case .gaveUp:
-                nextBreak = BreakInvitation.nextDue(afterGivingUpAt: now, warningWindow: warning)
+                // Ignored to the end: 小金金 runs out of battery and the break
+                // stays due, rather than quietly being rescheduled.
+                puppyIsDepleted = true
+                invitationStart = due.addingTimeInterval(-warning)
             }
         }
         if invitationStartedAt != invitationStart {
@@ -123,7 +148,8 @@ final class AppRuntime: ObservableObject {
             sessionDuration: snapshot.currentSession,
             secondsUntilBreak: secondsUntilBreak,
             isOnBreak: isOnBreak,
-            remindersPaused: remindersPaused
+            remindersPaused: remindersPaused,
+            isDepleted: puppyIsDepleted
         ))
         self.dependencies = dependencies
     }
@@ -131,8 +157,18 @@ final class AppRuntime: ObservableObject {
     func startBreak(_ activity: BreakActivity = .rest) {
         guard let dependencies else { return }
         let now = Date()
+        // During a break another choice only switches the activity; the break
+        // keeps its end time.
+        if breakEndsAt != nil {
+            breakActivity = activity
+            breakActivityPaused = false
+            animationDirector.breakStarted(at: now, activity: activity)
+            return
+        }
+        puppyIsDepleted = false
         breakEndsAt = now.addingTimeInterval(dependencies.scheduler.policy.restInterval)
         breakActivity = activity
+        breakActivityPaused = false
         invitationStartedAt = nil
         animationDirector.invitation(startedAt: nil)
         animationDirector.breakStarted(at: now, activity: activity)
@@ -159,6 +195,7 @@ final class AppRuntime: ObservableObject {
 
     func pauseReminders() {
         remindersPaused = true
+        puppyIsDepleted = false
         nextBreak = nil
         tick()
     }
@@ -168,17 +205,17 @@ final class AppRuntime: ObservableObject {
         tick()
     }
 
-    func endBreak() {
-        guard let dependencies, breakEndsAt != nil else { return }
-        breakEndsAt = nil
-        breakActivity = nil
-        animationDirector.breakEndedEarly()
-        try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
-        tick()
+    /// ⏹ stops the current activity without ending the break; only the
+    /// break's own end time returns to work.
+    func setBreakActivityPaused(_ paused: Bool) {
+        guard breakEndsAt != nil else { return }
+        breakActivityPaused = paused
+        animationDirector.breakActivity(paused: paused)
     }
 
     func invitationText(at date: Date) -> String? {
-        invitationStartedAt.map { BreakInvitation.line(since: $0, now: date).text }
+        guard let invitationStartedAt else { return nil }
+        return puppyIsDepleted ? BreakInvitation.depletedLine : BreakInvitation.line(since: invitationStartedAt, now: date).text
     }
 
     func dogPlayback(at date: Date) -> DogAnimationPlayback {

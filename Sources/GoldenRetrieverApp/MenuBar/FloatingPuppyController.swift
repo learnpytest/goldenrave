@@ -25,9 +25,9 @@ enum FloatingPuppyPlacement {
         return String(line[..<comma]) + "…"
     }
 
-    /// The popover picks up where the bubble left off.
+    /// The popover picks up where the bubble left off, always after "…".
     static func remainder(_ line: String) -> String {
-        guard let comma = line.firstIndex(of: "，") else { return line }
+        guard let comma = line.firstIndex(of: "，") else { return "…" + line }
         return "…" + String(line[line.index(after: comma)...])
     }
 

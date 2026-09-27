@@ -12,6 +12,10 @@ public protocol LocalStore {
     func dailyTotal(on date: Date) throws -> TimeInterval
     /// Detailed mode only: time per app in [start, end), most used first.
     func appUsage(from start: Date, to end: Date) throws -> [AppUsage]
+    /// When per-app recording began, so a longer range can say it is partial.
+    func firstDetailedSampleDate() throws -> Date?
+    /// When usage-time recording began, so a longer total can say it is partial.
+    func firstSessionDate() throws -> Date?
     func exportCSV() throws -> Data
     func deleteAll() throws
 }
@@ -112,6 +116,18 @@ public final class SwiftDataLocalStore: LocalStore, DetailedActivityStore {
                 )
             }
             .sorted { $0.seconds != $1.seconds ? $0.seconds > $1.seconds : $0.appName < $1.appName }
+    }
+
+    public func firstDetailedSampleDate() throws -> Date? {
+        var descriptor = FetchDescriptor<DetailedActivityModel>(sortBy: [SortDescriptor(\.timestamp)])
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first?.timestamp
+    }
+
+    public func firstSessionDate() throws -> Date? {
+        var descriptor = FetchDescriptor<UsageSessionModel>(sortBy: [SortDescriptor(\.start)])
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first?.start
     }
 
     public func dailyTotal(on date: Date) throws -> TimeInterval {
