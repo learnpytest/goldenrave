@@ -172,6 +172,7 @@ private struct PopoverRootView: View {
                 breakActivity: runtime.breakActivity,
                 remindersPaused: runtime.remindersPaused,
                 invitationText: runtime.invitationText(at: Date()),
+                invitationTextAt: runtime.invitationText(at:),
                 playbackAt: runtime.dogPlayback(at:),
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,

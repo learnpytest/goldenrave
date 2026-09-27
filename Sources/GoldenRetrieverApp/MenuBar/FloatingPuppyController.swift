@@ -6,13 +6,23 @@ enum FloatingPuppyPlacement {
     static let margin: CGFloat = 24
     static let dragThreshold: CGFloat = 4
 
-    /// A remembered spot is reused only while it still lies on a connected screen.
+    /// A remembered spot is reused while it still touches a connected screen,
+    /// nudged inward so the whole puppy and bubble stay visible.
     static func origin(saved: CGPoint?, size: CGSize, screens: [CGRect]) -> CGPoint {
-        if let saved, screens.contains(where: { $0.intersects(CGRect(origin: saved, size: size)) }) {
-            return saved
+        if let saved, let screen = screens.first(where: { $0.intersects(CGRect(origin: saved, size: size)) }) {
+            return CGPoint(
+                x: min(max(saved.x, screen.minX), screen.maxX - size.width),
+                y: min(max(saved.y, screen.minY), screen.maxY - size.height)
+            )
         }
         guard let screen = screens.first else { return .zero }
         return CGPoint(x: screen.maxX - size.width - margin, y: screen.minY + margin)
+    }
+
+    /// The bubble shows only the first half of a line; the popover has it all.
+    static func teaser(_ line: String) -> String {
+        guard let comma = line.firstIndex(of: "，") else { return line }
+        return String(line[..<comma]) + "…"
     }
 
     static func isDrag(from start: CGPoint, to end: CGPoint) -> Bool {
@@ -137,7 +147,7 @@ private struct FloatingPuppyView: View {
         VStack(spacing: 2) {
             // Same line as under 小金金陪伴中 in the popover; it changes every 45s.
             TimelineView(.periodic(from: .now, by: 1)) { context in
-                Text(lineAt(context.date) ?? BreakInvitation.lines[0].text)
+                Text(FloatingPuppyPlacement.teaser(lineAt(context.date) ?? BreakInvitation.lines[0].text))
             }
                 .font(.system(size: 13, weight: .medium))
                 .multilineTextAlignment(.center)

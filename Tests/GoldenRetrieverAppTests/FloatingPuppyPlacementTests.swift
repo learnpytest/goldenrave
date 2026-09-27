@@ -27,4 +27,15 @@ final class FloatingPuppyPlacementTests: XCTestCase {
         XCTAssertFalse(FloatingPuppyPlacement.isDrag(from: .zero, to: CGPoint(x: 2, y: 2)))
         XCTAssertTrue(FloatingPuppyPlacement.isDrag(from: .zero, to: CGPoint(x: 6, y: 0)))
     }
+
+    func testASpotHalfOffTheScreenIsPushedBackInside() {
+        let origin = FloatingPuppyPlacement.origin(saved: CGPoint(x: 1400, y: -40), size: size, screens: [screen])
+
+        XCTAssertEqual(origin, CGPoint(x: 1440 - 180, y: 0))
+    }
+
+    func testTheBubbleShowsOnlyTheFirstHalfOfALine() {
+        XCTAssertEqual(FloatingPuppyPlacement.teaser("我有點想你了，有空來摸摸我嗎？"), "我有點想你了…")
+        XCTAssertEqual(FloatingPuppyPlacement.teaser("我幫你看著時間"), "我幫你看著時間")
+    }
 }
