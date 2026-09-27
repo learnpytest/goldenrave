@@ -83,6 +83,7 @@ public struct PopoverView: View {
     public var onEndBreak: () -> Void
     public var onOpenSettings: () -> Void
     public var onOpenStatistics: () -> Void
+    @State private var showsEarlyBreak = false
 
     public init(
         snapshot: UsageSnapshot,
@@ -150,15 +151,33 @@ public struct PopoverView: View {
                     breakMetric
                 }
             }
-            statisticsEntry
-                .padding(.top, 12)
-            HStack(spacing: 8) {
-                ForEach(controls, id: \.title) { control in
-                    controlButton(control)
+            HStack(spacing: 6) {
+                if Self.offersActivities(isInviting: invitationText != nil, isOnBreak: breakEndsAt != nil, userAskedEarly: showsEarlyBreak) {
+                    ForEach(controls, id: \.title) { control in
+                        controlButton(control)
+                    }
+                } else {
+                    Button("想提早喘口氣？") { showsEarlyBreak = true }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 12))
+                        .foregroundStyle(PanelStyle.chipText)
+                        .underline()
+                    Spacer(minLength: 0)
+                    ForEach(controls.filter { $0.systemImage != nil }, id: \.title) { control in
+                        controlButton(control)
+                    }
                 }
             }
-            .padding(.top, 14)
+            .frame(minHeight: 28)
+            .padding(.top, 12)
+            Rectangle()
+                .fill(PanelStyle.line.opacity(0.35))
+                .frame(height: 1)
+                .padding(.top, 12)
+            statisticsEntry
+                .padding(.top, 8)
         }
+        .onDisappear { showsEarlyBreak = false }
         .foregroundStyle(PanelStyle.text)
         .padding(.horizontal, 18)
         .padding(.top, 16)
@@ -182,9 +201,8 @@ public struct PopoverView: View {
                     .foregroundStyle(PanelStyle.chipText)
             }
             .foregroundStyle(PanelStyle.text)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 9)
-            .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            .padding(.horizontal, 2)
+            .padding(.vertical, 2)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -196,7 +214,7 @@ public struct PopoverView: View {
             Spacer(minLength: 0)
             Button { perform(control) } label: {
                 Image(systemName: icon)
-                    .font(.system(size: 30))
+                    .font(.system(size: 24))
                     .foregroundStyle(control == .pauseReminders ? PanelStyle.red : PanelStyle.green)
             }
             .buttonStyle(.plain)
@@ -207,14 +225,20 @@ public struct PopoverView: View {
             // tap switches to the ongoing-break screen.
             Button { perform(control) } label: {
                 Text(control.title)
-                    .font(.system(size: 12, weight: .heavy))
+                    .font(.system(size: 11, weight: .heavy))
                     .foregroundStyle(PanelStyle.chipText)
-                    .padding(.horizontal, 13)
-                    .padding(.vertical, 8)
-                    .background(PanelStyle.chip, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .padding(.horizontal, 11)
+                    .padding(.vertical, 5)
+                    .background(PanelStyle.chip, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             }
             .buttonStyle(.plain)
         }
+    }
+
+    /// 休息／陪玩／散步 exist for a due break; before then they would read as a
+    /// nudge, so they wait behind 想提早喘口氣？.
+    static func offersActivities(isInviting: Bool, isOnBreak: Bool, userAskedEarly: Bool) -> Bool {
+        isInviting || isOnBreak || userAskedEarly
     }
 
     static func controls(isOnBreak: Bool, remindersPaused: Bool, hasScheduledBreak: Bool) -> [PopoverControl] {

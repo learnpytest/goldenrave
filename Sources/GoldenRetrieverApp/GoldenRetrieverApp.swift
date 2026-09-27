@@ -25,6 +25,8 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var invitationStartedAt: Date?
     @Published private(set) var remindersPaused = false
     private var activeSessionStart: Date?
+    /// When the last break ended; 連續使用 counts from here.
+    private var workCountsFrom: Date?
     private var animationDirector = DogAnimationDirector()
     private let preferences = AppPreferences()
     private var permissionTimer: Timer?
@@ -56,11 +58,25 @@ final class AppRuntime: ObservableObject {
         if let breakEndsAt, now >= breakEndsAt {
             self.breakEndsAt = nil
             breakActivity = nil
+            workCountsFrom = now
             animationDirector.breakCompleted(at: now, withBall: Bool.random())
         }
         let sample = activitySource.sample(at: now)
         let previousSnapshot = snapshot
-        snapshot = dependencies.activityEngine.ingest(sample)
+        let engineSnapshot = dependencies.activityEngine.ingest(sample)
+        if engineSnapshot.currentSession == 0 {
+            workCountsFrom = nil
+        }
+        snapshot = UsageSnapshot(
+            isActive: engineSnapshot.isActive,
+            currentSession: WorkSessionClock.session(
+                engineSession: engineSnapshot.currentSession,
+                isOnBreak: breakEndsAt != nil,
+                countsFrom: workCountsFrom,
+                now: now
+            ),
+            todayTotal: engineSnapshot.todayTotal
+        )
         if sample.kind == .active {
             if activeSessionStart == nil {
                 activeSessionStart = now
@@ -172,6 +188,8 @@ final class AppRuntime: ObservableObject {
         guard let dependencies, breakEndsAt != nil else { return }
         breakEndsAt = nil
         breakActivity = nil
+        workCountsFrom = Date()
+        nextBreak = nil
         animationDirector.breakEndedEarly()
         try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
         tick()

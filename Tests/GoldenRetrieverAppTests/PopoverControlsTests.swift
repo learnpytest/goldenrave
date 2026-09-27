@@ -89,4 +89,11 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(row.title, "下次喘口氣")
         XCTAssertEqual(row.value, PopoverView.timeString(planned))
     }
+
+    func testBreakChoicesWaitUntilTheBreakIsDueOrTheUserAsks() {
+        XCTAssertFalse(PopoverView.offersActivities(isInviting: false, isOnBreak: false, userAskedEarly: false))
+        XCTAssertTrue(PopoverView.offersActivities(isInviting: false, isOnBreak: false, userAskedEarly: true))
+        XCTAssertTrue(PopoverView.offersActivities(isInviting: true, isOnBreak: false, userAskedEarly: false))
+        XCTAssertTrue(PopoverView.offersActivities(isInviting: false, isOnBreak: true, userAskedEarly: false), "提早結束 stays reachable")
+    }
 }

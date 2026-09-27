@@ -60,15 +60,10 @@ public struct StatisticsView: View {
             } else if isPartial {
                 // A range that reaches back before recording began would
                 // show numbers that look complete but are not, so show none.
-                VStack(spacing: 8) {
-                    Image(systemName: "pawprint.fill")
-                        .font(.system(size: 30))
-                        .foregroundStyle(PanelStyle.orange)
-                    Text("尚無資料")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(PanelStyle.muted)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Text("尚無資料")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(PanelStyle.muted)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 HStack(alignment: .firstTextBaseline) {
                     Text("總共").font(.system(size: 13)).foregroundStyle(PanelStyle.muted)
