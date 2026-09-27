@@ -59,11 +59,13 @@ final class FloatingPuppyController {
         panel.isReleasedWhenClosed = false
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
 
-        let hosting = NSHostingView(rootView: FloatingPuppyView(playbackAt: playbackAt, lineAt: lineAt))
+        let hover = HoverState()
+        let hosting = NSHostingView(rootView: FloatingPuppyView(playbackAt: playbackAt, lineAt: lineAt, hover: hover))
         hosting.frame = CGRect(origin: .zero, size: Self.size)
         let container = DragOrClickView(frame: hosting.frame)
         container.addSubview(hosting)
         container.onClick = onClick
+        container.onHover = { hover.isHovering = $0 }
         container.onDragEnded = { [weak self] origin in
             self?.preferences.floatingPuppyOrigin = origin
         }
@@ -86,6 +88,7 @@ final class FloatingPuppyController {
     func hide() {
         guard panel.isVisible else { return }
         panel.orderOut(nil)
+        (panel.contentView as? DragOrClickView)?.onHover?(false)
     }
 }
 
@@ -95,8 +98,13 @@ private final class FloatingPuppyPanel: NSPanel {
     override var canBecomeMain: Bool { false }
 }
 
+private final class HoverState: ObservableObject {
+    @Published var isHovering = false
+}
+
 private final class DragOrClickView: NSView {
     var onClick: (() -> Void)?
+    var onHover: ((Bool) -> Void)?
     var onDragEnded: ((CGPoint) -> Void)?
     private var mouseDownAt: CGPoint?
     private var windowOriginAtMouseDown: CGPoint = .zero
@@ -107,6 +115,19 @@ private final class DragOrClickView: NSView {
     }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func updateTrackingAreas() {
+        super.updateTrackingAreas()
+        trackingAreas.forEach(removeTrackingArea)
+        addTrackingArea(NSTrackingArea(
+            rect: bounds,
+            options: [.mouseEnteredAndExited, .activeAlways, .inVisibleRect],
+            owner: self
+        ))
+    }
+
+    override func mouseEntered(with event: NSEvent) { onHover?(true) }
+    override func mouseExited(with event: NSEvent) { onHover?(false) }
 
     override func mouseDown(with event: NSEvent) {
         mouseDownAt = NSEvent.mouseLocation
@@ -141,6 +162,7 @@ private final class DragOrClickView: NSView {
 private struct FloatingPuppyView: View {
     let playbackAt: (Date) -> DogAnimationPlayback
     let lineAt: (Date) -> String?
+    @ObservedObject var hover: HoverState
     private static let dogSide: CGFloat = 120
 
     var body: some View {
@@ -149,7 +171,7 @@ private struct FloatingPuppyView: View {
                 .frame(width: DogAnimationPlayer.popoverSide, height: DogAnimationPlayer.popoverSide)
                 .scaleEffect(Self.dogSide / DogAnimationPlayer.popoverSide)
                 .frame(width: Self.dogSide, height: Self.dogSide)
-            // Same line as under 小金金陪伴中 in the popover; it changes every 45s.
+            // Same line as under 小金金陪伴中 in the popover; it only appears on hover.
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Text(FloatingPuppyPlacement.teaser(lineAt(context.date) ?? BreakInvitation.lines[0].text))
             }
@@ -164,6 +186,8 @@ private struct FloatingPuppyView: View {
                         .fill(Color(nsColor: .windowBackgroundColor))
                         .shadow(color: .black.opacity(0.18), radius: 3, y: 1)
                 )
+                .opacity(hover.isHovering ? 1 : 0)
+                .animation(.easeOut(duration: 0.15), value: hover.isHovering)
         }
         .padding(.bottom, 6)
         .frame(width: FloatingPuppyController.size.width, height: FloatingPuppyController.size.height, alignment: .bottom)

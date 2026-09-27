@@ -52,9 +52,14 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertNil(PopoverControl.start(.rest).systemImage, "activity choices stay as words")
     }
 
-    func testEveryPopoverScreenSharesOneSquareishSize() {
-        XCTAssertLessThanOrEqual(PopoverLayout.size.height, 360, "no big empty area under the buttons")
-        XCTAssertGreaterThanOrEqual(DogAnimationPlayer.popoverSide, 140, "the puppy gets the middle of the window")
+    func testThePanelIsCompactNowThatThePuppyLivesInTheMenuBar() {
+        XCTAssertLessThanOrEqual(PopoverLayout.size.height, 300, "no empty space where the puppy used to be")
+    }
+
+    func testPetVisibilityOffersHideAndShow() {
+        XCTAssertEqual(PetVisibility.allCases.map(\.title), ["Hide pet", "Show pet"])
+        XCTAssertEqual(PetVisibility(showsPet: true), .show)
+        XCTAssertEqual(PetVisibility(showsPet: false), .hide)
     }
 
     func testBreakCountdownRoundsUpRemainingMinutes() {
@@ -81,7 +86,7 @@ final class PopoverControlsTests: XCTestCase {
 
         let row = PopoverView.breakRow(nextBreak: planned, isInviting: false, now: now)
 
-        XCTAssertEqual(row.title, "喘口氣")
+        XCTAssertEqual(row.title, "下次喘口氣")
         XCTAssertEqual(row.value, PopoverView.timeString(planned))
     }
 }

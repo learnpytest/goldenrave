@@ -15,6 +15,7 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var isAwaitingDetailedPermission = false
     @Published private(set) var workMinutes: Int
     @Published private(set) var restMinutes: Int
+    @Published private(set) var showsPet: Bool
 
     private var dependencies: AppDependencies?
     private let activitySource = SystemActivitySource()
@@ -31,6 +32,7 @@ final class AppRuntime: ObservableObject {
     init() {
         workMinutes = preferences.workMinutes
         restMinutes = preferences.restMinutes
+        showsPet = preferences.showsFloatingPuppy
         dependencies = try? AppDependencies.live()
         trackingMode = dependencies?.trackingController.mode ?? .privateMode
         if dependencies?.trackingController.isAwaitingPermission == true {
@@ -137,6 +139,11 @@ final class AppRuntime: ObservableObject {
         dependencies?.scheduler = BreakScheduler(policy: policy)
         nextBreak = nil
         tick()
+    }
+
+    func setShowsPet(_ shows: Bool) {
+        showsPet = shows
+        preferences.showsFloatingPuppy = shows
     }
 
     func pauseReminders() {

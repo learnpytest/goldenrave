@@ -8,6 +8,7 @@ public struct AppPreferences {
         static let trackingMode = "trackingMode"
         static let floatingPuppyX = "floatingPuppyX"
         static let floatingPuppyY = "floatingPuppyY"
+        static let showsFloatingPuppy = "showsFloatingPuppy"
     }
 
     private let defaults: UserDefaults
@@ -42,6 +43,12 @@ public struct AppPreferences {
             defaults.set(newValue.map { Double($0.x) }, forKey: Key.floatingPuppyX)
             defaults.set(newValue.map { Double($0.y) }, forKey: Key.floatingPuppyY)
         }
+    }
+
+    /// Show pet / Hide pet: whether 小金金 floats onto the desktop when a break is due.
+    public var showsFloatingPuppy: Bool {
+        get { defaults.object(forKey: Key.showsFloatingPuppy) as? Bool ?? true }
+        nonmutating set { defaults.set(newValue, forKey: Key.showsFloatingPuppy) }
     }
 
     public var breakPolicy: BreakPolicy {

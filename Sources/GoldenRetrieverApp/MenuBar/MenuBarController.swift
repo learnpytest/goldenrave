@@ -31,6 +31,8 @@ final class MenuBarController: NSObject {
         statusItem.button?.font = .monospacedDigitSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
 
         popover.behavior = .transient
+        // The A-version panel is a light cream design; keep the popover chrome light too.
+        popover.appearance = NSAppearance(named: .aqua)
         popover.animates = true
         // Built once and kept: the root view observes the runtime, so updates
         // re-render in place. Rebuilding the controller on every change made
@@ -74,7 +76,7 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
-        if runtime.invitationStartedAt != nil {
+        if runtime.invitationStartedAt != nil, runtime.showsPet {
             floatingPuppy?.show()
         } else {
             floatingPuppy?.hide()
@@ -137,6 +139,12 @@ private struct PopoverRootView: View {
     @ObservedObject var runtime: AppRuntime
 
     var body: some View {
+        content
+            .background(PanelStyle.panel)
+    }
+
+    @ViewBuilder
+    private var content: some View {
         if runtime.showStatistics, let store = runtime.store {
             StatisticsView(store: store, range: .today)
                 .overlay(alignment: .topTrailing) {
@@ -173,12 +181,13 @@ private struct PopoverRootView: View {
                 remindersPaused: runtime.remindersPaused,
                 invitationText: runtime.invitationText(at: Date()),
                 invitationTextAt: runtime.invitationText(at:),
-                playbackAt: runtime.dogPlayback(at:),
+                showsPet: runtime.showsPet,
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,
                 onResumeReminders: runtime.resumeReminders,
                 onEndBreak: runtime.endBreak,
-                onOpenSettings: runtime.openSettings
+                onOpenSettings: runtime.openSettings,
+                onSetShowsPet: runtime.setShowsPet
             )
         }
     }

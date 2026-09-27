@@ -47,4 +47,13 @@ final class AppPreferencesTests: XCTestCase {
 
         XCTAssertEqual(AppPreferences(defaults: defaults).floatingPuppyOrigin, CGPoint(x: 120, y: 340))
     }
+
+    func testThePuppyShowsUpAtBreakTimeUntilTheUserHidesIt() {
+        let preferences = AppPreferences(defaults: defaults)
+        XCTAssertTrue(preferences.showsFloatingPuppy)
+
+        preferences.showsFloatingPuppy = false
+
+        XCTAssertFalse(AppPreferences(defaults: defaults).showsFloatingPuppy)
+    }
 }
