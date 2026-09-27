@@ -87,4 +87,17 @@ final class LocalStoreTests: XCTestCase {
         XCTAssertEqual(usage[1].seconds, SwiftDataLocalStore.detailedSampleInterval, accuracy: 0.001)
         XCTAssertEqual(usage[1].topWindows, [], "a window from another day is not counted")
     }
+
+    func testAnOngoingSessionCountsNowAndIsUpdatedInPlaceNotDuplicated() throws {
+        let store = try makeStore()
+        try store.saveOngoing(session: UsageRecord(start: date(0), end: date(15), activeSeconds: 15, mode: .privateMode))
+        XCTAssertEqual(try store.dailyTotal(on: date(0)), 15, accuracy: 0.001, "counted before the session ends")
+
+        try store.saveOngoing(session: UsageRecord(start: date(0), end: date(30), activeSeconds: 30, mode: .privateMode))
+        XCTAssertEqual(try store.dailyTotal(on: date(0)), 30, accuracy: 0.001, "the same record grows")
+
+        store.finishOngoingSession()
+        try store.saveOngoing(session: UsageRecord(start: date(100), end: date(110), activeSeconds: 10, mode: .privateMode))
+        XCTAssertEqual(try store.dailyTotal(on: date(0)), 40, accuracy: 0.001, "a new session after finishing is a new record")
+    }
 }

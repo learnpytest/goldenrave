@@ -9,6 +9,11 @@ final class AppCompositionTests: XCTestCase {
         var segments: [ActivitySegment] = []
 
         func save(session: UsageRecord) throws { sessions.append(session) }
+        private var ongoingIndex: Int?
+        func saveOngoing(session: UsageRecord) throws {
+            if let ongoingIndex { sessions[ongoingIndex] = session } else { ongoingIndex = sessions.count; sessions.append(session) }
+        }
+        func finishOngoingSession() { ongoingIndex = nil }
         func save(breakEvent: BreakEventRecord) throws {}
         func appUsage(from start: Date, to end: Date) throws -> [AppUsage] { [] }
         func dailyTotal(on date: Date) throws -> TimeInterval {

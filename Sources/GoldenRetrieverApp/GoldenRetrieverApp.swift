@@ -68,17 +68,28 @@ final class AppRuntime: ObservableObject {
             if dependencies.trackingController.mode == .detailed {
                 _ = try? dependencies.trackingController.capture()
             }
+            // Saved every tick, not only when the user goes idle: quitting or
+            // updating the app mid-session used to drop the whole session.
+            if let activeSessionStart {
+                try? dependencies.store.saveOngoing(session: UsageRecord(
+                    start: activeSessionStart,
+                    end: now,
+                    activeSeconds: max(snapshot.currentSession, now.timeIntervalSince(activeSessionStart)),
+                    mode: dependencies.trackingController.mode
+                ))
+            }
         } else if let activeSessionStart, previousSnapshot.isActive {
             let activeSeconds = max(
                 previousSnapshot.currentSession,
                 now.timeIntervalSince(activeSessionStart)
             )
-            try? dependencies.store.save(session: UsageRecord(
+            try? dependencies.store.saveOngoing(session: UsageRecord(
                 start: activeSessionStart,
                 end: now,
                 activeSeconds: activeSeconds,
                 mode: dependencies.trackingController.mode
             ))
+            dependencies.store.finishOngoingSession()
             self.activeSessionStart = nil
         }
         let isOnBreak = breakEndsAt != nil

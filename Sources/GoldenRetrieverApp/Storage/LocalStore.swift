@@ -4,6 +4,10 @@ import SwiftData
 
 public protocol LocalStore {
     func save(session: UsageRecord) throws
+    /// Saves the session still in progress, updating the same record on each
+    /// call until `finishOngoingSession`, so quitting loses at most one tick.
+    func saveOngoing(session: UsageRecord) throws
+    func finishOngoingSession()
     func save(breakEvent: BreakEventRecord) throws
     func dailyTotal(on date: Date) throws -> TimeInterval
     /// Detailed mode only: time per app in [start, end), most used first.
@@ -27,6 +31,7 @@ public final class SwiftDataLocalStore: LocalStore, DetailedActivityStore {
     private let container: ModelContainer
     private let context: ModelContext
     private let calendar: Calendar
+    private var ongoing: UsageSessionModel?
 
     public init(container: ModelContainer, calendar: Calendar = .current) {
         self.container = container
@@ -51,6 +56,26 @@ public final class SwiftDataLocalStore: LocalStore, DetailedActivityStore {
         }
         context.insert(UsageSessionModel(record: session))
         try context.save()
+    }
+
+    public func saveOngoing(session: UsageRecord) throws {
+        guard session.end >= session.start, session.activeSeconds >= 0 else {
+            throw LocalStoreError.invalidRecord
+        }
+        if let ongoing, ongoing.start == session.start {
+            ongoing.end = session.end
+            ongoing.activeSeconds = session.activeSeconds
+            ongoing.trackingModeRaw = session.mode.rawValue
+        } else {
+            let model = UsageSessionModel(record: session)
+            context.insert(model)
+            ongoing = model
+        }
+        try context.save()
+    }
+
+    public func finishOngoingSession() {
+        ongoing = nil
     }
 
     public func save(breakEvent: BreakEventRecord) throws {
@@ -142,6 +167,7 @@ public final class SwiftDataLocalStore: LocalStore, DetailedActivityStore {
     }
 
     public func deleteAll() throws {
+        ongoing = nil
         for model in try context.fetch(FetchDescriptor<UsageSessionModel>()) {
             context.delete(model)
         }

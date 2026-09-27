@@ -88,7 +88,7 @@ public struct StatisticsView: View {
                                 Text(app.appName)
                                     .font(.system(size: 13, weight: .bold))
                                     .lineLimit(1)
-                                    .frame(width: 78, alignment: .leading)
+                                    .frame(width: 70, alignment: .leading)
                                 GeometryReader { proxy in
                                     Capsule()
                                         .fill(PanelStyle.orange.opacity(0.75))
@@ -98,7 +98,9 @@ public struct StatisticsView: View {
                                 Text(Self.formatShort(app.seconds))
                                     .font(.system(size: 12))
                                     .monospacedDigit()
-                                    .frame(width: 64, alignment: .trailing)
+                                    .lineLimit(1)
+                                    .fixedSize()
+                                    .frame(minWidth: 84, alignment: .trailing)
                             }
                             ForEach(app.topWindows, id: \.self) { title in
                                 Text(title)
