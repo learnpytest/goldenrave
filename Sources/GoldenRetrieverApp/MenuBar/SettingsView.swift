@@ -83,8 +83,9 @@ public struct SettingsView: View {
     private var petVisibility: some View {
         HStack {
             Text("休息時顯示小金金")
-                .font(.system(size: 12))
-            Spacer()
+                .font(.system(size: 11))
+                .lineLimit(1)
+            Spacer(minLength: 6)
             HStack(spacing: 2) {
                 ForEach(PetVisibility.allCases, id: \.self) { option in
                     let isOn = PetVisibility(showsPet: showsPet) == option
@@ -92,7 +93,8 @@ public struct SettingsView: View {
                         Text(option.title)
                             .font(.system(size: 11, weight: isOn ? .heavy : .regular))
                             .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
-                            .padding(.horizontal, 9)
+                            .fixedSize()
+                            .padding(.horizontal, 8)
                             .padding(.vertical, 4)
                             .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
                     }
