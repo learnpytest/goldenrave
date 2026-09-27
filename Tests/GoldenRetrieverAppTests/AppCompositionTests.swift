@@ -16,6 +16,7 @@ final class AppCompositionTests: XCTestCase {
         func finishOngoingSession() { ongoingIndex = nil }
         func save(breakEvent: BreakEventRecord) throws {}
         func appUsage(from start: Date, to end: Date) throws -> [AppUsage] { [] }
+        func firstDetailedSampleDate() throws -> Date? { segments.map(\.timestamp).min() }
         func dailyTotal(on date: Date) throws -> TimeInterval {
             let start = Calendar.current.startOfDay(for: date)
             guard let end = Calendar.current.date(byAdding: .day, value: 1, to: start) else { return 0 }
