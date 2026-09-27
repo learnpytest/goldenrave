@@ -46,8 +46,7 @@ final class FloatingPuppyPlacementTests: XCTestCase {
     }
 
     func testTheDepletedLineSplitsBetweenBubbleAndPopover() {
-        XCTAssertEqual(FloatingPuppyPlacement.teaser(BreakInvitation.depletedLine) + FloatingPuppyPlacement.remainder(BreakInvitation.depletedLine).dropFirst(),
-                       FloatingPuppyPlacement.teaser(BreakInvitation.depletedLine).dropLast() + "…" + BreakInvitation.depletedLine.split(separator: "，").dropFirst().joined())
-        XCTAssertNotEqual(FloatingPuppyPlacement.teaser(BreakInvitation.depletedLine), BreakInvitation.depletedLine, "the bubble shows only its first half")
+        XCTAssertEqual(FloatingPuppyPlacement.teaser(BreakInvitation.depletedLine), "金金沒電了…")
+        XCTAssertEqual(FloatingPuppyPlacement.remainder(BreakInvitation.depletedLine), "…陪我充個電好嗎？")
     }
 }
