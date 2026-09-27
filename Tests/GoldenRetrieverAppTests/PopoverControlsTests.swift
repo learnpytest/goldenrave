@@ -45,13 +45,6 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(PopoverView.nextBreakText(nil, now: now), "尚未排程")
     }
 
-    func testPauseAndResumeAreRedPauseAndPlayIcons() {
-        XCTAssertEqual(PopoverControl.pauseReminders.systemImage, "pause.circle.fill")
-        XCTAssertEqual(PopoverControl.pauseReminders.iconColor, .red)
-        XCTAssertEqual(PopoverControl.resumeReminders.systemImage, "play.circle.fill")
-        XCTAssertNil(PopoverControl.start(.rest).systemImage, "activity choices stay as words")
-    }
-
     func testThePanelIsCompactNowThatThePuppyLivesInTheMenuBar() {
         XCTAssertLessThanOrEqual(PopoverLayout.size.height, 300, "no empty space where the puppy used to be")
     }
@@ -90,16 +83,17 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(row.value, PopoverView.timeString(planned))
     }
 
-    func testBreakChoicesWaitUntilTheBreakIsDueOrTheUserAsks() {
-        XCTAssertFalse(PopoverView.offersActivities(isInviting: false, isOnBreak: false, userAskedEarly: false))
-        XCTAssertTrue(PopoverView.offersActivities(isInviting: false, isOnBreak: false, userAskedEarly: true))
-        XCTAssertTrue(PopoverView.offersActivities(isInviting: true, isOnBreak: false, userAskedEarly: false))
-        XCTAssertTrue(PopoverView.offersActivities(isInviting: false, isOnBreak: true, userAskedEarly: false), "提早結束 stays reachable")
+
+    func testEveryControlIsAnIconTitledForTooltips() {
+        let all: [PopoverControl] = [.start(.rest), .start(.play), .start(.walk), .pauseReminders, .resumeReminders, .endBreak]
+        XCTAssertEqual(Set(all.map(\.systemImage)).count, all.count, "each control has its own icon")
+        XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停")
     }
 
-    func testEarlyBreakChoicesCanBeFoldedAwayButADueOneCannot() {
-        XCTAssertTrue(PopoverView.canCancelEarlyBreak(isInviting: false, isOnBreak: false, userAskedEarly: true))
-        XCTAssertFalse(PopoverView.canCancelEarlyBreak(isInviting: true, isOnBreak: false, userAskedEarly: true))
-        XCTAssertFalse(PopoverView.canCancelEarlyBreak(isInviting: false, isOnBreak: true, userAskedEarly: true))
+    func testBreakChoicesShowOnlyWhenTheBreakIsDue() {
+        let working = PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: true)
+
+        XCTAssertEqual(PopoverView.visibleControls(working, isInviting: false), [.pauseReminders])
+        XCTAssertEqual(PopoverView.visibleControls(working, isInviting: true), [.start(.rest), .start(.play), .start(.walk), .pauseReminders])
     }
 }
