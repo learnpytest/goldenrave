@@ -145,6 +145,10 @@ private struct FloatingPuppyView: View {
 
     var body: some View {
         VStack(spacing: 2) {
+            DogAnimationView(playbackAt: playbackAt)
+                .frame(width: DogAnimationPlayer.popoverSide, height: DogAnimationPlayer.popoverSide)
+                .scaleEffect(Self.dogSide / DogAnimationPlayer.popoverSide)
+                .frame(width: Self.dogSide, height: Self.dogSide)
             // Same line as under 小金金陪伴中 in the popover; it changes every 45s.
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Text(FloatingPuppyPlacement.teaser(lineAt(context.date) ?? BreakInvitation.lines[0].text))
@@ -160,12 +164,8 @@ private struct FloatingPuppyView: View {
                         .fill(Color(nsColor: .windowBackgroundColor))
                         .shadow(color: .black.opacity(0.18), radius: 3, y: 1)
                 )
-            DogAnimationView(playbackAt: playbackAt)
-                .frame(width: DogAnimationPlayer.popoverSide, height: DogAnimationPlayer.popoverSide)
-                .scaleEffect(Self.dogSide / DogAnimationPlayer.popoverSide)
-                .frame(width: Self.dogSide, height: Self.dogSide)
         }
-        .padding(.top, 6)
-        .frame(width: FloatingPuppyController.size.width, height: FloatingPuppyController.size.height, alignment: .top)
+        .padding(.bottom, 6)
+        .frame(width: FloatingPuppyController.size.width, height: FloatingPuppyController.size.height, alignment: .bottom)
     }
 }
