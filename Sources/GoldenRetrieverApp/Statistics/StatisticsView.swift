@@ -23,7 +23,8 @@ public struct StatisticsView: View {
     @State private var range: StatisticsRange
     @State private var total: TimeInterval = 0
     @State private var apps: [AppUsage] = []
-    @State private var recordedSince: Date?
+    /// True when the chosen range starts before per-app recording began.
+    @State private var isPartial = false
     @State private var loadError: String?
 
     private static let appsShown = 5
@@ -56,6 +57,18 @@ public struct StatisticsView: View {
             }
             if let loadError {
                 Text(loadError).font(.system(size: 12)).foregroundStyle(PanelStyle.red)
+            } else if isPartial {
+                // A range that reaches back before recording began would
+                // show numbers that look complete but are not, so show none.
+                VStack(spacing: 8) {
+                    Image(systemName: "pawprint.fill")
+                        .font(.system(size: 30))
+                        .foregroundStyle(PanelStyle.orange)
+                    Text("尚無資料")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundStyle(PanelStyle.muted)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 HStack(alignment: .firstTextBaseline) {
                     Text("總共").font(.system(size: 13)).foregroundStyle(PanelStyle.muted)
@@ -63,12 +76,6 @@ public struct StatisticsView: View {
                 }
                 CreamBlock {
                     appList
-                }
-                if let recordedSince {
-                    Text("從 \(recordedSince.formatted(.dateTime.month(.defaultDigits).day())) 開始記錄")
-                        .font(.system(size: 11))
-                        .foregroundStyle(PanelStyle.muted)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
             }
         }
@@ -151,10 +158,8 @@ public struct StatisticsView: View {
             let end = calendar.date(byAdding: .day, value: 1, to: today) ?? Date()
             total = try totalForRange(from: start, today: today)
             apps = try store.appUsage(from: start, to: end)
-            // Only when the chosen range reaches back before the first sample.
-            recordedSince = try store.firstDetailedSampleDate()
-                .map { calendar.startOfDay(for: $0) }
-                .flatMap { $0 > start ? $0 : nil }
+            let firstDay = try store.firstDetailedSampleDate().map { calendar.startOfDay(for: $0) }
+            isPartial = range != .today && (firstDay.map { $0 > start } ?? true)
             loadError = nil
         } catch {
             loadError = "讀取統計失敗：\(error.localizedDescription)"
