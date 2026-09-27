@@ -110,4 +110,14 @@ final class LocalStoreTests: XCTestCase {
 
         XCTAssertEqual(try store.firstDetailedSampleDate(), date(100))
     }
+
+    func testFirstSessionDateIsTheEarliestSession() throws {
+        let store = try makeStore()
+        XCTAssertNil(try store.firstSessionDate())
+
+        try store.save(session: UsageRecord(start: date(900), end: date(910), activeSeconds: 10, mode: .privateMode))
+        try store.save(session: UsageRecord(start: date(300), end: date(310), activeSeconds: 10, mode: .privateMode))
+
+        XCTAssertEqual(try store.firstSessionDate(), date(300))
+    }
 }

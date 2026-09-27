@@ -20,11 +20,15 @@ public struct StatisticsView: View {
     public let store: any LocalStore
     private let calendar: Calendar
     private let onClose: () -> Void
+    private let isDetailed: Bool
+    private let onEnableDetailed: () -> Void
     @State private var range: StatisticsRange
     @State private var total: TimeInterval = 0
     @State private var apps: [AppUsage] = []
-    /// True when the chosen range starts before per-app recording began.
-    @State private var isPartial = false
+    // Totals and per-app samples began on different days, so each part
+    // shows 尚無資料 on its own when the range reaches back before it.
+    @State private var totalIsPartial = false
+    @State private var appsArePartial = false
     @State private var loadError: String?
 
     private static let appsShown = 5
@@ -33,12 +37,16 @@ public struct StatisticsView: View {
         store: any LocalStore,
         range: StatisticsRange,
         calendar: Calendar = .current,
+        isDetailed: Bool = true,
+        onEnableDetailed: @escaping () -> Void = {},
         onClose: @escaping () -> Void = {}
     ) {
         self.store = store
         self._range = State(initialValue: range)
         self.calendar = calendar
         self.onClose = onClose
+        self.isDetailed = isDetailed
+        self.onEnableDetailed = onEnableDetailed
     }
 
     public var body: some View {
@@ -57,17 +65,13 @@ public struct StatisticsView: View {
             }
             if let loadError {
                 Text(loadError).font(.system(size: 12)).foregroundStyle(PanelStyle.red)
-            } else if isPartial {
-                // A range that reaches back before recording began would
-                // show numbers that look complete but are not, so show none.
-                Text("尚無資料")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(PanelStyle.muted)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 HStack(alignment: .firstTextBaseline) {
                     Text("總共").font(.system(size: 13)).foregroundStyle(PanelStyle.muted)
-                    Text(Self.format(total)).font(.system(size: 22, weight: .heavy)).monospacedDigit()
+                    Text(totalIsPartial ? "尚無資料" : Self.format(total))
+                        .font(.system(size: totalIsPartial ? 15 : 22, weight: .heavy))
+                        .foregroundStyle(totalIsPartial ? PanelStyle.muted : PanelStyle.text)
+                        .monospacedDigit()
                 }
                 CreamBlock {
                     appList
@@ -77,16 +81,32 @@ public struct StatisticsView: View {
         .foregroundStyle(PanelStyle.text)
         .padding(16)
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .topLeading)
-        .task(id: range) { load() }
+        .task(id: "\(range)-\(isDetailed)") { load() }
     }
 
     @ViewBuilder
     private var appList: some View {
-        if apps.isEmpty {
-            Text("切到 Detailed 模式後，這裡會列出各個 app 用了多久。")
-                .font(.system(size: 12))
+        if !isDetailed {
+            VStack(spacing: 10) {
+                Text("Private 模式只記使用時間")
+                    .font(.system(size: 12))
+                    .foregroundStyle(PanelStyle.muted)
+                Button(action: onEnableDetailed) {
+                    Text("切換成 Detailed，看各 app 用了多久")
+                        .font(.system(size: 12, weight: .heavy))
+                        .foregroundStyle(Color.white)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(PanelStyle.orange, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if appsArePartial || apps.isEmpty {
+            Text("尚無資料")
+                .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(PanelStyle.muted)
-                .frame(maxWidth: .infinity, minHeight: 80)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else {
             let longest = apps.first?.seconds ?? 1
             ScrollView {
@@ -153,12 +173,18 @@ public struct StatisticsView: View {
             let end = calendar.date(byAdding: .day, value: 1, to: today) ?? Date()
             total = try totalForRange(from: start, today: today)
             apps = try store.appUsage(from: start, to: end)
-            let firstDay = try store.firstDetailedSampleDate().map { calendar.startOfDay(for: $0) }
-            isPartial = range != .today && (firstDay.map { $0 > start } ?? true)
+            totalIsPartial = try isPartial(since: store.firstSessionDate(), rangeStart: start)
+            appsArePartial = try isPartial(since: store.firstDetailedSampleDate(), rangeStart: start)
             loadError = nil
         } catch {
             loadError = "讀取統計失敗：\(error.localizedDescription)"
         }
+    }
+
+    private func isPartial(since first: Date?, rangeStart start: Date) -> Bool {
+        guard range != .today else { return false }
+        guard let first else { return true }
+        return calendar.startOfDay(for: first) > start
     }
 
     private func rangeStart(today: Date) -> Date {

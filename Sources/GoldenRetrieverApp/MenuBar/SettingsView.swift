@@ -45,7 +45,7 @@ public struct SettingsView: View {
                 Text(mode == .detailed ? "Detailed" : "Private")
                     .foregroundStyle(Color(hex: 0x2F4F46))
             }
-            .font(.system(size: 14))
+            .font(.system(size: 13))
             .padding(.top, 10)
             modeNote
                 .padding(.top, 6)
@@ -53,10 +53,10 @@ public struct SettingsView: View {
             HStack {
                 Button(action: onClose) {
                     Text("返回")
-                        .font(.system(size: 13, weight: .heavy))
+                        .font(.system(size: 12, weight: .heavy))
                         .foregroundStyle(PanelStyle.chipText)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 8)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 5)
                         .overlay(Capsule().stroke(PanelStyle.line, lineWidth: 1))
                 }
                 .buttonStyle(.plain)
@@ -117,13 +117,13 @@ public struct SettingsView: View {
         } else if mode == .detailed {
             Button("改回 Private 只記使用時間 →") { mode = .privateMode }
                 .buttonStyle(.plain)
-                .font(.system(size: 14))
+                .font(.system(size: 12))
                 .foregroundStyle(PanelStyle.green)
                 .underline()
         } else {
             Button("前往 Detailed 詳細設定 →") { mode = .detailed }
                 .buttonStyle(.plain)
-                .font(.system(size: 14))
+                .font(.system(size: 12))
                 .foregroundStyle(PanelStyle.green)
                 .underline()
         }
@@ -131,11 +131,11 @@ public struct SettingsView: View {
 
     private func minutesRow(_ title: String, value: Binding<Int>, range: ClosedRange<Int>, step: Int) -> some View {
         HStack {
-            Text(title).font(.system(size: 15, weight: .heavy))
+            Text(title).font(.system(size: 13, weight: .heavy))
             Spacer()
             HStack(spacing: 8) {
                 Text("\(value.wrappedValue) 分鐘")
-                    .font(.system(size: 15))
+                    .font(.system(size: 13))
                     .monospacedDigit()
                 VStack(spacing: 0) {
                     arrow("chevron.up") { value.wrappedValue = min(value.wrappedValue + step, range.upperBound) }

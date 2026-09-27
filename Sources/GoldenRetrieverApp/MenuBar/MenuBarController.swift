@@ -157,7 +157,13 @@ private struct PopoverRootView: View {
     @ViewBuilder
     private var content: some View {
         if runtime.showStatistics, let store = runtime.store {
-            StatisticsView(store: store, range: .today, onClose: runtime.closeSecondaryView)
+            StatisticsView(
+                store: store,
+                range: .today,
+                isDetailed: runtime.trackingMode == .detailed,
+                onEnableDetailed: { [runtime] in runtime.setTrackingMode(.detailed) },
+                onClose: runtime.closeSecondaryView
+            )
         } else if runtime.showSettings {
             SettingsView(
                 mode: Binding(
