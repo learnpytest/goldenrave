@@ -31,22 +31,22 @@ public struct SettingsView: View {
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CreamBlock {
-                VStack(spacing: 10) {
+            CreamBlock(verticalPadding: 8) {
+                VStack(spacing: 6) {
                     minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange, step: 5)
                     minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange, step: 1)
                 }
             }
             petVisibility
-                .padding(.top, 10)
+                .padding(.top, 8)
             HStack {
                 Text("目前模式").foregroundStyle(PanelStyle.muted)
                 Spacer()
                 Text(mode == .detailed ? "Detailed" : "Private")
                     .foregroundStyle(Color(hex: 0x2F4F46))
             }
-            .font(.system(size: 15))
-            .padding(.top, 12)
+            .font(.system(size: 14))
+            .padding(.top, 10)
             modeNote
                 .padding(.top, 6)
             Spacer(minLength: 0)
@@ -68,7 +68,7 @@ public struct SettingsView: View {
             }
         }
         .foregroundStyle(PanelStyle.text)
-        .padding(18)
+        .padding(16)
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .top)
         .confirmationDialog(
             "確定清除所有本機使用與休息紀錄？",
@@ -143,7 +143,7 @@ public struct SettingsView: View {
                 }
             }
             .padding(.horizontal, 10)
-            .padding(.vertical, 5)
+            .padding(.vertical, 3)
             .background(Color.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(PanelStyle.line, lineWidth: 1))
         }

@@ -28,12 +28,13 @@ extension Color {
 /// A cream rounded block, the design's grouping container.
 struct CreamBlock<Content: View>: View {
     var radius: CGFloat = 15
+    var verticalPadding: CGFloat = 13
     @ViewBuilder var content: Content
 
     var body: some View {
         content
             .padding(.horizontal, 15)
-            .padding(.vertical, 13)
+            .padding(.vertical, verticalPadding)
             .frame(maxWidth: .infinity)
             .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
