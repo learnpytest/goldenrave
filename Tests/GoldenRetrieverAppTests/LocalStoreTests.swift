@@ -67,4 +67,37 @@ final class LocalStoreTests: XCTestCase {
         XCTAssertEqual(try store.dailyTotal(on: date(0)), 0, accuracy: 0.001)
         XCTAssertEqual(try store.exportCSV(), Data("start,end,active_seconds,tracking_mode\n".utf8))
     }
+
+    func testAppUsageAddsUpDetailedSamplesPerAppWithTheirMostUsedWindows() throws {
+        let store = try makeStore()
+        func sample(_ at: TimeInterval, _ app: String, _ title: String?) throws {
+            try store.save(segment: ActivitySegment(timestamp: date(at), appName: app, windowTitle: title, browserURL: nil))
+        }
+        try sample(0, "Ghostty", "build")
+        try sample(15, "Ghostty", "build")
+        try sample(30, "Ghostty", "logs")
+        try sample(45, "Arc", nil)
+        try sample(86_400, "Arc", "tomorrow")
+
+        let usage = try store.appUsage(from: date(0), to: date(86_400))
+
+        XCTAssertEqual(usage.map(\.appName), ["Ghostty", "Arc"])
+        XCTAssertEqual(usage[0].seconds, 3 * SwiftDataLocalStore.detailedSampleInterval, accuracy: 0.001)
+        XCTAssertEqual(usage[0].topWindows, ["build", "logs"])
+        XCTAssertEqual(usage[1].seconds, SwiftDataLocalStore.detailedSampleInterval, accuracy: 0.001)
+        XCTAssertEqual(usage[1].topWindows, [], "a window from another day is not counted")
+    }
+
+    func testAnOngoingSessionCountsNowAndIsUpdatedInPlaceNotDuplicated() throws {
+        let store = try makeStore()
+        try store.saveOngoing(session: UsageRecord(start: date(0), end: date(15), activeSeconds: 15, mode: .privateMode))
+        XCTAssertEqual(try store.dailyTotal(on: date(0)), 15, accuracy: 0.001, "counted before the session ends")
+
+        try store.saveOngoing(session: UsageRecord(start: date(0), end: date(30), activeSeconds: 30, mode: .privateMode))
+        XCTAssertEqual(try store.dailyTotal(on: date(0)), 30, accuracy: 0.001, "the same record grows")
+
+        store.finishOngoingSession()
+        try store.saveOngoing(session: UsageRecord(start: date(100), end: date(110), activeSeconds: 10, mode: .privateMode))
+        XCTAssertEqual(try store.dailyTotal(on: date(0)), 40, accuracy: 0.001, "a new session after finishing is a new record")
+    }
 }

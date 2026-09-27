@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 import Foundation
 
 public struct FrontmostAppReader: DetailedActivityReader {
@@ -22,8 +23,21 @@ public struct FrontmostAppReader: DetailedActivityReader {
         return ActivitySegment(
             timestamp: Date(),
             appName: name,
-            windowTitle: nil,
+            windowTitle: Self.focusedWindowTitle(of: application),
             browserURL: browserTabReader.readURL()
         )
+    }
+
+    /// Reads the focused window's title through the Accessibility API, which
+    /// Detailed mode has already been granted.
+    private static func focusedWindowTitle(of application: NSRunningApplication) -> String? {
+        let app = AXUIElementCreateApplication(application.processIdentifier)
+        var window: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(app, kAXFocusedWindowAttribute as CFString, &window) == .success,
+              let window, CFGetTypeID(window) == AXUIElementGetTypeID() else { return nil }
+        var title: CFTypeRef?
+        guard AXUIElementCopyAttributeValue(window as! AXUIElement, kAXTitleAttribute as CFString, &title) == .success,
+              let title = title as? String, !title.isEmpty else { return nil }
+        return title
     }
 }

@@ -157,12 +157,7 @@ private struct PopoverRootView: View {
     @ViewBuilder
     private var content: some View {
         if runtime.showStatistics, let store = runtime.store {
-            StatisticsView(store: store, range: .today)
-                .overlay(alignment: .topTrailing) {
-                    Button("返回", action: runtime.openSettings)
-                        .buttonStyle(.link)
-                        .padding()
-                }
+            StatisticsView(store: store, range: .today, onClose: runtime.openSettings)
         } else if runtime.showSettings {
             SettingsView(
                 mode: Binding(

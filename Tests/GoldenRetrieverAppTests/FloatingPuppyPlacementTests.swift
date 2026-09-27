@@ -38,4 +38,9 @@ final class FloatingPuppyPlacementTests: XCTestCase {
         XCTAssertEqual(FloatingPuppyPlacement.teaser("我有點想你了，有空來摸摸我嗎？"), "我有點想你了…")
         XCTAssertEqual(FloatingPuppyPlacement.teaser("我幫你看著時間"), "我幫你看著時間")
     }
+
+    func testThePopoverContinuesTheBubbleWithTheSecondHalf() {
+        XCTAssertEqual(FloatingPuppyPlacement.remainder("我有點想你了，有空來摸摸我嗎？"), "…有空來摸摸我嗎？")
+        XCTAssertEqual(FloatingPuppyPlacement.remainder("我幫你看著時間"), "我幫你看著時間", "a line the bubble already shows whole stays whole")
+    }
 }

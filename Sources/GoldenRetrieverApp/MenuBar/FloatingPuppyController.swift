@@ -25,6 +25,12 @@ enum FloatingPuppyPlacement {
         return String(line[..<comma]) + "…"
     }
 
+    /// The popover picks up where the bubble left off.
+    static func remainder(_ line: String) -> String {
+        guard let comma = line.firstIndex(of: "，") else { return line }
+        return "…" + String(line[line.index(after: comma)...])
+    }
+
     static func isDrag(from start: CGPoint, to end: CGPoint) -> Bool {
         hypot(end.x - start.x, end.y - start.y) >= dragThreshold
     }
