@@ -161,6 +161,16 @@ public struct DogAnimationPlayer: Sendable {
         animation != .spin
     }
 
+    /// Seconds until the next frame is due, so a timer can fire exactly then.
+    /// Sampling on a fixed 0.1s tick made 0.15s run frames alternate 0.1s/0.2s
+    /// holds and gave the 0.21s walk a 0.3s hitch about once a loop.
+    public static func secondsUntilNextFrame(elapsed: TimeInterval, frameDuration: TimeInterval) -> TimeInterval {
+        guard frameDuration > 0 else { return 0.5 }
+        // The epsilon keeps 0.3 / 0.15 from landing on 1.999… and scheduling a 0s wait.
+        let step = (max(0, elapsed) / frameDuration + 1e-9).rounded(.down)
+        return (step + 1) * frameDuration - max(0, elapsed)
+    }
+
     public static func frameIndex(
         elapsed: TimeInterval,
         frameDuration: TimeInterval,

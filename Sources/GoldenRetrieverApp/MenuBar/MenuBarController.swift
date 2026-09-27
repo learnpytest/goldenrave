@@ -56,11 +56,6 @@ final class MenuBarController: NSObject {
 
         refresh()
 
-        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.renderFrame()
-            }
-        }
     }
 
     deinit {
@@ -107,6 +102,7 @@ final class MenuBarController: NSObject {
         // While the puppy is out on the desktop, the menu bar keeps only the timer.
         if floatingPuppy?.isVisible == true {
             if statusItem.button?.image != nil { statusItem.button?.image = nil }
+            scheduleNextFrame(in: 0.5)
             return
         }
         let playback = runtime.dogPlayback(at: now)
@@ -116,17 +112,32 @@ final class MenuBarController: NSObject {
             animationStartedAt = playback.startedAt ?? now
         }
         let frames = player.menuBarFrames(for: animation)
+        let elapsed = now.timeIntervalSince(animationStartedAt)
+        let frameDuration = player.menuBarFrameDuration(for: animation)
         let index = DogAnimationPlayer.frameIndex(
-            elapsed: now.timeIntervalSince(animationStartedAt),
-            frameDuration: player.menuBarFrameDuration(for: animation),
+            elapsed: elapsed,
+            frameDuration: frameDuration,
             frameCount: frames.count,
             loops: player.loops(animation)
         )
+        scheduleNextFrame(in: DogAnimationPlayer.secondsUntilNextFrame(elapsed: elapsed, frameDuration: frameDuration))
         if let shownFrame, shownFrame.animation == animation, shownFrame.index == index {
             return
         }
         shownFrame = (animation, index)
         statusItem.button?.image = frames.isEmpty ? fallbackImage() : frames[index]
+    }
+
+    private func scheduleNextFrame(in seconds: TimeInterval) {
+        frameTimer?.invalidate()
+        let timer = Timer(timeInterval: max(seconds, 0.01), repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.renderFrame()
+            }
+        }
+        timer.tolerance = 0
+        RunLoop.main.add(timer, forMode: .common)
+        frameTimer = timer
     }
 
     private func fallbackImage() -> NSImage? {
