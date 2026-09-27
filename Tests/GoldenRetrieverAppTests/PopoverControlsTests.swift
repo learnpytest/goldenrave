@@ -47,6 +47,7 @@ final class PopoverControlsTests: XCTestCase {
 
     func testThePanelIsCompactNowThatThePuppyLivesInTheMenuBar() {
         XCTAssertLessThanOrEqual(PopoverLayout.size.height, 300, "no empty space where the puppy used to be")
+        XCTAssertLessThan(PopoverLayout.mainHeight(showsActionRow: false), PopoverLayout.mainHeight(showsActionRow: true))
     }
 
     func testPetVisibilityOffersHideAndShow() {
@@ -110,5 +111,12 @@ final class PopoverControlsTests: XCTestCase {
             PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false, activityPaused: true).last,
             .resumeActivity
         )
+    }
+
+    func testTheChoiceRowOnlyShowsWhenThereIsSomethingToChoose() {
+        XCTAssertFalse(PopoverView.showsActionRow(isInviting: false, isOnBreak: false, remindersPaused: false))
+        XCTAssertTrue(PopoverView.showsActionRow(isInviting: true, isOnBreak: false, remindersPaused: false))
+        XCTAssertTrue(PopoverView.showsActionRow(isInviting: false, isOnBreak: true, remindersPaused: false))
+        XCTAssertTrue(PopoverView.showsActionRow(isInviting: false, isOnBreak: false, remindersPaused: true), "恢復 stays reachable")
     }
 }

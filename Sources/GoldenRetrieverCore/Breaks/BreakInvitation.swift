@@ -20,6 +20,10 @@ public enum BreakInvitation {
     public static let overdueGrace: TimeInterval = 10 * 60
     public static let retryAfter: TimeInterval = 20 * 60
 
+    /// Shown once the invitation has been ignored to the end and 小金金 is
+    /// out of battery; the break stays due.
+    public static let depletedLine = "金金沒電了，陪我充個電好嗎？"
+
     public static let lines: [Line] = [
         Line(text: "你已經工作好久了，要不要陪我一下？", animation: .play),
         Line(text: "我在這裡等你，想休息時叫我喔", animation: .waiting),

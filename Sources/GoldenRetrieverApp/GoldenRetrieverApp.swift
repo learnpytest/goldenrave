@@ -119,7 +119,9 @@ final class AppRuntime: ObservableObject {
                 nextBreak = dependencies.scheduler.nextBreak(after: sessionStart)
             }
         } else if sample.kind == .idle {
+            // Stepping away counts as the rest 小金金 was waiting for.
             nextBreak = nil
+            puppyIsDepleted = false
         }
         var invitationStart: Date?
         if let due = nextBreak, !remindersPaused, !isOnBreak, sample.kind == .active {
@@ -130,8 +132,10 @@ final class AppRuntime: ObservableObject {
             case .inviting(let since):
                 invitationStart = since
             case .gaveUp:
+                // Ignored to the end: 小金金 runs out of battery and the break
+                // stays due, rather than quietly being rescheduled.
                 puppyIsDepleted = true
-                nextBreak = BreakInvitation.nextDue(afterGivingUpAt: now, warningWindow: warning)
+                invitationStart = due.addingTimeInterval(-warning)
             }
         }
         if invitationStartedAt != invitationStart {
@@ -191,6 +195,7 @@ final class AppRuntime: ObservableObject {
 
     func pauseReminders() {
         remindersPaused = true
+        puppyIsDepleted = false
         nextBreak = nil
         tick()
     }
@@ -209,7 +214,8 @@ final class AppRuntime: ObservableObject {
     }
 
     func invitationText(at date: Date) -> String? {
-        invitationStartedAt.map { BreakInvitation.line(since: $0, now: date).text }
+        guard let invitationStartedAt else { return nil }
+        return puppyIsDepleted ? BreakInvitation.depletedLine : BreakInvitation.line(since: invitationStartedAt, now: date).text
     }
 
     func dogPlayback(at date: Date) -> DogAnimationPlayback {

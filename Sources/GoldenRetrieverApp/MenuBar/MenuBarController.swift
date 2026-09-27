@@ -71,6 +71,17 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
+        let height = runtime.showSettings || runtime.showStatistics
+            ? PopoverLayout.size.height
+            : PopoverLayout.mainHeight(showsActionRow: PopoverView.showsActionRow(
+                isInviting: runtime.invitationStartedAt != nil,
+                isOnBreak: runtime.breakEndsAt != nil,
+                remindersPaused: runtime.remindersPaused
+            ))
+        let size = CGSize(width: PopoverLayout.size.width, height: height)
+        if popover.contentSize != size {
+            popover.contentSize = size
+        }
         if runtime.invitationStartedAt != nil, runtime.showsPet {
             floatingPuppy?.show()
         } else {

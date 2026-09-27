@@ -41,7 +41,12 @@ extension PopoverControl {
 /// sizes made the popover shrink after returning from settings. The puppy
 /// animates in the menu bar, so the panel holds no animation and no blank area.
 enum PopoverLayout {
-    static let size = CGSize(width: 290, height: 262)
+    static let size = CGSize(width: 290, height: 240)
+    /// The main panel is shorter without the break-choice row, so no blank
+    /// row is left between the dividers.
+    static func mainHeight(showsActionRow: Bool) -> CGFloat {
+        showsActionRow ? 262 : 219
+    }
 }
 
 /// Show pet / Hide pet: whether 小金金 floats onto the desktop at break time.
@@ -146,11 +151,13 @@ public struct PopoverView: View {
             }
             divider
                 .padding(.top, 12)
-            actionRow
-                .frame(minHeight: 26)
-                .padding(.vertical, 8)
-                .padding(.horizontal, Self.blockInset)
-            divider
+            if showsActionRow {
+                actionRow
+                    .frame(minHeight: 26)
+                    .padding(.vertical, 8)
+                    .padding(.horizontal, Self.blockInset)
+                divider
+            }
             footerLink(icon: "chart.bar.fill", title: "使用統計", action: onOpenStatistics)
                 .padding(.vertical, 7)
                 .padding(.horizontal, Self.blockInset)
@@ -163,7 +170,7 @@ public struct PopoverView: View {
         .padding(.horizontal, 18)
         .padding(.top, 16)
         .padding(.bottom, 16)
-        .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .top)
+        .frame(width: PopoverLayout.size.width, height: PopoverLayout.mainHeight(showsActionRow: showsActionRow), alignment: .top)
     }
 
     private func footerLink(icon: String, title: String, action: @escaping () -> Void) -> some View {
@@ -213,6 +220,14 @@ public struct PopoverView: View {
 
     /// During a break the three activities stay so the user can switch, and
     /// ⏹／▶ stops or resumes the current one; nothing ends the break early.
+    static func showsActionRow(isInviting: Bool, isOnBreak: Bool, remindersPaused: Bool) -> Bool {
+        isInviting || isOnBreak || remindersPaused
+    }
+
+    private var showsActionRow: Bool {
+        Self.showsActionRow(isInviting: invitationText != nil, isOnBreak: breakEndsAt != nil, remindersPaused: remindersPaused)
+    }
+
     static func controls(isOnBreak: Bool, remindersPaused: Bool, hasScheduledBreak: Bool, activityPaused: Bool = false) -> [PopoverControl] {
         let activities = BreakActivity.allCases.map(PopoverControl.start)
         if isOnBreak {
@@ -322,7 +337,7 @@ public struct PopoverView: View {
             case .walk: "散步中"
             }
         case .relaxing: "自己玩，不吵你"
-        case .depleted: "沒電了，睡著了"
+        case .depleted: FloatingPuppyPlacement.remainder(BreakInvitation.depletedLine)
         }
     }
 
