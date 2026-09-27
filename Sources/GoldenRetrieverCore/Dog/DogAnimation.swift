@@ -16,6 +16,8 @@ public enum DogAnimation: String, CaseIterable, Sendable {
     case stroll
     /// Sitting up with front paws reaching out, asking for a hug.
     case cuddle
+    /// Sitting in place, noticing the time and then quietly waiting again.
+    case timeWatch = "time-watch"
 }
 
 /// `startedAt` is set for moments so they play from their first frame;
@@ -36,9 +38,9 @@ public struct DogAnimationDirector: Sendable {
     public static let bellyUpCycle: TimeInterval = 75
     public static let bellyUpLength: TimeInterval = 5
     public static let playSegment: TimeInterval = 8
-    /// Paused reminders: a quiet loop of the puppy's own business.
+    /// Paused reminders: a quiet loop of the puppy playing with its ball.
     static let relaxingLoop: [(animation: DogAnimation, length: TimeInterval)] = [
-        (.rest, 40), (.bellyUp, 5), (.idle, 30), (.playBall, 8), (.rest, 7)
+        (.playBall, 90)
     ]
 
     private struct Reward: Sendable {

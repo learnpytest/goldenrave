@@ -15,6 +15,11 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertNotNil(DogAnimationPlayer.canonicalReferenceURL())
     }
 
+    func testTimeWatchUsesItsDedicatedFourFrameSequence() {
+        XCTAssertEqual(DogAnimationPlayer.frameURLs(for: .timeWatch).count, 4)
+        XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .timeWatch).contains { $0.lastPathComponent == "rest.png" })
+    }
+
     func testMenuBarFramesFitInTheMenuBar() {
         let player = DogAnimationPlayer()
 

@@ -14,6 +14,7 @@ final class MenuBarController: NSObject {
     private var currentAnimation: DogAnimation?
     private var animationStartedAt = Date()
     private var shownFrame: (animation: DogAnimation, index: Int)?
+    private var floatingPuppy: FloatingPuppyController?
 
     init(runtime: AppRuntime) {
         self.runtime = runtime
@@ -38,6 +39,12 @@ final class MenuBarController: NSObject {
         hostingController.sizingOptions = []
         popover.contentViewController = hostingController
         popover.contentSize = PopoverLayout.size
+
+        floatingPuppy = FloatingPuppyController(
+            playbackAt: { [runtime] date in runtime.dogPlayback(at: date) },
+            lineAt: { [runtime] date in runtime.invitationText(at: date) },
+            onClick: { [weak self] in self?.showPopover() }
+        )
 
         runtimeSubscription = runtime.objectWillChange.sink { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -67,6 +74,12 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
+        if runtime.invitationStartedAt != nil {
+            floatingPuppy?.show()
+        } else {
+            floatingPuppy?.hide()
+        }
+        shownFrame = nil
         renderFrame()
         button?.toolTip = configuration.accessibilityLabel
         button?.setAccessibilityLabel(configuration.accessibilityLabel)
@@ -83,7 +96,17 @@ final class MenuBarController: NSObject {
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
     }
 
+    private func showPopover() {
+        guard let button = statusItem.button, !popover.isShown else { return }
+        popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    }
+
     private func renderFrame(now: Date = Date()) {
+        // While the puppy is out on the desktop, the menu bar keeps only the timer.
+        if floatingPuppy?.isVisible == true {
+            if statusItem.button?.image != nil { statusItem.button?.image = nil }
+            return
+        }
         let playback = runtime.dogPlayback(at: now)
         let animation = playback.animation
         if animation != currentAnimation {
@@ -149,6 +172,7 @@ private struct PopoverRootView: View {
                 breakActivity: runtime.breakActivity,
                 remindersPaused: runtime.remindersPaused,
                 invitationText: runtime.invitationText(at: Date()),
+                invitationTextAt: runtime.invitationText(at:),
                 playbackAt: runtime.dogPlayback(at:),
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,

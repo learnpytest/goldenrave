@@ -26,7 +26,7 @@ public enum BreakInvitation {
         Line(text: "我有點想你了，有空來摸摸我嗎？", animation: .bellyUp),
         Line(text: "忙完這段再來找我就好", animation: .playBall),
         Line(text: "你專心好久了，我等你的抱抱喔", animation: .cuddle),
-        Line(text: "我幫你看著時間", animation: .walk)
+        Line(text: "我幫你看著時間", animation: .timeWatch)
     ]
 
     public static func phase(due: Date, warningWindow: TimeInterval, now: Date) -> Phase {

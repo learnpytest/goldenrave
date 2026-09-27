@@ -58,6 +58,7 @@ public struct PopoverView: View {
     public let breakActivity: BreakActivity?
     public let remindersPaused: Bool
     public let invitationText: String?
+    public let invitationTextAt: ((Date) -> String?)?
     public let playbackAt: ((Date) -> DogAnimationPlayback)?
     public var onStart: (BreakActivity) -> Void
     public var onPauseReminders: () -> Void
@@ -73,6 +74,7 @@ public struct PopoverView: View {
         breakActivity: BreakActivity? = nil,
         remindersPaused: Bool = false,
         invitationText: String? = nil,
+        invitationTextAt: ((Date) -> String?)? = nil,
         playbackAt: ((Date) -> DogAnimationPlayback)? = nil,
         onStart: @escaping (BreakActivity) -> Void = { _ in },
         onPauseReminders: @escaping () -> Void = {},
@@ -87,6 +89,7 @@ public struct PopoverView: View {
         self.breakActivity = breakActivity
         self.remindersPaused = remindersPaused
         self.invitationText = invitationText
+        self.invitationTextAt = invitationTextAt
         self.playbackAt = playbackAt
         self.onStart = onStart
         self.onPauseReminders = onPauseReminders
@@ -100,7 +103,10 @@ public struct PopoverView: View {
             VStack(spacing: 4) {
                 Text("小金金陪伴中")
                     .font(.headline)
-                Text(stateDescription)
+                // The invitation line rotates every 45s while the popover stays open.
+                TimelineView(.periodic(from: .now, by: 1)) { context in
+                    Text(stateDescription(at: context.date))
+                }
                     .foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .fixedSize(horizontal: false, vertical: true)
@@ -160,6 +166,15 @@ public struct PopoverView: View {
         return activities + [remindersPaused ? .resumeReminders : .pauseReminders]
     }
 
+    /// While the puppy is inviting, the row says the break is here and keeps
+    /// the time it was planned for, rather than "現在".
+    static func breakRow(nextBreak: Date?, isInviting: Bool, now: Date) -> (title: String, value: String) {
+        if isInviting, let nextBreak {
+            return ("喘口氣時間到了", timeString(nextBreak))
+        }
+        return ("喘口氣", nextBreakText(nextBreak, now: now))
+    }
+
     /// A reminder that is already due reads "現在", never a time in the past.
     static func nextBreakText(_ nextBreak: Date?, now: Date) -> String {
         guard let nextBreak else { return "尚未排程" }
@@ -185,8 +200,23 @@ public struct PopoverView: View {
             metric((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
             metric("喘口氣", "已暫停")
+        } else if invitationText != nil {
+            let row = Self.breakRow(nextBreak: nextBreak, isInviting: true, now: Date())
+            HStack(spacing: 6) {
+                Image(systemName: "pawprint.fill")
+                Text(row.title).fontWeight(.semibold)
+                Spacer()
+                Text(row.value).monospacedDigit().fontWeight(.semibold)
+            }
+            .font(.callout)
+            .foregroundStyle(Color.orange)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Color.orange.opacity(0.16), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
+            .padding(.horizontal, -8)
         } else {
-            metric("喘口氣", Self.nextBreakText(nextBreak, now: Date()))
+            let row = Self.breakRow(nextBreak: nextBreak, isInviting: false, now: Date())
+            metric(row.title, row.value)
         }
     }
 
@@ -199,12 +229,12 @@ public struct PopoverView: View {
         }
     }
 
-    private var stateDescription: String {
+    private func stateDescription(at date: Date) -> String {
         switch dogState {
         case .idle: "等你回來"
         case .walk: "慢慢走，先熱身"
         case .run: "跑起來了！"
-        case .pounce: invitationText ?? BreakInvitation.lines[0].text
+        case .pounce: invitationTextAt?(date) ?? invitationText ?? BreakInvitation.lines[0].text
         case .rest:
             switch breakActivity ?? .rest {
             case .rest: "正在休息"
