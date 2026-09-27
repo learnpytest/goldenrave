@@ -37,6 +37,8 @@ final class FloatingPuppyController {
 
     private let panel: NSPanel
     private let preferences: AppPreferences
+    private let makeContent: () -> NSView
+    private let container: DragOrClickView
 
     init(
         playbackAt: @escaping (Date) -> DogAnimationPlayback,
@@ -60,10 +62,13 @@ final class FloatingPuppyController {
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary]
 
         let hover = HoverState()
-        let hosting = NSHostingView(rootView: FloatingPuppyView(playbackAt: playbackAt, lineAt: lineAt, hover: hover))
-        hosting.frame = CGRect(origin: .zero, size: Self.size)
-        let container = DragOrClickView(frame: hosting.frame)
-        container.addSubview(hosting)
+        makeContent = {
+            let hosting = NSHostingView(rootView: FloatingPuppyView(playbackAt: playbackAt, lineAt: lineAt, hover: hover))
+            hosting.frame = CGRect(origin: .zero, size: Self.size)
+            return hosting
+        }
+        let container = DragOrClickView(frame: CGRect(origin: .zero, size: Self.size))
+        self.container = container
         container.onClick = onClick
         container.onHover = { hover.isHovering = $0 }
         container.onDragEnded = { [weak self] origin in
@@ -82,13 +87,17 @@ final class FloatingPuppyController {
             screens: NSScreen.screens.map(\.visibleFrame)
         )
         panel.setFrameOrigin(origin)
+        // Built on show and torn down on hide: a hidden panel's TimelineViews
+        // kept redrawing, 0.7% → 4.2% CPU while idle (measured 2026-09-27).
+        container.addSubview(makeContent())
         panel.orderFrontRegardless()
     }
 
     func hide() {
         guard panel.isVisible else { return }
         panel.orderOut(nil)
-        (panel.contentView as? DragOrClickView)?.onHover?(false)
+        container.subviews.forEach { $0.removeFromSuperview() }
+        container.onHover?(false)
     }
 }
 
