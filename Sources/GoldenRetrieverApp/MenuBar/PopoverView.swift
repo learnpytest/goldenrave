@@ -147,7 +147,11 @@ public struct PopoverView: View {
                 .padding(.bottom, 14)
             CreamBlock {
                 VStack(spacing: 10) {
-                    statusRow("這次連續使用", Self.format(snapshot.currentSession))
+                    HStack(spacing: 8) {
+                        statusRow("這次連續使用", Self.format(snapshot.currentSession))
+                        // Same width as the pause button below, so both times line up.
+                        Color.clear.frame(width: Self.toggleSide, height: 1)
+                    }
                     breakMetric
                 }
             }
@@ -156,9 +160,11 @@ public struct PopoverView: View {
             actionRow
                 .frame(minHeight: 22)
                 .padding(.vertical, 8)
+                .padding(.horizontal, Self.blockInset)
             divider
             statisticsEntry
                 .padding(.top, 8)
+                .padding(.horizontal, Self.blockInset)
         }
         .onDisappear { showsEarlyBreak = false }
         .foregroundStyle(PanelStyle.text)
@@ -172,19 +178,19 @@ public struct PopoverView: View {
         Button(action: onOpenStatistics) {
             HStack {
                 Image(systemName: "chart.bar.fill")
+                    .font(.system(size: 10))
                     .foregroundStyle(PanelStyle.orange)
                 Text("使用統計")
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 11, weight: .bold))
                 Spacer()
                 Text("各 app 用了多久")
-                    .font(.system(size: 11))
+                    .font(.system(size: 10))
                     .foregroundStyle(PanelStyle.muted)
                 Image(systemName: "chevron.right")
-                    .font(.system(size: 11, weight: .bold))
+                    .font(.system(size: 9, weight: .bold))
                     .foregroundStyle(PanelStyle.chipText)
             }
             .foregroundStyle(PanelStyle.text)
-            .padding(.horizontal, 2)
             .padding(.vertical, 2)
             .contentShape(Rectangle())
         }
@@ -196,7 +202,8 @@ public struct PopoverView: View {
         if let icon = control.systemImage {
             Button { perform(control) } label: {
                 Image(systemName: icon)
-                    .font(.system(size: 18))
+                    .font(.system(size: 17))
+                    .frame(width: Self.toggleSide)
                     .foregroundStyle(control == .pauseReminders ? PanelStyle.red : PanelStyle.green)
             }
             .buttonStyle(.plain)
@@ -295,6 +302,10 @@ public struct PopoverView: View {
             }
         }
     }
+
+    /// Matches CreamBlock's inner padding so rows outside it line up with it.
+    static let blockInset: CGFloat = 15
+    static let toggleSide: CGFloat = 18
 
     /// Pause / resume sit beside the break time they control.
     @ViewBuilder
