@@ -153,7 +153,19 @@ public struct PopoverView: View {
             }
             HStack(spacing: 6) {
                 if Self.offersActivities(isInviting: invitationText != nil, isOnBreak: breakEndsAt != nil, userAskedEarly: showsEarlyBreak) {
-                    ForEach(controls, id: \.title) { control in
+                    ForEach(controls.filter { $0.systemImage == nil }, id: \.title) { control in
+                        controlButton(control)
+                    }
+                    if Self.canCancelEarlyBreak(isInviting: invitationText != nil, isOnBreak: breakEndsAt != nil, userAskedEarly: showsEarlyBreak) {
+                        Button("取消") { showsEarlyBreak = false }
+                            .buttonStyle(.plain)
+                            .font(.system(size: 11))
+                            .foregroundStyle(PanelStyle.muted)
+                            .underline()
+                            .padding(.leading, 2)
+                    }
+                    Spacer(minLength: 0)
+                    ForEach(controls.filter { $0.systemImage != nil }, id: \.title) { control in
                         controlButton(control)
                     }
                 } else {
@@ -211,7 +223,6 @@ public struct PopoverView: View {
     @ViewBuilder
     private func controlButton(_ control: PopoverControl) -> some View {
         if let icon = control.systemImage {
-            Spacer(minLength: 0)
             Button { perform(control) } label: {
                 Image(systemName: icon)
                     .font(.system(size: 24))
@@ -239,6 +250,11 @@ public struct PopoverView: View {
     /// nudge, so they wait behind 想提早喘口氣？.
     static func offersActivities(isInviting: Bool, isOnBreak: Bool, userAskedEarly: Bool) -> Bool {
         isInviting || isOnBreak || userAskedEarly
+    }
+
+    /// Only the choices the user opened early can be folded away again.
+    static func canCancelEarlyBreak(isInviting: Bool, isOnBreak: Bool, userAskedEarly: Bool) -> Bool {
+        userAskedEarly && !isInviting && !isOnBreak
     }
 
     static func controls(isOnBreak: Bool, remindersPaused: Bool, hasScheduledBreak: Bool) -> [PopoverControl] {
@@ -301,7 +317,9 @@ public struct PopoverView: View {
 
     private func perform(_ control: PopoverControl) {
         switch control {
-        case .start(let activity): onStart(activity)
+        case .start(let activity):
+            showsEarlyBreak = false
+            onStart(activity)
         case .pauseReminders: onPauseReminders()
         case .resumeReminders: onResumeReminders()
         case .endBreak: onEndBreak()

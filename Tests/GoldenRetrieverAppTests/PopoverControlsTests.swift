@@ -96,4 +96,10 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertTrue(PopoverView.offersActivities(isInviting: true, isOnBreak: false, userAskedEarly: false))
         XCTAssertTrue(PopoverView.offersActivities(isInviting: false, isOnBreak: true, userAskedEarly: false), "提早結束 stays reachable")
     }
+
+    func testEarlyBreakChoicesCanBeFoldedAwayButADueOneCannot() {
+        XCTAssertTrue(PopoverView.canCancelEarlyBreak(isInviting: false, isOnBreak: false, userAskedEarly: true))
+        XCTAssertFalse(PopoverView.canCancelEarlyBreak(isInviting: true, isOnBreak: false, userAskedEarly: true))
+        XCTAssertFalse(PopoverView.canCancelEarlyBreak(isInviting: false, isOnBreak: true, userAskedEarly: true))
+    }
 }
