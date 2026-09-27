@@ -22,7 +22,7 @@ public enum BreakInvitation {
 
     /// Shown once the invitation has been ignored to the end and 小金金 is
     /// out of battery; the break stays due.
-    public static let depletedLine = "金金沒電了，陪我充個電好嗎？"
+    public static let depletedLine = "金金沒電了，等你來摸摸就能充電"
 
     public static let lines: [Line] = [
         Line(text: "你已經工作好久了，要不要陪我一下？", animation: .play),

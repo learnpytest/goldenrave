@@ -42,6 +42,8 @@ extension PopoverControl {
 /// animates in the menu bar, so the panel holds no animation and no blank area.
 enum PopoverLayout {
     static let size = CGSize(width: 290, height: 240)
+    /// The main panel is narrower than statistics and settings, which need the room.
+    static let mainWidth: CGFloat = 260
     /// The main panel is shorter without the break-choice row, so no blank
     /// row is left between the dividers.
     static func mainHeight(showsActionRow: Bool) -> CGFloat {
@@ -131,14 +133,15 @@ public struct PopoverView: View {
         VStack(spacing: 0) {
             Text("小金金陪伴中")
                 .font(.system(size: 20, weight: .heavy))
-                .frame(minHeight: 30)
+                .frame(maxWidth: .infinity, minHeight: 30, alignment: .leading)
             // The invitation line rotates every 45s while the popover stays open.
             TimelineView(.periodic(from: .now, by: 1)) { context in
                 Text(stateDescription(at: context.date))
             }
                 .font(.system(size: 14))
                 .foregroundStyle(PanelStyle.muted)
-                .multilineTextAlignment(.center)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .lineLimit(2)
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.top, 4)
@@ -170,7 +173,7 @@ public struct PopoverView: View {
         .padding(.horizontal, 18)
         .padding(.top, 16)
         .padding(.bottom, 16)
-        .frame(width: PopoverLayout.size.width, height: PopoverLayout.mainHeight(showsActionRow: showsActionRow), alignment: .top)
+        .frame(width: PopoverLayout.mainWidth, height: PopoverLayout.mainHeight(showsActionRow: showsActionRow), alignment: .top)
     }
 
     private func footerLink(icon: String, title: String, action: @escaping () -> Void) -> some View {

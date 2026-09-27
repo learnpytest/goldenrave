@@ -71,14 +71,16 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
-        let height = runtime.showSettings || runtime.showStatistics
-            ? PopoverLayout.size.height
-            : PopoverLayout.mainHeight(showsActionRow: PopoverView.showsActionRow(
-                isInviting: runtime.invitationStartedAt != nil,
-                isOnBreak: runtime.breakEndsAt != nil,
-                remindersPaused: runtime.remindersPaused
-            ))
-        let size = CGSize(width: PopoverLayout.size.width, height: height)
+        let size = runtime.showSettings || runtime.showStatistics
+            ? PopoverLayout.size
+            : CGSize(
+                width: PopoverLayout.mainWidth,
+                height: PopoverLayout.mainHeight(showsActionRow: PopoverView.showsActionRow(
+                    isInviting: runtime.invitationStartedAt != nil,
+                    isOnBreak: runtime.breakEndsAt != nil,
+                    remindersPaused: runtime.remindersPaused
+                ))
+            )
         if popover.contentSize != size {
             popover.contentSize = size
         }
