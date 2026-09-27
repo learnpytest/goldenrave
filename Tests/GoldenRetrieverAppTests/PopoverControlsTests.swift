@@ -3,10 +3,10 @@ import XCTest
 @testable import GoldenRetrieverApp
 
 final class PopoverControlsTests: XCTestCase {
-    func testOnBreakOnlyOffersEndingItEarly() {
+    func testABreakCanSwitchActivityOrStopButNotEndEarly() {
         XCTAssertEqual(
             PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false),
-            [.endBreak]
+            [.start(.rest), .start(.play), .start(.walk), .stopActivity]
         )
     }
 
@@ -85,7 +85,7 @@ final class PopoverControlsTests: XCTestCase {
 
 
     func testEveryControlIsAnIconTitledForTooltips() {
-        let all: [PopoverControl] = [.start(.rest), .start(.play), .start(.walk), .pauseReminders, .resumeReminders, .endBreak]
+        let all: [PopoverControl] = [.start(.rest), .start(.play), .start(.walk), .pauseReminders, .resumeReminders, .stopActivity, .resumeActivity]
         XCTAssertEqual(Set(all.map(\.systemImage)).count, all.count, "each control has its own icon")
         XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停")
     }
@@ -95,7 +95,7 @@ final class PopoverControlsTests: XCTestCase {
         let onBreak = PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false)
 
         XCTAssertEqual(PopoverView.visibleControls(paused, isInviting: false), [.resumeReminders])
-        XCTAssertEqual(PopoverView.visibleControls(onBreak, isInviting: false), [.endBreak])
+        XCTAssertEqual(PopoverView.visibleControls(onBreak, isInviting: false, isOnBreak: true), onBreak)
     }
 
     func testBreakChoicesShowOnlyWhenTheBreakIsDue() {
@@ -103,5 +103,12 @@ final class PopoverControlsTests: XCTestCase {
 
         XCTAssertEqual(PopoverView.visibleControls(working, isInviting: false), [], "pause waits for the break too")
         XCTAssertEqual(PopoverView.visibleControls(working, isInviting: true), [.start(.rest), .start(.play), .start(.walk), .pauseReminders])
+    }
+
+    func testAStoppedActivityOffersToContinue() {
+        XCTAssertEqual(
+            PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false, activityPaused: true).last,
+            .resumeActivity
+        )
     }
 }

@@ -22,6 +22,7 @@ final class AppRuntime: ObservableObject {
     private var timer: Timer?
     @Published private(set) var breakEndsAt: Date?
     @Published private(set) var breakActivity: BreakActivity?
+    @Published private(set) var breakActivityPaused = false
     @Published private(set) var invitationStartedAt: Date?
     @Published private(set) var remindersPaused = false
     /// Set after the puppy gives up inviting a break; cleared when a break starts.
@@ -60,6 +61,7 @@ final class AppRuntime: ObservableObject {
         if let breakEndsAt, now >= breakEndsAt {
             self.breakEndsAt = nil
             breakActivity = nil
+            breakActivityPaused = false
             workCountsFrom = now
             animationDirector.breakCompleted(at: now, withBall: Bool.random())
         }
@@ -151,9 +153,18 @@ final class AppRuntime: ObservableObject {
     func startBreak(_ activity: BreakActivity = .rest) {
         guard let dependencies else { return }
         let now = Date()
+        // During a break another choice only switches the activity; the break
+        // keeps its end time.
+        if breakEndsAt != nil {
+            breakActivity = activity
+            breakActivityPaused = false
+            animationDirector.breakStarted(at: now, activity: activity)
+            return
+        }
         puppyIsDepleted = false
         breakEndsAt = now.addingTimeInterval(dependencies.scheduler.policy.restInterval)
         breakActivity = activity
+        breakActivityPaused = false
         invitationStartedAt = nil
         animationDirector.invitation(startedAt: nil)
         animationDirector.breakStarted(at: now, activity: activity)
@@ -189,15 +200,12 @@ final class AppRuntime: ObservableObject {
         tick()
     }
 
-    func endBreak() {
-        guard let dependencies, breakEndsAt != nil else { return }
-        breakEndsAt = nil
-        breakActivity = nil
-        workCountsFrom = Date()
-        nextBreak = nil
-        animationDirector.breakEndedEarly()
-        try? dependencies.store.save(breakEvent: BreakEventRecord(date: Date(), action: .completed))
-        tick()
+    /// ⏹ stops the current activity without ending the break; only the
+    /// break's own end time returns to work.
+    func setBreakActivityPaused(_ paused: Bool) {
+        guard breakEndsAt != nil else { return }
+        breakActivityPaused = paused
+        animationDirector.breakActivity(paused: paused)
     }
 
     func invitationText(at date: Date) -> String? {

@@ -119,4 +119,27 @@ final class DogAnimationDirectorTests: XCTestCase {
 
         XCTAssertEqual(director.animation(for: .walk, at: start.addingTimeInterval(1)), .walk)
     }
+
+    func testAStoppedBreakActivityWaitsAndResumesWhereItWas() {
+        var director = DogAnimationDirector()
+        let start = Date(timeIntervalSince1970: 0)
+        director.breakStarted(at: start, activity: .walk)
+
+        director.breakActivity(paused: true)
+        XCTAssertEqual(director.animation(for: .rest, at: start.addingTimeInterval(30)), .waiting)
+
+        director.breakActivity(paused: false)
+        XCTAssertEqual(director.animation(for: .rest, at: start.addingTimeInterval(40)), .stroll)
+    }
+
+    func testChoosingAnotherActivityClearsTheStop() {
+        var director = DogAnimationDirector()
+        let start = Date(timeIntervalSince1970: 0)
+        director.breakStarted(at: start, activity: .walk)
+        director.breakActivity(paused: true)
+
+        director.breakStarted(at: start.addingTimeInterval(60), activity: .walk)
+
+        XCTAssertEqual(director.animation(for: .rest, at: start.addingTimeInterval(70)), .stroll)
+    }
 }

@@ -5,7 +5,8 @@ enum PopoverControl: Equatable {
     case start(BreakActivity)
     case pauseReminders
     case resumeReminders
-    case endBreak
+    case stopActivity
+    case resumeActivity
 
     var title: String {
         switch self {
@@ -14,7 +15,8 @@ enum PopoverControl: Equatable {
         case .start(.walk): "散步"
         case .pauseReminders: "暫停"
         case .resumeReminders: "恢復"
-        case .endBreak: "提早結束"
+        case .stopActivity: "停下"
+        case .resumeActivity: "繼續"
         }
     }
 }
@@ -29,7 +31,8 @@ extension PopoverControl {
         case .start(.walk): "figure.walk"
         case .pauseReminders: "pause.fill"
         case .resumeReminders: "play.fill"
-        case .endBreak: "stop.fill"
+        case .stopActivity: "stop.fill"
+        case .resumeActivity: "play.circle.fill"
         }
     }
 }
@@ -74,13 +77,14 @@ public struct PopoverView: View {
     public let nextBreak: Date?
     public let breakEndsAt: Date?
     public let breakActivity: BreakActivity?
+    public let breakActivityPaused: Bool
     public let remindersPaused: Bool
     public let invitationText: String?
     public let invitationTextAt: ((Date) -> String?)?
     public var onStart: (BreakActivity) -> Void
     public var onPauseReminders: () -> Void
     public var onResumeReminders: () -> Void
-    public var onEndBreak: () -> Void
+    public var onSetBreakActivityPaused: (Bool) -> Void
     public var onOpenSettings: () -> Void
     public var onOpenStatistics: () -> Void
 
@@ -90,13 +94,14 @@ public struct PopoverView: View {
         nextBreak: Date? = nil,
         breakEndsAt: Date? = nil,
         breakActivity: BreakActivity? = nil,
+        breakActivityPaused: Bool = false,
         remindersPaused: Bool = false,
         invitationText: String? = nil,
         invitationTextAt: ((Date) -> String?)? = nil,
         onStart: @escaping (BreakActivity) -> Void = { _ in },
         onPauseReminders: @escaping () -> Void = {},
         onResumeReminders: @escaping () -> Void = {},
-        onEndBreak: @escaping () -> Void = {},
+        onSetBreakActivityPaused: @escaping (Bool) -> Void = { _ in },
         onOpenSettings: @escaping () -> Void = {},
         onOpenStatistics: @escaping () -> Void = {}
     ) {
@@ -105,13 +110,14 @@ public struct PopoverView: View {
         self.nextBreak = nextBreak
         self.breakEndsAt = breakEndsAt
         self.breakActivity = breakActivity
+        self.breakActivityPaused = breakActivityPaused
         self.remindersPaused = remindersPaused
         self.invitationText = invitationText
         self.invitationTextAt = invitationTextAt
         self.onStart = onStart
         self.onPauseReminders = onPauseReminders
         self.onResumeReminders = onResumeReminders
-        self.onEndBreak = onEndBreak
+        self.onSetBreakActivityPaused = onSetBreakActivityPaused
         self.onOpenSettings = onOpenSettings
         self.onOpenStatistics = onOpenStatistics
     }
@@ -199,17 +205,19 @@ public struct PopoverView: View {
         .accessibilityLabel(control.title)
     }
 
-    /// The controls appear with a due break. Outside one, only the way back
-    /// stays: 恢復 when paused and 提早結束 during a break.
-    static func visibleControls(_ controls: [PopoverControl], isInviting: Bool) -> [PopoverControl] {
-        isInviting ? controls : controls.filter { $0 == .resumeReminders || $0 == .endBreak }
+    /// The controls appear with a due break or during one. Otherwise only
+    /// 恢復 stays when reminders are paused, as the way back.
+    static func visibleControls(_ controls: [PopoverControl], isInviting: Bool, isOnBreak: Bool = false) -> [PopoverControl] {
+        isInviting || isOnBreak ? controls : controls.filter { $0 == .resumeReminders }
     }
 
-    static func controls(isOnBreak: Bool, remindersPaused: Bool, hasScheduledBreak: Bool) -> [PopoverControl] {
-        if isOnBreak {
-            return [.endBreak]
-        }
+    /// During a break the three activities stay so the user can switch, and
+    /// ⏹／▶ stops or resumes the current one; nothing ends the break early.
+    static func controls(isOnBreak: Bool, remindersPaused: Bool, hasScheduledBreak: Bool, activityPaused: Bool = false) -> [PopoverControl] {
         let activities = BreakActivity.allCases.map(PopoverControl.start)
+        if isOnBreak {
+            return activities + [activityPaused ? .resumeActivity : .stopActivity]
+        }
         return activities + [remindersPaused ? .resumeReminders : .pauseReminders]
     }
 
@@ -236,7 +244,8 @@ public struct PopoverView: View {
         Self.controls(
             isOnBreak: breakEndsAt != nil,
             remindersPaused: remindersPaused,
-            hasScheduledBreak: nextBreak != nil
+            hasScheduledBreak: nextBreak != nil,
+            activityPaused: breakActivityPaused
         )
     }
 
@@ -244,7 +253,7 @@ public struct PopoverView: View {
     private var breakMetric: some View {
         if let breakEndsAt {
             let minutes = Self.remainingBreakMinutes(until: breakEndsAt, now: Date())
-            statusRow((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
+            statusRow(breakActivityPaused ? "停下來了" : (breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
             statusRow("下次喘口氣", "已暫停")
         } else if invitationText != nil {
@@ -283,8 +292,8 @@ public struct PopoverView: View {
                     .foregroundStyle(isInviting ? PanelStyle.orange : PanelStyle.muted)
             }
             Spacer(minLength: 0)
-            ForEach(Self.visibleControls(controls, isInviting: isInviting), id: \.title) { control in
-                controlButton(control, emphasized: isInviting)
+            ForEach(Self.visibleControls(controls, isInviting: isInviting, isOnBreak: isOnBreak), id: \.title) { control in
+                controlButton(control, emphasized: isInviting || control == .start(breakActivity ?? .rest) && isOnBreak && !breakActivityPaused)
             }
         }
     }
@@ -294,7 +303,8 @@ public struct PopoverView: View {
         case .start(let activity): onStart(activity)
         case .pauseReminders: onPauseReminders()
         case .resumeReminders: onResumeReminders()
-        case .endBreak: onEndBreak()
+        case .stopActivity: onSetBreakActivityPaused(true)
+        case .resumeActivity: onSetBreakActivityPaused(false)
         }
     }
 
