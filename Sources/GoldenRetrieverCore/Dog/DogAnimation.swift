@@ -9,6 +9,8 @@ public enum DogAnimation: String, CaseIterable, Sendable {
     case pounce
     case spin
     case rest
+    /// Side-lying, fully sprawled asleep after working past the break invitation.
+    case depleted
     case bellyUp = "belly-up"
     case play
     case playBall = "play-ball"
@@ -107,6 +109,8 @@ public struct DogAnimationDirector: Sendable {
             case .play: return playPlayback(at: now)
             case .walk: return DogAnimationPlayback(animation: .stroll)
             }
+        case .depleted:
+            return DogAnimationPlayback(animation: .depleted)
         case .relaxing:
             return relaxingPlayback(at: now)
         }

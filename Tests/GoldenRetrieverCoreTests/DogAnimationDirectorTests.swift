@@ -12,6 +12,7 @@ final class DogAnimationDirectorTests: XCTestCase {
         XCTAssertEqual(director.animation(for: .run, at: start), .run)
         XCTAssertEqual(director.animation(for: .pounce, at: start), .pounce)
         XCTAssertEqual(director.animation(for: .rest, at: start), .rest)
+        XCTAssertEqual(director.animation(for: .depleted, at: start), .depleted)
     }
 
     func testStartingABreakSpinsBeforeLyingDown() {

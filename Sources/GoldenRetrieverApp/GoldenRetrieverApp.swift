@@ -24,6 +24,8 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var breakActivity: BreakActivity?
     @Published private(set) var invitationStartedAt: Date?
     @Published private(set) var remindersPaused = false
+    /// Set after the puppy gives up inviting a break; cleared when a break starts.
+    private var puppyIsDepleted = false
     private var activeSessionStart: Date?
     /// When the last break ended; 連續使用 counts from here.
     private var workCountsFrom: Date?
@@ -126,6 +128,7 @@ final class AppRuntime: ObservableObject {
             case .inviting(let since):
                 invitationStart = since
             case .gaveUp:
+                puppyIsDepleted = true
                 nextBreak = BreakInvitation.nextDue(afterGivingUpAt: now, warningWindow: warning)
             }
         }
@@ -139,7 +142,8 @@ final class AppRuntime: ObservableObject {
             sessionDuration: snapshot.currentSession,
             secondsUntilBreak: secondsUntilBreak,
             isOnBreak: isOnBreak,
-            remindersPaused: remindersPaused
+            remindersPaused: remindersPaused,
+            isDepleted: puppyIsDepleted
         ))
         self.dependencies = dependencies
     }
@@ -147,6 +151,7 @@ final class AppRuntime: ObservableObject {
     func startBreak(_ activity: BreakActivity = .rest) {
         guard let dependencies else { return }
         let now = Date()
+        puppyIsDepleted = false
         breakEndsAt = now.addingTimeInterval(dependencies.scheduler.policy.restInterval)
         breakActivity = activity
         invitationStartedAt = nil

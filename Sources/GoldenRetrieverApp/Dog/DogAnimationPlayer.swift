@@ -136,6 +136,7 @@ public struct DogAnimationPlayer: Sendable {
         case .pounce: 0.1
         case .spin: DogAnimationDirector.spinDuration / 12
         case .rest: 0.5
+        case .depleted: 0.8
         case .bellyUp: 0.25
         case .play, .playBall: 0.12
         case .stroll: 0.16

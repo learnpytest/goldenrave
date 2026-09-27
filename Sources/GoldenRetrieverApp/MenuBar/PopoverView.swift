@@ -311,6 +311,7 @@ public struct PopoverView: View {
             case .walk: "散步中"
             }
         case .relaxing: "自己玩，不吵你"
+        case .depleted: "沒電了，睡著了"
         }
     }
 

@@ -8,13 +8,15 @@ final class DogStateMachineTests: XCTestCase {
         active: Bool = true,
         session: TimeInterval,
         untilBreak: TimeInterval? = 1_000,
-        onBreak: Bool = false
+        onBreak: Bool = false,
+        depleted: Bool = false
     ) -> DogStateInput {
         DogStateInput(
             isActive: active,
             sessionDuration: session,
             secondsUntilBreak: untilBreak,
-            isOnBreak: onBreak
+            isOnBreak: onBreak,
+            isDepleted: depleted
         )
     }
 
@@ -50,6 +52,18 @@ final class DogStateMachineTests: XCTestCase {
     func testStopsInvitingTenMinutesAfterTheBreakWasDue() {
         XCTAssertEqual(machine.state(for: input(session: 60 * 60, untilBreak: -9 * 60)), .pounce)
         XCTAssertEqual(machine.state(for: input(session: 60 * 60, untilBreak: -10 * 60)), .run)
+    }
+
+    func testActivePuppyBecomesDepletedAfterIgnoringTheInvitation() {
+        XCTAssertEqual(
+            machine.state(for: input(session: 60 * 60, untilBreak: -10 * 60, depleted: true)),
+            .depleted
+        )
+    }
+
+    func testDepletedDoesNotOverrideARealBreakOrInactiveState() {
+        XCTAssertEqual(machine.state(for: input(active: false, session: 60 * 60, depleted: true)), .idle)
+        XCTAssertEqual(machine.state(for: input(session: 60 * 60, onBreak: true, depleted: true)), .rest)
     }
 
     func testBreakMapsToRest() {
