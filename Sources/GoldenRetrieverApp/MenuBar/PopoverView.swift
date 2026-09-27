@@ -77,13 +77,12 @@ public struct PopoverView: View {
     public let remindersPaused: Bool
     public let invitationText: String?
     public let invitationTextAt: ((Date) -> String?)?
-    public let showsPet: Bool
     public var onStart: (BreakActivity) -> Void
     public var onPauseReminders: () -> Void
     public var onResumeReminders: () -> Void
     public var onEndBreak: () -> Void
     public var onOpenSettings: () -> Void
-    public var onSetShowsPet: (Bool) -> Void
+    public var onOpenStatistics: () -> Void
 
     public init(
         snapshot: UsageSnapshot,
@@ -94,13 +93,12 @@ public struct PopoverView: View {
         remindersPaused: Bool = false,
         invitationText: String? = nil,
         invitationTextAt: ((Date) -> String?)? = nil,
-        showsPet: Bool = true,
         onStart: @escaping (BreakActivity) -> Void = { _ in },
         onPauseReminders: @escaping () -> Void = {},
         onResumeReminders: @escaping () -> Void = {},
         onEndBreak: @escaping () -> Void = {},
         onOpenSettings: @escaping () -> Void = {},
-        onSetShowsPet: @escaping (Bool) -> Void = { _ in }
+        onOpenStatistics: @escaping () -> Void = {}
     ) {
         self.snapshot = snapshot
         self.dogState = dogState
@@ -110,13 +108,12 @@ public struct PopoverView: View {
         self.remindersPaused = remindersPaused
         self.invitationText = invitationText
         self.invitationTextAt = invitationTextAt
-        self.showsPet = showsPet
         self.onStart = onStart
         self.onPauseReminders = onPauseReminders
         self.onResumeReminders = onResumeReminders
         self.onEndBreak = onEndBreak
         self.onOpenSettings = onOpenSettings
-        self.onSetShowsPet = onSetShowsPet
+        self.onOpenStatistics = onOpenStatistics
     }
 
     public var body: some View {
@@ -153,7 +150,7 @@ public struct PopoverView: View {
                     breakMetric
                 }
             }
-            petVisibility
+            statisticsEntry
                 .padding(.top, 12)
             HStack(spacing: 8) {
                 ForEach(controls, id: \.title) { control in
@@ -169,31 +166,28 @@ public struct PopoverView: View {
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .top)
     }
 
-    private var petVisibility: some View {
-        HStack {
-            Text("休息時顯示小金金")
-                .font(.system(size: 12))
-            Spacer()
-            HStack(spacing: 2) {
-                ForEach(PetVisibility.allCases, id: \.self) { option in
-                    let isOn = PetVisibility(showsPet: showsPet) == option
-                    Button { onSetShowsPet(option == .show) } label: {
-                        Text(option.title)
-                            .font(.system(size: 11, weight: isOn ? .heavy : .regular))
-                            .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
-                            .padding(.horizontal, 9)
-                            .padding(.vertical, 4)
-                            .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                }
+    private var statisticsEntry: some View {
+        Button(action: onOpenStatistics) {
+            HStack {
+                Image(systemName: "chart.bar.fill")
+                    .foregroundStyle(PanelStyle.orange)
+                Text("使用統計")
+                    .font(.system(size: 13, weight: .bold))
+                Spacer()
+                Text("各 app 用了多久")
+                    .font(.system(size: 11))
+                    .foregroundStyle(PanelStyle.muted)
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 11, weight: .bold))
+                    .foregroundStyle(PanelStyle.chipText)
             }
-            .padding(2)
-            .background(PanelStyle.chip, in: Capsule())
+            .foregroundStyle(PanelStyle.text)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 9)
+            .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
+        .buttonStyle(.plain)
     }
 
     @ViewBuilder

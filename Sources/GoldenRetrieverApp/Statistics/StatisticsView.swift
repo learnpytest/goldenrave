@@ -112,6 +112,8 @@ public struct StatisticsView: View {
                         }
                     }
                 }
+                // Room for the overlay scroller so it never covers the times.
+                .padding(.trailing, 12)
             }
         }
     }

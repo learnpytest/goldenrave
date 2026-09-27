@@ -5,9 +5,9 @@ public struct SettingsView: View {
     @Binding private var mode: TrackingMode
     @Binding private var workMinutes: Int
     @Binding private var restMinutes: Int
+    @Binding private var showsPet: Bool
     private let isAwaitingPermission: Bool
     private let onClose: () -> Void
-    private let onOpenStatistics: () -> Void
     private let onDeleteData: () -> Void
     @State private var showingDeleteConfirmation = false
 
@@ -15,17 +15,17 @@ public struct SettingsView: View {
         mode: Binding<TrackingMode>,
         workMinutes: Binding<Int> = .constant(45),
         restMinutes: Binding<Int> = .constant(10),
+        showsPet: Binding<Bool> = .constant(true),
         isAwaitingPermission: Bool = false,
         onClose: @escaping () -> Void = {},
-        onOpenStatistics: @escaping () -> Void = {},
         onDeleteData: @escaping () -> Void = {}
     ) {
         self._mode = mode
         self._workMinutes = workMinutes
         self._restMinutes = restMinutes
+        self._showsPet = showsPet
         self.isAwaitingPermission = isAwaitingPermission
         self.onClose = onClose
-        self.onOpenStatistics = onOpenStatistics
         self.onDeleteData = onDeleteData
     }
 
@@ -37,6 +37,8 @@ public struct SettingsView: View {
                     minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange, step: 1)
                 }
             }
+            petVisibility
+                .padding(.top, 10)
             HStack {
                 Text("目前模式").foregroundStyle(PanelStyle.muted)
                 Spacer()
@@ -44,9 +46,9 @@ public struct SettingsView: View {
                     .foregroundStyle(Color(hex: 0x2F4F46))
             }
             .font(.system(size: 15))
-            .padding(.top, 16)
+            .padding(.top, 12)
             modeNote
-                .padding(.top, 10)
+                .padding(.top, 6)
             Spacer(minLength: 0)
             HStack {
                 Button(action: onClose) {
@@ -63,16 +65,6 @@ public struct SettingsView: View {
                     .buttonStyle(.plain)
                     .font(.system(size: 11))
                     .foregroundStyle(PanelStyle.muted)
-                Spacer()
-                Button(action: onOpenStatistics) {
-                    Text("查看統計 ↗")
-                        .font(.system(size: 13, weight: .heavy))
-                        .foregroundStyle(Color.white)
-                        .padding(.horizontal, 18)
-                        .padding(.vertical, 8)
-                        .background(PanelStyle.orange, in: Capsule())
-                }
-                .buttonStyle(.plain)
             }
         }
         .foregroundStyle(PanelStyle.text)
@@ -86,6 +78,33 @@ public struct SettingsView: View {
             Button("清除", role: .destructive, action: onDeleteData)
             Button("取消", role: .cancel) {}
         }
+    }
+
+    private var petVisibility: some View {
+        HStack {
+            Text("休息時顯示小金金")
+                .font(.system(size: 12))
+            Spacer()
+            HStack(spacing: 2) {
+                ForEach(PetVisibility.allCases, id: \.self) { option in
+                    let isOn = PetVisibility(showsPet: showsPet) == option
+                    Button { showsPet = option == .show } label: {
+                        Text(option.title)
+                            .font(.system(size: 11, weight: isOn ? .heavy : .regular))
+                            .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(2)
+            .background(PanelStyle.chip, in: Capsule())
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     @ViewBuilder

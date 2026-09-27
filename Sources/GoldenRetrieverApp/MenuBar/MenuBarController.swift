@@ -157,7 +157,7 @@ private struct PopoverRootView: View {
     @ViewBuilder
     private var content: some View {
         if runtime.showStatistics, let store = runtime.store {
-            StatisticsView(store: store, range: .today, onClose: runtime.openSettings)
+            StatisticsView(store: store, range: .today, onClose: runtime.closeSecondaryView)
         } else if runtime.showSettings {
             SettingsView(
                 mode: Binding(
@@ -172,9 +172,12 @@ private struct PopoverRootView: View {
                     get: { runtime.restMinutes },
                     set: { runtime.setBreakMinutes(work: runtime.workMinutes, rest: $0) }
                 ),
+                showsPet: Binding(
+                    get: { runtime.showsPet },
+                    set: runtime.setShowsPet
+                ),
                 isAwaitingPermission: runtime.isAwaitingDetailedPermission,
                 onClose: runtime.closeSecondaryView,
-                onOpenStatistics: runtime.openStatistics,
                 onDeleteData: runtime.deleteAllData
             )
         } else {
@@ -187,13 +190,12 @@ private struct PopoverRootView: View {
                 remindersPaused: runtime.remindersPaused,
                 invitationText: runtime.invitationText(at: Date()),
                 invitationTextAt: runtime.invitationText(at:),
-                showsPet: runtime.showsPet,
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,
                 onResumeReminders: runtime.resumeReminders,
                 onEndBreak: runtime.endBreak,
                 onOpenSettings: runtime.openSettings,
-                onSetShowsPet: runtime.setShowsPet
+                onOpenStatistics: runtime.openStatistics
             )
         }
     }
