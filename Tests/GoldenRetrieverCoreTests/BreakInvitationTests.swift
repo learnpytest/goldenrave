@@ -55,6 +55,17 @@ final class BreakInvitationTests: XCTestCase {
         XCTAssertEqual(BreakInvitation.lines.first { $0.text == "我幫你看著時間" }?.animation, .timeWatch)
     }
 
+    func testWaitingLinesUseTheDedicatedWaitingAnimation() {
+        XCTAssertEqual(
+            BreakInvitation.lines.first { $0.text == "我在這裡等你，想休息時叫我喔" }?.animation,
+            .waiting
+        )
+        XCTAssertEqual(
+            BreakInvitation.lines.first { $0.text == "忙完這段再來找我就好" }?.animation,
+            .waiting
+        )
+    }
+
     func testUsesTheSixChosenLines() {
         XCTAssertEqual(BreakInvitation.lines.map(\.text), [
             "你已經工作好久了，要不要陪我一下？",

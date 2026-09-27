@@ -35,9 +35,27 @@ extension PopoverControl {
 }
 
 /// Every popover screen shares one size; swapping screens of different
-/// sizes made the popover shrink after returning from settings.
+/// sizes made the popover shrink after returning from settings. The puppy
+/// animates in the menu bar, so the panel holds no animation and no blank area.
 enum PopoverLayout {
-    static let size = CGSize(width: 320, height: 310)
+    static let size = CGSize(width: 320, height: 260)
+}
+
+/// Show pet / Hide pet: whether 小金金 floats onto the desktop at break time.
+enum PetVisibility: CaseIterable {
+    case hide
+    case show
+
+    init(showsPet: Bool) {
+        self = showsPet ? .show : .hide
+    }
+
+    var title: String {
+        switch self {
+        case .hide: "Hide pet"
+        case .show: "Show pet"
+        }
+    }
 }
 
 extension BreakActivity {
@@ -59,12 +77,13 @@ public struct PopoverView: View {
     public let remindersPaused: Bool
     public let invitationText: String?
     public let invitationTextAt: ((Date) -> String?)?
-    public let playbackAt: ((Date) -> DogAnimationPlayback)?
+    public let showsPet: Bool
     public var onStart: (BreakActivity) -> Void
     public var onPauseReminders: () -> Void
     public var onResumeReminders: () -> Void
     public var onEndBreak: () -> Void
     public var onOpenSettings: () -> Void
+    public var onSetShowsPet: (Bool) -> Void
 
     public init(
         snapshot: UsageSnapshot,
@@ -75,12 +94,13 @@ public struct PopoverView: View {
         remindersPaused: Bool = false,
         invitationText: String? = nil,
         invitationTextAt: ((Date) -> String?)? = nil,
-        playbackAt: ((Date) -> DogAnimationPlayback)? = nil,
+        showsPet: Bool = true,
         onStart: @escaping (BreakActivity) -> Void = { _ in },
         onPauseReminders: @escaping () -> Void = {},
         onResumeReminders: @escaping () -> Void = {},
         onEndBreak: @escaping () -> Void = {},
-        onOpenSettings: @escaping () -> Void = {}
+        onOpenSettings: @escaping () -> Void = {},
+        onSetShowsPet: @escaping (Bool) -> Void = { _ in }
     ) {
         self.snapshot = snapshot
         self.dogState = dogState
@@ -90,71 +110,116 @@ public struct PopoverView: View {
         self.remindersPaused = remindersPaused
         self.invitationText = invitationText
         self.invitationTextAt = invitationTextAt
-        self.playbackAt = playbackAt
+        self.showsPet = showsPet
         self.onStart = onStart
         self.onPauseReminders = onPauseReminders
         self.onResumeReminders = onResumeReminders
         self.onEndBreak = onEndBreak
         self.onOpenSettings = onOpenSettings
+        self.onSetShowsPet = onSetShowsPet
     }
 
     public var body: some View {
-        VStack(spacing: 12) {
-            VStack(spacing: 4) {
+        VStack(spacing: 0) {
+            ZStack {
                 Text("小金金陪伴中")
-                    .font(.headline)
-                // The invitation line rotates every 45s while the popover stays open.
-                TimelineView(.periodic(from: .now, by: 1)) { context in
-                    Text(stateDescription(at: context.date))
+                    .font(.system(size: 20, weight: .heavy))
+                HStack {
+                    Spacer()
+                    Button(action: onOpenSettings) {
+                        Image(systemName: "gearshape")
+                            .font(.system(size: 17))
+                    }
+                    .buttonStyle(.borderless)
+                    .help("設定")
+                    .accessibilityLabel("設定")
                 }
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(.horizontal, 24)
-            .frame(maxWidth: .infinity)
-            .overlay(alignment: .topTrailing) {
-                Button(action: onOpenSettings) {
-                    Image(systemName: "gearshape")
-                        .font(.title3)
+            .frame(minHeight: 30)
+            // The invitation line rotates every 45s while the popover stays open.
+            TimelineView(.periodic(from: .now, by: 1)) { context in
+                Text(stateDescription(at: context.date))
+            }
+                .font(.system(size: 14))
+                .foregroundStyle(PanelStyle.muted)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.top, 4)
+                .padding(.bottom, 14)
+            CreamBlock {
+                VStack(spacing: 10) {
+                    statusRow("這次連續使用", Self.format(snapshot.currentSession))
+                    breakMetric
                 }
-                .buttonStyle(.borderless)
-                .help("設定")
-                .accessibilityLabel("設定")
             }
-            DogAnimationView(playbackAt: playbackAt ?? { [dogState] date in
-                DogAnimationDirector().playback(for: dogState, at: date)
-            })
-                .frame(width: DogAnimationPlayer.popoverSide, height: DogAnimationPlayer.popoverSide)
-                .frame(maxWidth: .infinity)
-            VStack(spacing: 6) {
-                metric("這次連續使用", Self.format(snapshot.currentSession))
-                breakMetric
-            }
+            petVisibility
+                .padding(.top, 12)
             HStack(spacing: 8) {
                 ForEach(controls, id: \.title) { control in
                     controlButton(control)
                 }
             }
-            .frame(maxWidth: .infinity)
+            .padding(.top, 14)
         }
-        .padding(16)
+        .foregroundStyle(PanelStyle.text)
+        .padding(.horizontal, 18)
+        .padding(.top, 16)
+        .padding(.bottom, 16)
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .top)
+    }
+
+    private var petVisibility: some View {
+        HStack {
+            Text("休息時顯示小金金")
+                .font(.system(size: 12))
+            Spacer()
+            HStack(spacing: 2) {
+                ForEach(PetVisibility.allCases, id: \.self) { option in
+                    let isOn = PetVisibility(showsPet: showsPet) == option
+                    Button { onSetShowsPet(option == .show) } label: {
+                        Text(option.title)
+                            .font(.system(size: 11, weight: isOn ? .heavy : .regular))
+                            .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 4)
+                            .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(2)
+            .background(PanelStyle.chip, in: Capsule())
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
     }
 
     @ViewBuilder
     private func controlButton(_ control: PopoverControl) -> some View {
         if let icon = control.systemImage {
+            Spacer(minLength: 0)
             Button { perform(control) } label: {
                 Image(systemName: icon)
-                    .font(.title2)
-                    .foregroundStyle(control.iconColor)
+                    .font(.system(size: 30))
+                    .foregroundStyle(control == .pauseReminders ? PanelStyle.red : PanelStyle.green)
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain)
             .help(control.title)
             .accessibilityLabel(control.title)
         } else {
-            Button(control.title) { perform(control) }
+            // No highlighted choice: none of them is running until tapped, and a
+            // tap switches to the ongoing-break screen.
+            Button { perform(control) } label: {
+                Text(control.title)
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(PanelStyle.chipText)
+                    .padding(.horizontal, 13)
+                    .padding(.vertical, 8)
+                    .background(PanelStyle.chip, in: RoundedRectangle(cornerRadius: 10, style: .continuous))
+            }
+            .buttonStyle(.plain)
         }
     }
 
@@ -172,7 +237,7 @@ public struct PopoverView: View {
         if isInviting, let nextBreak {
             return ("喘口氣時間到了", timeString(nextBreak))
         }
-        return ("喘口氣", nextBreakText(nextBreak, now: now))
+        return ("下次喘口氣", nextBreakText(nextBreak, now: now))
     }
 
     /// A reminder that is already due reads "現在", never a time in the past.
@@ -197,26 +262,22 @@ public struct PopoverView: View {
     private var breakMetric: some View {
         if let breakEndsAt {
             let minutes = Self.remainingBreakMinutes(until: breakEndsAt, now: Date())
-            metric((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
+            statusRow((breakActivity ?? .rest).ongoingTitle, "還剩 \(minutes) 分鐘（\(Self.timeString(breakEndsAt)) 結束）")
         } else if remindersPaused {
-            metric("喘口氣", "已暫停")
+            statusRow("下次喘口氣", "已暫停")
         } else if invitationText != nil {
             let row = Self.breakRow(nextBreak: nextBreak, isInviting: true, now: Date())
             HStack(spacing: 6) {
                 Image(systemName: "pawprint.fill")
                 Text(row.title).fontWeight(.semibold)
                 Spacer()
-                Text(row.value).monospacedDigit().fontWeight(.semibold)
+                Text(row.value).font(.system(size: 16, weight: .bold)).monospacedDigit()
             }
-            .font(.callout)
-            .foregroundStyle(Color.orange)
-            .padding(.horizontal, 8)
-            .padding(.vertical, 3)
-            .background(Color.orange.opacity(0.16), in: RoundedRectangle(cornerRadius: 7, style: .continuous))
-            .padding(.horizontal, -8)
+            .font(.system(size: 14))
+            .foregroundStyle(PanelStyle.orange)
         } else {
             let row = Self.breakRow(nextBreak: nextBreak, isInviting: false, now: Date())
-            metric(row.title, row.value)
+            statusRow(row.title, row.value)
         }
     }
 
@@ -245,13 +306,17 @@ public struct PopoverView: View {
         }
     }
 
-    private func metric(_ title: String, _ value: String) -> some View {
-        HStack {
+    private func statusRow(_ title: String, _ value: String) -> some View {
+        HStack(spacing: 12) {
             Text(title)
+                .font(.system(size: 14))
             Spacer()
-            Text(value).monospacedDigit().foregroundStyle(.secondary)
+            Text(value)
+                .font(.system(size: 16, weight: .bold))
+                .monospacedDigit()
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
-        .font(.callout)
     }
 
     private static func format(_ seconds: TimeInterval) -> String {

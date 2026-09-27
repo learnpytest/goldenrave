@@ -30,39 +30,53 @@ public struct SettingsView: View {
     }
 
     public var body: some View {
-        ScrollView {
-            Form {
-                Section("休息時間") {
-                    Stepper(value: $workMinutes, in: BreakPolicy.workMinutesRange, step: 5) {
-                        Text("每工作 \(workMinutes) 分鐘休息一次")
-                    }
-                    Stepper(value: $restMinutes, in: BreakPolicy.restMinutesRange) {
-                        Text("每次休息 \(restMinutes) 分鐘")
-                    }
+        VStack(alignment: .leading, spacing: 0) {
+            CreamBlock {
+                VStack(spacing: 10) {
+                    minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange, step: 5)
+                    minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange, step: 1)
                 }
-                Picker("紀錄模式", selection: $mode) {
-                    Text("Private：只記使用時間").tag(TrackingMode.privateMode)
-                    Text("Detailed：記錄 app／視窗").tag(TrackingMode.detailed)
-                }
-                .pickerStyle(.radioGroup)
-                if isAwaitingPermission {
-                    Text("等待輔助使用權限：在「系統設定 → 隱私權與安全性 → 輔助使用」允許 Golden Retriever 後，會自動切到 Detailed。若清單裡已經打開卻沒有切換，請先把 Golden Retriever 移除（−），再重新加入。")
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .fixedSize(horizontal: false, vertical: true)
-                } else if mode == .detailed {
-                    Text("Detailed 模式已使用輔助使用權限讀取前景 app 與視窗名稱。")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                Button("查看統計", action: onOpenStatistics)
-                Button("清除本機資料", role: .destructive) {
-                    showingDeleteConfirmation = true
-                }
-                Button("返回", action: onClose)
             }
-            .padding()
+            HStack {
+                Text("目前模式").foregroundStyle(PanelStyle.muted)
+                Spacer()
+                Text(mode == .detailed ? "Detailed" : "Private")
+                    .foregroundStyle(Color(hex: 0x2F4F46))
+            }
+            .font(.system(size: 15))
+            .padding(.top, 16)
+            modeNote
+                .padding(.top, 10)
+            Spacer(minLength: 0)
+            HStack {
+                Button(action: onClose) {
+                    Text("返回")
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(PanelStyle.chipText)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 8)
+                        .overlay(Capsule().stroke(PanelStyle.line, lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                Spacer()
+                Button("清除本機資料") { showingDeleteConfirmation = true }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundStyle(PanelStyle.muted)
+                Spacer()
+                Button(action: onOpenStatistics) {
+                    Text("查看統計 ↗")
+                        .font(.system(size: 13, weight: .heavy))
+                        .foregroundStyle(Color.white)
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 8)
+                        .background(PanelStyle.orange, in: Capsule())
+                }
+                .buttonStyle(.plain)
+            }
         }
+        .foregroundStyle(PanelStyle.text)
+        .padding(18)
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .top)
         .confirmationDialog(
             "確定清除所有本機使用與休息紀錄？",
@@ -72,5 +86,57 @@ public struct SettingsView: View {
             Button("清除", role: .destructive, action: onDeleteData)
             Button("取消", role: .cancel) {}
         }
+    }
+
+    @ViewBuilder
+    private var modeNote: some View {
+        if isAwaitingPermission {
+            Text("等待輔助使用權限：到「系統設定 → 隱私權與安全性 → 輔助使用」允許後，會自動切到 Detailed。")
+                .font(.system(size: 11))
+                .foregroundStyle(PanelStyle.orange)
+                .fixedSize(horizontal: false, vertical: true)
+        } else if mode == .detailed {
+            Button("改回 Private 只記使用時間 →") { mode = .privateMode }
+                .buttonStyle(.plain)
+                .font(.system(size: 14))
+                .foregroundStyle(PanelStyle.green)
+                .underline()
+        } else {
+            Button("前往 Detailed 詳細設定 →") { mode = .detailed }
+                .buttonStyle(.plain)
+                .font(.system(size: 14))
+                .foregroundStyle(PanelStyle.green)
+                .underline()
+        }
+    }
+
+    private func minutesRow(_ title: String, value: Binding<Int>, range: ClosedRange<Int>, step: Int) -> some View {
+        HStack {
+            Text(title).font(.system(size: 15, weight: .heavy))
+            Spacer()
+            HStack(spacing: 8) {
+                Text("\(value.wrappedValue) 分鐘")
+                    .font(.system(size: 15))
+                    .monospacedDigit()
+                VStack(spacing: 0) {
+                    arrow("chevron.up") { value.wrappedValue = min(value.wrappedValue + step, range.upperBound) }
+                    arrow("chevron.down") { value.wrappedValue = max(value.wrappedValue - step, range.lowerBound) }
+                }
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 5)
+            .background(Color.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(PanelStyle.line, lineWidth: 1))
+        }
+    }
+
+    private func arrow(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(PanelStyle.stepperArrow)
+                .frame(width: 16, height: 11)
+        }
+        .buttonStyle(.plain)
     }
 }

@@ -31,6 +31,8 @@ final class MenuBarController: NSObject {
         statusItem.button?.font = .monospacedDigitSystemFont(ofSize: NSFont.smallSystemFontSize, weight: .regular)
 
         popover.behavior = .transient
+        // The A-version panel is a light cream design; keep the popover chrome light too.
+        popover.appearance = NSAppearance(named: .aqua)
         popover.animates = true
         // Built once and kept: the root view observes the runtime, so updates
         // re-render in place. Rebuilding the controller on every change made
@@ -54,11 +56,6 @@ final class MenuBarController: NSObject {
 
         refresh()
 
-        frameTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.renderFrame()
-            }
-        }
     }
 
     deinit {
@@ -74,7 +71,7 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
-        if runtime.invitationStartedAt != nil {
+        if runtime.invitationStartedAt != nil, runtime.showsPet {
             floatingPuppy?.show()
         } else {
             floatingPuppy?.hide()
@@ -105,6 +102,7 @@ final class MenuBarController: NSObject {
         // While the puppy is out on the desktop, the menu bar keeps only the timer.
         if floatingPuppy?.isVisible == true {
             if statusItem.button?.image != nil { statusItem.button?.image = nil }
+            scheduleNextFrame(in: 0.5)
             return
         }
         let playback = runtime.dogPlayback(at: now)
@@ -114,17 +112,32 @@ final class MenuBarController: NSObject {
             animationStartedAt = playback.startedAt ?? now
         }
         let frames = player.menuBarFrames(for: animation)
+        let elapsed = now.timeIntervalSince(animationStartedAt)
+        let frameDuration = player.menuBarFrameDuration(for: animation)
         let index = DogAnimationPlayer.frameIndex(
-            elapsed: now.timeIntervalSince(animationStartedAt),
-            frameDuration: player.menuBarFrameDuration(for: animation),
+            elapsed: elapsed,
+            frameDuration: frameDuration,
             frameCount: frames.count,
             loops: player.loops(animation)
         )
+        scheduleNextFrame(in: DogAnimationPlayer.secondsUntilNextFrame(elapsed: elapsed, frameDuration: frameDuration))
         if let shownFrame, shownFrame.animation == animation, shownFrame.index == index {
             return
         }
         shownFrame = (animation, index)
         statusItem.button?.image = frames.isEmpty ? fallbackImage() : frames[index]
+    }
+
+    private func scheduleNextFrame(in seconds: TimeInterval) {
+        frameTimer?.invalidate()
+        let timer = Timer(timeInterval: max(seconds, 0.01), repeats: false) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.renderFrame()
+            }
+        }
+        timer.tolerance = 0
+        RunLoop.main.add(timer, forMode: .common)
+        frameTimer = timer
     }
 
     private func fallbackImage() -> NSImage? {
@@ -137,6 +150,12 @@ private struct PopoverRootView: View {
     @ObservedObject var runtime: AppRuntime
 
     var body: some View {
+        content
+            .background(PanelStyle.panel)
+    }
+
+    @ViewBuilder
+    private var content: some View {
         if runtime.showStatistics, let store = runtime.store {
             StatisticsView(store: store, range: .today)
                 .overlay(alignment: .topTrailing) {
@@ -173,12 +192,13 @@ private struct PopoverRootView: View {
                 remindersPaused: runtime.remindersPaused,
                 invitationText: runtime.invitationText(at: Date()),
                 invitationTextAt: runtime.invitationText(at:),
-                playbackAt: runtime.dogPlayback(at:),
+                showsPet: runtime.showsPet,
                 onStart: { [runtime] activity in runtime.startBreak(activity) },
                 onPauseReminders: runtime.pauseReminders,
                 onResumeReminders: runtime.resumeReminders,
                 onEndBreak: runtime.endBreak,
-                onOpenSettings: runtime.openSettings
+                onOpenSettings: runtime.openSettings,
+                onSetShowsPet: runtime.setShowsPet
             )
         }
     }

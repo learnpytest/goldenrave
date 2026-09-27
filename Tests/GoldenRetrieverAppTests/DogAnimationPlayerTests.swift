@@ -20,6 +20,11 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .timeWatch).contains { $0.lastPathComponent == "rest.png" })
     }
 
+    func testWaitingUsesItsDedicatedEightFrameSequence() {
+        XCTAssertEqual(DogAnimationPlayer.frameURLs(for: .waiting).count, 8)
+        XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .waiting).contains { $0.lastPathComponent == "rest.png" })
+    }
+
     func testMenuBarFramesFitInTheMenuBar() {
         let player = DogAnimationPlayer()
 
@@ -116,5 +121,11 @@ final class DogAnimationPlayerTests: XCTestCase {
 
         XCTAssertLessThan(player.frameDuration(for: .run), player.frameDuration(for: .walk))
         XCTAssertLessThan(player.frameDuration(for: .walk), player.frameDuration(for: .rest))
+    }
+
+    func testTheNextFrameIsScheduledOnItsOwnBoundaryNotAFixedTick() {
+        XCTAssertEqual(DogAnimationPlayer.secondsUntilNextFrame(elapsed: 0, frameDuration: 0.15), 0.15, accuracy: 0.0001)
+        XCTAssertEqual(DogAnimationPlayer.secondsUntilNextFrame(elapsed: 0.2, frameDuration: 0.15), 0.1, accuracy: 0.0001)
+        XCTAssertEqual(DogAnimationPlayer.secondsUntilNextFrame(elapsed: 0.3, frameDuration: 0.15), 0.15, accuracy: 0.0001)
     }
 }

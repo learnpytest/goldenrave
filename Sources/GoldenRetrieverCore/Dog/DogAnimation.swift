@@ -16,6 +16,8 @@ public enum DogAnimation: String, CaseIterable, Sendable {
     case stroll
     /// Sitting up with front paws reaching out, asking for a hug.
     case cuddle
+    /// Sitting awake in place, gently wagging while waiting without interrupting.
+    case waiting
     /// Sitting in place, noticing the time and then quietly waiting again.
     case timeWatch = "time-watch"
 }
