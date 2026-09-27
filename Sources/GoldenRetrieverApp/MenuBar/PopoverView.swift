@@ -38,7 +38,7 @@ extension PopoverControl {
 /// sizes made the popover shrink after returning from settings. The puppy
 /// animates in the menu bar, so the panel holds no animation and no blank area.
 enum PopoverLayout {
-    static let size = CGSize(width: 320, height: 260)
+    static let size = CGSize(width: 320, height: 240)
 }
 
 /// Show pet / Hide pet: whether 小金金 floats onto the desktop at break time.
