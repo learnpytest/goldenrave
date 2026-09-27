@@ -33,7 +33,7 @@ enum FloatingPuppyPlacement {
 /// Shows the puppy on the desktop while a break invitation is running.
 @MainActor
 final class FloatingPuppyController {
-    static let size = CGSize(width: 240, height: 190)
+    static let size = CGSize(width: 180, height: 170)
 
     private let panel: NSPanel
     private let preferences: AppPreferences
@@ -150,9 +150,8 @@ private struct FloatingPuppyView: View {
                 Text(FloatingPuppyPlacement.teaser(lineAt(context.date) ?? BreakInvitation.lines[0].text))
             }
                 .font(.system(size: 13, weight: .medium))
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-                .frame(maxWidth: 220)
+                .lineLimit(1)
+                .fixedSize()
                 .foregroundStyle(Color(nsColor: .labelColor))
                 .padding(.horizontal, 10)
                 .padding(.vertical, 5)
