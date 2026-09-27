@@ -140,6 +140,7 @@ public struct DogAnimationPlayer: Sendable {
         case .play, .playBall: 0.12
         case .stroll: 0.16
         case .cuddle: 0.2
+        case .waiting: 0.32
         case .timeWatch: 0.6
         }
     }
@@ -211,7 +212,7 @@ public struct DogAnimationPlayer: Sendable {
         case .walk, .spin, .stroll: "walk"
         case .run: "run"
         case .pounce: "jump"
-        case .idle, .rest, .bellyUp, .cuddle, .timeWatch: "rest"
+        case .idle, .rest, .bellyUp, .cuddle, .waiting, .timeWatch: "rest"
         case .play, .playBall: "play"
         }
     }
