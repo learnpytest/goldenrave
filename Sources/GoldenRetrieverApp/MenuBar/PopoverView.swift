@@ -38,7 +38,7 @@ extension PopoverControl {
 /// sizes made the popover shrink after returning from settings. The puppy
 /// animates in the menu bar, so the panel holds no animation and no blank area.
 enum PopoverLayout {
-    static let size = CGSize(width: 320, height: 262)
+    static let size = CGSize(width: 290, height: 262)
 }
 
 /// Show pet / Hide pet: whether 小金金 floats onto the desktop at break time.
@@ -199,9 +199,10 @@ public struct PopoverView: View {
         .accessibilityLabel(control.title)
     }
 
-    /// 休息／陪玩／散步 exist for a due break; before then only pause shows.
+    /// The controls appear with a due break. Outside one, only the way back
+    /// stays: 恢復 when paused and 提早結束 during a break.
     static func visibleControls(_ controls: [PopoverControl], isInviting: Bool) -> [PopoverControl] {
-        isInviting ? controls : controls.filter { if case .start = $0 { false } else { true } }
+        isInviting ? controls : controls.filter { $0 == .resumeReminders || $0 == .endBreak }
     }
 
     static func controls(isOnBreak: Bool, remindersPaused: Bool, hasScheduledBreak: Bool) -> [PopoverControl] {
@@ -271,7 +272,7 @@ public struct PopoverView: View {
     }
 
     /// Due: 陪金金 and the three ways to take the break, then pause, all on
-    /// the right. Otherwise only pause (or 提早結束 during a break).
+    /// the right.
     private var actionRow: some View {
         let isInviting = invitationText != nil
         let isOnBreak = breakEndsAt != nil

@@ -90,10 +90,18 @@ final class PopoverControlsTests: XCTestCase {
         XCTAssertEqual(PopoverControl.pauseReminders.title, "暫停")
     }
 
+    func testPausedRemindersKeepTheirWayBackAndABreakCanStillEndEarly() {
+        let paused = PopoverView.controls(isOnBreak: false, remindersPaused: true, hasScheduledBreak: false)
+        let onBreak = PopoverView.controls(isOnBreak: true, remindersPaused: false, hasScheduledBreak: false)
+
+        XCTAssertEqual(PopoverView.visibleControls(paused, isInviting: false), [.resumeReminders])
+        XCTAssertEqual(PopoverView.visibleControls(onBreak, isInviting: false), [.endBreak])
+    }
+
     func testBreakChoicesShowOnlyWhenTheBreakIsDue() {
         let working = PopoverView.controls(isOnBreak: false, remindersPaused: false, hasScheduledBreak: true)
 
-        XCTAssertEqual(PopoverView.visibleControls(working, isInviting: false), [.pauseReminders])
+        XCTAssertEqual(PopoverView.visibleControls(working, isInviting: false), [], "pause waits for the break too")
         XCTAssertEqual(PopoverView.visibleControls(working, isInviting: true), [.start(.rest), .start(.play), .start(.walk), .pauseReminders])
     }
 }
