@@ -60,7 +60,7 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertLessThanOrEqual(rep.pixelsHigh, Int(DogAnimationPlayer.menuBarHeight) * 2, "Menu bar frames should not keep the full-size bitmap")
     }
 
-    func testMenuBarSwapsFramesAtMostAboutSevenTimesASecondButRunStaysFasterThanWalk() {
+    func testMenuBarSwapsFramesAtMostAboutSevenTimesASecond() {
         let player = DogAnimationPlayer()
 
         for animation in DogAnimation.allCases where animation != .spin {
@@ -70,7 +70,6 @@ final class DogAnimationPlayerTests: XCTestCase {
                 "\(animation)"
             )
         }
-        XCTAssertLessThan(player.menuBarFrameDuration(for: .run), player.menuBarFrameDuration(for: .walk))
         XCTAssertEqual(player.menuBarFrameDuration(for: .spin), player.frameDuration(for: .spin))
     }
 
@@ -125,10 +124,13 @@ final class DogAnimationPlayerTests: XCTestCase {
         )
     }
 
-    func testFastMotionsCycleFasterThanCalmOnes() {
+    func testLongRunningMotionsStayCalmSoTheyDoNotDazzle() {
         let player = DogAnimationPlayer()
 
-        XCTAssertLessThan(player.frameDuration(for: .run), player.frameDuration(for: .walk))
+        for animation: DogAnimation in [.run, .walk, .play, .playBall, .stroll, .cuddle] {
+            XCTAssertEqual(player.frameDuration(for: animation), 0.3, accuracy: 0.0001, "\(animation)")
+        }
+        XCTAssertEqual(player.frameDuration(for: .bellyUp), 0.375, accuracy: 0.0001)
         XCTAssertLessThan(player.frameDuration(for: .walk), player.frameDuration(for: .rest))
     }
 
