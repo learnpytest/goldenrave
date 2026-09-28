@@ -311,6 +311,7 @@ final class AppRuntime: ObservableObject {
 
     func deleteAllData() {
         try? dependencies?.store.deleteAll()
+        StoreLocation.removeLegacy(applicationSupport: StoreLocation.applicationSupport)
     }
 
     var store: (any LocalStore)? { dependencies?.store }

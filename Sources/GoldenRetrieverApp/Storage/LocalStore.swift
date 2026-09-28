@@ -44,7 +44,8 @@ public final class SwiftDataLocalStore: LocalStore, DetailedActivityStore {
     }
 
     public static func makeDefault(calendar: Calendar = .current) throws -> SwiftDataLocalStore {
-        let configuration = ModelConfiguration(isStoredInMemoryOnly: false)
+        let url = try StoreLocation.prepare(applicationSupport: StoreLocation.applicationSupport)
+        let configuration = ModelConfiguration(url: url)
         let container = try ModelContainer(
             for: UsageSessionModel.self,
             BreakEventModel.self,
