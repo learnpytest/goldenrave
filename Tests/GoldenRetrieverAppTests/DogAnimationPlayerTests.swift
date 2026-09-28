@@ -71,6 +71,9 @@ final class DogAnimationPlayerTests: XCTestCase {
             )
         }
         XCTAssertEqual(player.menuBarFrameDuration(for: .spin), player.frameDuration(for: .spin))
+        XCTAssertEqual(player.menuBarFrameDuration(for: .run), 0.3, accuracy: 0.0001)
+        XCTAssertEqual(player.menuBarFrameDuration(for: .play), 0.3, accuracy: 0.0001)
+        XCTAssertEqual(player.menuBarFrameDuration(for: .walk), 0.45, accuracy: 0.0001)
     }
 
     func testPopoverFramesArePreScaledToThePopoverSize() throws {
