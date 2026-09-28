@@ -53,7 +53,7 @@ enum PopoverLayout {
     }
 }
 
-/// Show pet / Hide pet: whether 小金金 floats onto the desktop at break time.
+/// Show / Hide: whether 小金金 floats onto the desktop at break time.
 enum PetVisibility: CaseIterable {
     case hide
     case show
@@ -64,8 +64,8 @@ enum PetVisibility: CaseIterable {
 
     var title: String {
         switch self {
-        case .hide: "Hide pet"
-        case .show: "Show pet"
+        case .hide: "Hide"
+        case .show: "Show"
         }
     }
 }

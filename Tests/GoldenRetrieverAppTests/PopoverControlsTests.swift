@@ -51,7 +51,7 @@ final class PopoverControlsTests: XCTestCase {
     }
 
     func testPetVisibilityOffersHideAndShow() {
-        XCTAssertEqual(PetVisibility.allCases.map(\.title), ["Hide pet", "Show pet"])
+        XCTAssertEqual(PetVisibility.allCases.map(\.title), ["Hide", "Show"])
         XCTAssertEqual(PetVisibility(showsPet: true), .show)
         XCTAssertEqual(PetVisibility(showsPet: false), .hide)
     }
