@@ -28,11 +28,13 @@ public struct StatisticsView: View {
     // Totals and per-app samples began on different days, so each part
     // shows 尚無資料 on its own when the range reaches back before it.
     @State private var totalIsPartial = false
+    @State private var listReachesBottom = false
     @State private var appsArePartial = false
     @State private var loadError: String?
 
     private static let appsShown = 5
     private static let rowHeight: CGFloat = 40
+    private static let listSpace = "appList"
 
     public init(
         store: any LocalStore,
@@ -150,11 +152,19 @@ public struct StatisticsView: View {
                 }
                 // Room for the overlay scroller so it never covers the times.
                 .padding(.trailing, 12)
+                .background(GeometryReader { proxy in
+                    Color.clear.preference(key: ListBottomKey.self, value: proxy.frame(in: .named(Self.listSpace)).maxY)
+                })
+            }
+            .coordinateSpace(name: Self.listSpace)
+            .onPreferenceChange(ListBottomKey.self) { bottom in
+                listReachesBottom = bottom <= Self.rowHeight * 3.5 + 1
             }
             // Three and a half rows: the half row plus the fade says there is more.
             .frame(height: Self.rowHeight * 3.5)
             .scrollIndicators(.visible)
-            // A fade at the bottom shows there is more to scroll to.
+            // A fade at the bottom shows there is more to scroll to, and goes
+            // away once the last row is in view so it stays readable.
             .overlay(alignment: .bottom) {
                 LinearGradient(
                     colors: [PanelStyle.panel.opacity(0), PanelStyle.panel.opacity(0.85), PanelStyle.panel],
@@ -162,6 +172,8 @@ public struct StatisticsView: View {
                     endPoint: .bottom
                 )
                     .frame(height: Self.rowHeight * 0.85)
+                    .opacity(listReachesBottom ? 0 : 1)
+                    .animation(.easeOut(duration: 0.15), value: listReachesBottom)
                     .allowsHitTesting(false)
             }
         }
@@ -237,5 +249,13 @@ public struct StatisticsView: View {
     private static func formatShort(_ seconds: TimeInterval) -> String {
         let totalMinutes = Int(seconds / 60)
         return totalMinutes >= 60 ? "\(totalMinutes / 60) 小時 \(totalMinutes % 60) 分" : "\(totalMinutes) 分"
+    }
+}
+
+private struct ListBottomKey: PreferenceKey {
+    static let defaultValue: CGFloat = .greatestFiniteMagnitude
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }
