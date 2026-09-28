@@ -69,24 +69,26 @@ public struct SettingsView: View {
                     .padding(.horizontal, PopoverView.blockInset)
             }
             PanelDivider()
+            Button("清除本機資料") { showingDeleteConfirmation = true }
+                .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundStyle(PanelStyle.muted)
+                .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
+            PanelDivider()
             HStack {
-                Button("清除本機資料") { showingDeleteConfirmation = true }
-                    .buttonStyle(.plain)
+                Text("目前版本 v\(currentVersion)")
                     .font(.system(size: 11))
                     .foregroundStyle(PanelStyle.muted)
                 Spacer()
                 // Notify only: the release page is where the new dmg is downloaded.
                 if let update {
-                    Button("有新版本 v\(update.version) · 前往下載") { NSWorkspace.shared.open(update.pageURL) }
+                    Button("有新版本 v\(update.version) · 前往更新") { NSWorkspace.shared.open(update.pageURL) }
                         .buttonStyle(.plain)
                         .font(.system(size: 11, weight: .bold))
                         .foregroundStyle(PanelStyle.orange)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
-                } else {
-                    Text("v\(currentVersion)")
-                        .font(.system(size: 11))
-                        .foregroundStyle(PanelStyle.muted)
                 }
             }
                 .padding(.top, Self.rowPadding)
