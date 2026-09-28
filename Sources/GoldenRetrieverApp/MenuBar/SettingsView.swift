@@ -33,27 +33,33 @@ public struct SettingsView: View {
         VStack(alignment: .leading, spacing: 0) {
             BackButton(action: onClose)
                 .frame(minHeight: 18)
+                .padding(.horizontal, PopoverView.blockInset)
                 .padding(.bottom, 8)
             PanelDivider()
             minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange, step: 5)
                 .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
             minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange, step: 1)
                 .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
             toggleRow("休息時顯示小金金", options: PetVisibility.allCases.map { ($0.title, $0 == .show) }, selected: showsPet) { showsPet = $0 }
                 .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
             toggleRow("記錄模式", options: [("Private", false), ("Detailed", true)], selected: mode == .detailed) { detailed in
                 mode = detailed ? .detailed : .privateMode
             }
                 .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
             if isAwaitingPermission {
                 Text("等待輔助使用權限：到「系統設定 → 隱私權與安全性 → 輔助使用」允許後，會自動切到 Detailed。")
                     .font(.system(size: 10))
                     .foregroundStyle(PanelStyle.orange)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.bottom, 6)
+                    .padding(.horizontal, PopoverView.blockInset)
             }
             PanelDivider()
             Button("清除本機資料") { showingDeleteConfirmation = true }
@@ -61,9 +67,12 @@ public struct SettingsView: View {
                 .font(.system(size: 11))
                 .foregroundStyle(PanelStyle.muted)
                 .padding(.top, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
         }
         .foregroundStyle(PanelStyle.text)
-        .padding(16)
+        // Same edges as the main panel: dividers span the width, text is inset.
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.settingsHeight, alignment: .top)
         .confirmationDialog(
             "確定清除所有本機使用與休息紀錄？",

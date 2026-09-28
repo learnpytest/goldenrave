@@ -58,10 +58,12 @@ public struct StatisticsView: View {
                 rangePicker
             }
             .padding(.bottom, 8)
+            .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
             if let loadError {
                 Text(loadError).font(.system(size: 12)).foregroundStyle(PanelStyle.red)
                     .padding(.top, 8)
+                    .padding(.horizontal, PopoverView.blockInset)
             } else {
                 HStack(alignment: .firstTextBaseline) {
                     Text("總共").font(.system(size: 12))
@@ -72,13 +74,17 @@ public struct StatisticsView: View {
                         .monospacedDigit()
                 }
                 .padding(.vertical, 7)
+                .padding(.horizontal, PopoverView.blockInset)
                 PanelDivider()
                 appList
                     .padding(.top, 8)
+                    .padding(.horizontal, PopoverView.blockInset)
             }
         }
         .foregroundStyle(PanelStyle.text)
-        .padding(16)
+        // Same edges as the main panel: dividers span the width, text is inset.
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .topLeading)
         .task(id: "\(range)-\(isDetailed)") { load() }
     }
