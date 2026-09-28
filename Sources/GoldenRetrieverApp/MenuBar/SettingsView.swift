@@ -126,7 +126,8 @@ public struct SettingsView: View {
                             .font(.system(size: 11, weight: isOn ? .heavy : .regular))
                             .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
                             .fixedSize()
-                            .padding(.horizontal, 8)
+                            // 6pt keeps 休息時顯示小金金 whole beside Hide pet / Show pet.
+                            .padding(.horizontal, 6)
                             .padding(.vertical, 3)
                             .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
                     }
