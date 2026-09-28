@@ -52,14 +52,7 @@ public struct StatisticsView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack {
-                Button(action: onClose) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(PanelStyle.chipText)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("返回")
-                Text("使用統計").font(.system(size: 17, weight: .heavy))
+                BackButton(action: onClose)
                 Spacer()
                 rangePicker
             }
@@ -67,9 +60,11 @@ public struct StatisticsView: View {
                 Text(loadError).font(.system(size: 12)).foregroundStyle(PanelStyle.red)
             } else {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("總共").font(.system(size: 13)).foregroundStyle(PanelStyle.muted)
+                    Text("使用統計").font(.system(size: 15, weight: .heavy))
+                    Spacer()
+                    Text("總共").font(.system(size: 11)).foregroundStyle(PanelStyle.muted)
                     Text(totalIsPartial ? "尚無資料" : Self.format(total))
-                        .font(.system(size: totalIsPartial ? 15 : 22, weight: .heavy))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(totalIsPartial ? PanelStyle.muted : PanelStyle.text)
                         .monospacedDigit()
                 }
@@ -131,7 +126,8 @@ public struct StatisticsView: View {
                                     .fixedSize()
                                     .frame(minWidth: 84, alignment: .trailing)
                             }
-                            ForEach(app.topWindows, id: \.self) { title in
+                            // One window each, so more apps fit before scrolling.
+                            ForEach(app.topWindows.prefix(1), id: \.self) { title in
                                 Text(title)
                                     .font(.system(size: 11))
                                     .foregroundStyle(PanelStyle.muted)
@@ -143,6 +139,14 @@ public struct StatisticsView: View {
                 }
                 // Room for the overlay scroller so it never covers the times.
                 .padding(.trailing, 12)
+                .padding(.bottom, 14)
+            }
+            .scrollIndicators(.visible)
+            // A fade at the bottom shows there is more to scroll to.
+            .overlay(alignment: .bottom) {
+                LinearGradient(colors: [PanelStyle.cream.opacity(0), PanelStyle.cream], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 22)
+                    .allowsHitTesting(false)
             }
         }
     }

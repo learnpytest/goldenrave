@@ -39,3 +39,31 @@ struct CreamBlock<Content: View>: View {
             .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
     }
 }
+
+/// ‹ 返回 at the top-left of every secondary page, so they all go back the same way.
+struct BackButton: View {
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 3) {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 10, weight: .bold))
+                Text("返回")
+                    .font(.system(size: 11, weight: .semibold))
+            }
+            .foregroundStyle(PanelStyle.chipText)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+/// The thin rule between rows, shared by the main panel and settings.
+struct PanelDivider: View {
+    var body: some View {
+        Rectangle()
+            .fill(PanelStyle.line.opacity(0.35))
+            .frame(height: 1)
+    }
+}
