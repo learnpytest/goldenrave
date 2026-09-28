@@ -1,8 +1,8 @@
 import Foundation
 
-/// How the puppy asks for company around a due break: one short pounce,
-/// then gentle rotating lines; if nobody answers within ten minutes of the
-/// due time it stops asking and tries again twenty minutes later.
+/// How the puppy asks for company once a break is due: one short pounce,
+/// then each gentle line once; if nobody answers by the last line 小金金
+/// runs out of battery.
 public enum BreakInvitation {
     public enum Phase: Equatable, Sendable {
         case notYet
@@ -17,7 +17,6 @@ public enum BreakInvitation {
 
     public static let pounceLength: TimeInterval = 10
     public static let lineLength: TimeInterval = 45
-    public static let overdueGrace: TimeInterval = 10 * 60
     public static let retryAfter: TimeInterval = 20 * 60
 
     /// Shown once the invitation has been ignored to the end and 小金金 is
@@ -33,11 +32,16 @@ public enum BreakInvitation {
         Line(text: "我幫你看著時間", animation: .timeWatch)
     ]
 
-    public static func phase(due: Date, warningWindow: TimeInterval, now: Date) -> Phase {
-        let start = due.addingTimeInterval(-warningWindow)
-        if now < start { return .notYet }
-        if now >= due.addingTimeInterval(overdueGrace) { return .gaveUp }
-        return .inviting(since: start)
+    /// The pounce plus every line once.
+    public static var roundLength: TimeInterval {
+        pounceLength + lineLength * Double(lines.count)
+    }
+
+    /// Inviting starts at the break's own time, never before it.
+    public static func phase(due: Date, now: Date) -> Phase {
+        if now < due { return .notYet }
+        if now >= due.addingTimeInterval(roundLength) { return .gaveUp }
+        return .inviting(since: due)
     }
 
     /// The next due time chosen so the invitation starts again `retryAfter` from now.

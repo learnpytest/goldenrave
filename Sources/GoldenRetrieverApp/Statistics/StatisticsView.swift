@@ -28,10 +28,13 @@ public struct StatisticsView: View {
     // Totals and per-app samples began on different days, so each part
     // shows 尚無資料 on its own when the range reaches back before it.
     @State private var totalIsPartial = false
+    @State private var listReachesBottom = false
     @State private var appsArePartial = false
     @State private var loadError: String?
 
     private static let appsShown = 5
+    private static let rowHeight: CGFloat = 40
+    private static let listSpace = "appList"
 
     public init(
         store: any LocalStore,
@@ -50,36 +53,40 @@ public struct StatisticsView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
-                Button(action: onClose) {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(PanelStyle.chipText)
-                }
-                .buttonStyle(.plain)
-                .accessibilityLabel("返回")
-                Text("使用統計").font(.system(size: 17, weight: .heavy))
+                BackButton(action: onClose)
                 Spacer()
                 rangePicker
             }
+            .padding(.bottom, 8)
+            .padding(.horizontal, PopoverView.blockInset)
+            PanelDivider()
             if let loadError {
                 Text(loadError).font(.system(size: 12)).foregroundStyle(PanelStyle.red)
+                    .padding(.top, 8)
+                    .padding(.horizontal, PopoverView.blockInset)
             } else {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("總共").font(.system(size: 13)).foregroundStyle(PanelStyle.muted)
+                    Text("總共").font(.system(size: 12))
+                    Spacer()
                     Text(totalIsPartial ? "尚無資料" : Self.format(total))
-                        .font(.system(size: totalIsPartial ? 15 : 22, weight: .heavy))
+                        .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(totalIsPartial ? PanelStyle.muted : PanelStyle.text)
                         .monospacedDigit()
                 }
-                CreamBlock {
-                    appList
-                }
+                .padding(.vertical, 7)
+                .padding(.horizontal, PopoverView.blockInset)
+                PanelDivider()
+                appList
+                    .padding(.top, 8)
+                    .padding(.horizontal, PopoverView.blockInset)
             }
         }
         .foregroundStyle(PanelStyle.text)
-        .padding(16)
+        // Same edges as the main panel: dividers span the width, text is inset.
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
         .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .topLeading)
         .task(id: "\(range)-\(isDetailed)") { load() }
     }
@@ -110,7 +117,7 @@ public struct StatisticsView: View {
         } else {
             let longest = apps.first?.seconds ?? 1
             ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(apps.prefix(Self.appsShown), id: \.appName) { app in
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 8) {
@@ -131,7 +138,8 @@ public struct StatisticsView: View {
                                     .fixedSize()
                                     .frame(minWidth: 84, alignment: .trailing)
                             }
-                            ForEach(app.topWindows, id: \.self) { title in
+                            // One window each, so more apps fit before scrolling.
+                            ForEach(app.topWindows.prefix(1), id: \.self) { title in
                                 Text(title)
                                     .font(.system(size: 11))
                                     .foregroundStyle(PanelStyle.muted)
@@ -139,10 +147,34 @@ public struct StatisticsView: View {
                                     .truncationMode(.middle)
                             }
                         }
+                        .frame(height: Self.rowHeight, alignment: .top)
                     }
                 }
                 // Room for the overlay scroller so it never covers the times.
                 .padding(.trailing, 12)
+                .background(GeometryReader { proxy in
+                    Color.clear.preference(key: ListBottomKey.self, value: proxy.frame(in: .named(Self.listSpace)).maxY)
+                })
+            }
+            .coordinateSpace(name: Self.listSpace)
+            .onPreferenceChange(ListBottomKey.self) { bottom in
+                listReachesBottom = bottom <= Self.rowHeight * 3.5 + 1
+            }
+            // Three and a half rows: the half row plus the fade says there is more.
+            .frame(height: Self.rowHeight * 3.5)
+            .scrollIndicators(.visible)
+            // A fade at the bottom shows there is more to scroll to, and goes
+            // away once the last row is in view so it stays readable.
+            .overlay(alignment: .bottom) {
+                LinearGradient(
+                    colors: [PanelStyle.panel.opacity(0), PanelStyle.panel.opacity(0.85), PanelStyle.panel],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                    .frame(height: Self.rowHeight * 0.85)
+                    .opacity(listReachesBottom ? 0 : 1)
+                    .animation(.easeOut(duration: 0.15), value: listReachesBottom)
+                    .allowsHitTesting(false)
             }
         }
     }
@@ -153,10 +185,10 @@ public struct StatisticsView: View {
                 let isOn = option == range
                 Button { range = option } label: {
                     Text(option.title)
-                        .font(.system(size: 11, weight: isOn ? .heavy : .regular))
+                        .font(.system(size: 10, weight: isOn ? .heavy : .regular))
                         .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
                         .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
                 }
                 .buttonStyle(.plain)
@@ -217,5 +249,13 @@ public struct StatisticsView: View {
     private static func formatShort(_ seconds: TimeInterval) -> String {
         let totalMinutes = Int(seconds / 60)
         return totalMinutes >= 60 ? "\(totalMinutes / 60) 小時 \(totalMinutes % 60) 分" : "\(totalMinutes) 分"
+    }
+}
+
+private struct ListBottomKey: PreferenceKey {
+    static let defaultValue: CGFloat = .greatestFiniteMagnitude
+
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+        value = nextValue()
     }
 }

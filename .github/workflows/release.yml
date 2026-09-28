@@ -1,0 +1,30 @@
+name: Release
+
+# Push a tag such as v0.2.0 to publish goldenrave.dmg as a GitHub Release.
+# The app's update check reads the latest Release, so this is what users see.
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-14
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+      - name: Tag must match the app version
+        run: |
+          app_version=$(/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" Packaging/Info.plist)
+          if [ "${GITHUB_REF_NAME}" != "v${app_version}" ]; then
+            echo "Tag ${GITHUB_REF_NAME} does not match Info.plist version v${app_version}" >&2
+            exit 1
+          fi
+      - name: Run tests, release build, and app packaging
+        run: bash Scripts/run-checks.sh
+      - name: Publish the Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${GITHUB_REF_NAME}" dist/goldenrave.dmg --title "goldenrave ${GITHUB_REF_NAME}" --generate-notes

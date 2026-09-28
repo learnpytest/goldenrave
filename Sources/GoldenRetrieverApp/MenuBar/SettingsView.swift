@@ -1,3 +1,4 @@
+import AppKit
 import GoldenRetrieverCore
 import SwiftUI
 
@@ -7,6 +8,8 @@ public struct SettingsView: View {
     @Binding private var restMinutes: Int
     @Binding private var showsPet: Bool
     private let isAwaitingPermission: Bool
+    private let currentVersion: String
+    private let update: AvailableUpdate?
     private let onClose: () -> Void
     private let onDeleteData: () -> Void
     @State private var showingDeleteConfirmation = false
@@ -17,6 +20,8 @@ public struct SettingsView: View {
         restMinutes: Binding<Int> = .constant(10),
         showsPet: Binding<Bool> = .constant(true),
         isAwaitingPermission: Bool = false,
+        currentVersion: String = "",
+        update: AvailableUpdate? = nil,
         onClose: @escaping () -> Void = {},
         onDeleteData: @escaping () -> Void = {}
     ) {
@@ -25,51 +30,75 @@ public struct SettingsView: View {
         self._restMinutes = restMinutes
         self._showsPet = showsPet
         self.isAwaitingPermission = isAwaitingPermission
+        self.currentVersion = currentVersion
+        self.update = update
         self.onClose = onClose
         self.onDeleteData = onDeleteData
     }
 
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            CreamBlock(verticalPadding: 8) {
-                VStack(spacing: 6) {
-                    minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange, step: 5)
-                    minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange, step: 1)
-                }
+            BackButton(action: onClose)
+                .frame(minHeight: 18)
+                .padding(.horizontal, PopoverView.blockInset)
+                .padding(.bottom, 8)
+            PanelDivider()
+            minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange, step: 5)
+                .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
+            PanelDivider()
+            minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange, step: 1)
+                .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
+            PanelDivider()
+            toggleRow("休息時顯示小金金", options: PetVisibility.allCases.map { ($0.title, $0 == .show) }, selected: showsPet) { showsPet = $0 }
+                .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
+            PanelDivider()
+            toggleRow("記錄模式", options: [("Private", false), ("Detailed", true)], selected: mode == .detailed) { detailed in
+                mode = detailed ? .detailed : .privateMode
             }
-            petVisibility
-                .padding(.top, 8)
-            HStack {
-                Text("目前模式").foregroundStyle(PanelStyle.muted)
-                Spacer()
-                Text(mode == .detailed ? "Detailed" : "Private")
-                    .foregroundStyle(Color(hex: 0x2F4F46))
+                .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
+            if isAwaitingPermission {
+                Text("等待輔助使用權限：到「系統設定 → 隱私權與安全性 → 輔助使用」允許後，會自動切到 Detailed。")
+                    .font(.system(size: 10))
+                    .foregroundStyle(PanelStyle.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.bottom, 6)
+                    .padding(.horizontal, PopoverView.blockInset)
             }
-            .font(.system(size: 13))
-            .padding(.top, 10)
-            modeNote
-                .padding(.top, 6)
-            Spacer(minLength: 0)
-            HStack {
-                Button(action: onClose) {
-                    Text("返回")
-                        .font(.system(size: 12, weight: .heavy))
-                        .foregroundStyle(PanelStyle.chipText)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 5)
-                        .overlay(Capsule().stroke(PanelStyle.line, lineWidth: 1))
-                }
+            PanelDivider()
+            Button("清除本機資料") { showingDeleteConfirmation = true }
                 .buttonStyle(.plain)
-                Spacer()
-                Button("清除本機資料") { showingDeleteConfirmation = true }
-                    .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundStyle(PanelStyle.muted)
+                .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
+            PanelDivider()
+            HStack {
+                Text("目前版本 v\(currentVersion)")
                     .font(.system(size: 11))
                     .foregroundStyle(PanelStyle.muted)
+                Spacer()
+                // Notify only: the release page is where the new dmg is downloaded.
+                if let update {
+                    Button("有新版本 v\(update.version) · 前往更新") { NSWorkspace.shared.open(update.pageURL) }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(PanelStyle.orange)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
             }
+                .padding(.top, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
         }
         .foregroundStyle(PanelStyle.text)
-        .padding(16)
-        .frame(width: PopoverLayout.size.width, height: PopoverLayout.size.height, alignment: .top)
+        // Same edges as the main panel: dividers span the width, text is inset.
+        .padding(.horizontal, 18)
+        .padding(.vertical, 16)
+        .frame(width: PopoverLayout.size.width, height: PopoverLayout.settingsHeight, alignment: .top)
         .confirmationDialog(
             "確定清除所有本機使用與休息紀錄？",
             isPresented: $showingDeleteConfirmation,
@@ -80,22 +109,26 @@ public struct SettingsView: View {
         }
     }
 
-    private var petVisibility: some View {
+    private static let rowPadding: CGFloat = 7
+
+    /// A two-option pill toggle, the same look for pet visibility and mode.
+    private func toggleRow(_ title: String, options: [(String, Bool)], selected: Bool, onSelect: @escaping (Bool) -> Void) -> some View {
         HStack {
-            Text("休息時顯示小金金")
-                .font(.system(size: 11))
+            Text(title)
+                .font(.system(size: 12))
                 .lineLimit(1)
             Spacer(minLength: 6)
             HStack(spacing: 2) {
-                ForEach(PetVisibility.allCases, id: \.self) { option in
-                    let isOn = PetVisibility(showsPet: showsPet) == option
-                    Button { showsPet = option == .show } label: {
-                        Text(option.title)
+                ForEach(options, id: \.0) { option in
+                    let isOn = option.1 == selected
+                    Button { onSelect(option.1) } label: {
+                        Text(option.0)
                             .font(.system(size: 11, weight: isOn ? .heavy : .regular))
                             .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
                             .fixedSize()
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
+                            // 6pt keeps 休息時顯示小金金 whole beside Hide pet / Show pet.
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 3)
                             .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
                     }
                     .buttonStyle(.plain)
@@ -104,36 +137,11 @@ public struct SettingsView: View {
             .padding(2)
             .background(PanelStyle.chip, in: Capsule())
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
-        .background(PanelStyle.cream, in: RoundedRectangle(cornerRadius: 11, style: .continuous))
-    }
-
-    @ViewBuilder
-    private var modeNote: some View {
-        if isAwaitingPermission {
-            Text("等待輔助使用權限：到「系統設定 → 隱私權與安全性 → 輔助使用」允許後，會自動切到 Detailed。")
-                .font(.system(size: 11))
-                .foregroundStyle(PanelStyle.orange)
-                .fixedSize(horizontal: false, vertical: true)
-        } else if mode == .detailed {
-            Button("改回 Private 只記使用時間 →") { mode = .privateMode }
-                .buttonStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundStyle(PanelStyle.green)
-                .underline()
-        } else {
-            Button("前往 Detailed 詳細設定 →") { mode = .detailed }
-                .buttonStyle(.plain)
-                .font(.system(size: 12))
-                .foregroundStyle(PanelStyle.green)
-                .underline()
-        }
     }
 
     private func minutesRow(_ title: String, value: Binding<Int>, range: ClosedRange<Int>, step: Int) -> some View {
         HStack {
-            Text(title).font(.system(size: 13, weight: .heavy))
+            Text(title).font(.system(size: 12))
             Spacer()
             HStack(spacing: 8) {
                 Text("\(value.wrappedValue) 分鐘")

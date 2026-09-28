@@ -17,6 +17,13 @@ app 是 menu-bar-only utility，不會建立不必要的 Dock 視窗。第一次
 
 從 GitHub repo 開啟 `Actions` → `macOS checks` → 最新一筆 `main` 分支且顯示成功的 workflow run，在頁面最下方 `Artifacts` 下載 `goldenrave-macOS-dmg`。解壓縮後打開 `goldenrave.dmg`，在跳出的視窗把小黃金拖到 Applications 再開啟。這個 artifact 是未上架 App Store 的個人版，使用 ad-hoc signing；如果 macOS 第一次顯示安全提示，請在 Finder 對 app 按右鍵並選「打開」。
 
+## 發佈新版本
+
+1. 把 `Packaging/Info.plist` 的 `CFBundleShortVersionString` 改成新版號（例如 `0.2.0`），合併進 `main`。
+2. 在 `main` 打 tag 並推上去：`git tag v0.2.0 && git push origin v0.2.0`。
+3. `Release` workflow 會檢查 tag 和版號一致、跑完全部測試，再建立 GitHub Release 並附上 `goldenrave.dmg`。
+4. 已安裝的 app 會在啟動時、每天一次、以及打開設定時檢查最新 Release；有新版時，設定底部會出現「有新版本 · 前往下載」。
+
 ## 追蹤模式
 
 - Private（預設）：只記錄 active／idle、連續使用時間、每日使用時間和休息事件。

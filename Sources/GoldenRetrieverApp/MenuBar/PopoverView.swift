@@ -44,6 +44,8 @@ enum PopoverLayout {
     static let size = CGSize(width: 290, height: 240)
     /// The main panel is narrower than statistics and settings, which need the room.
     static let mainWidth: CGFloat = 260
+    /// Settings lists one option per row between dividers, so it runs taller.
+    static let settingsHeight: CGFloat = 272
     /// The main panel is shorter without the break-choice row, so no blank
     /// row is left between the dividers.
     static func mainHeight(showsActionRow: Bool) -> CGFloat {

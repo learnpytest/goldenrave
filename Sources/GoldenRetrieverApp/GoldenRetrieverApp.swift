@@ -16,6 +16,9 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var workMinutes: Int
     @Published private(set) var restMinutes: Int
     @Published private(set) var showsPet: Bool
+    @Published private(set) var availableUpdate: AvailableUpdate?
+    let updateChecker = UpdateChecker()
+    private var lastUpdateCheck: Date?
 
     private var dependencies: AppDependencies?
     private let activitySource = SystemActivitySource()
@@ -47,7 +50,20 @@ final class AppRuntime: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.tick()
+                self?.checkForUpdates()
             }
+        }
+        checkForUpdates()
+    }
+
+    /// At most once per `UpdateChecker.interval`, unless forced (settings opened).
+    func checkForUpdates(force: Bool = false, now: Date = Date()) {
+        if !force, let lastUpdateCheck, now.timeIntervalSince(lastUpdateCheck) < UpdateChecker.interval { return }
+        lastUpdateCheck = now
+        let checker = updateChecker
+        Task { [weak self] in
+            let update = await checker.check()
+            await MainActor.run { self?.availableUpdate = update }
         }
     }
 
@@ -118,24 +134,26 @@ final class AppRuntime: ObservableObject {
                 let sessionStart = now.addingTimeInterval(-snapshot.currentSession)
                 nextBreak = dependencies.scheduler.nextBreak(after: sessionStart)
             }
-        } else if sample.kind == .idle {
-            // Stepping away counts as the rest 小金金 was waiting for.
+        } else if sample.kind == .idle, !puppyIsDepleted {
+            // Stepping away counts as the rest 小金金 was waiting for, but not
+            // once it has run out of battery.
             nextBreak = nil
-            puppyIsDepleted = false
         }
         var invitationStart: Date?
-        if let due = nextBreak, !remindersPaused, !isOnBreak, sample.kind == .active {
-            let warning = dependencies.scheduler.policy.warningWindow
-            switch BreakInvitation.phase(due: due, warningWindow: warning, now: now) {
+        if puppyIsDepleted, !remindersPaused, !isOnBreak {
+            // Stays out of battery until 休息／陪玩／散步 or ⏸.
+            invitationStart = invitationStartedAt ?? now
+        } else if let due = nextBreak, !remindersPaused, !isOnBreak, sample.kind == .active {
+            switch BreakInvitation.phase(due: due, now: now) {
             case .notYet:
                 break
             case .inviting(let since):
                 invitationStart = since
             case .gaveUp:
-                // Ignored to the end: 小金金 runs out of battery and the break
-                // stays due, rather than quietly being rescheduled.
+                // Ignored through every line: 小金金 runs out of battery and
+                // the break stays due, rather than quietly being rescheduled.
                 puppyIsDepleted = true
-                invitationStart = due.addingTimeInterval(-warning)
+                invitationStart = due
             }
         }
         if invitationStartedAt != invitationStart {
@@ -213,6 +231,16 @@ final class AppRuntime: ObservableObject {
         animationDirector.breakActivity(paused: paused)
     }
 
+    /// The floating bubble's line: the invitation, or during a break what
+    /// 小金金 is doing and how long is left.
+    func floatingLine(at date: Date) -> String? {
+        if let breakEndsAt {
+            let title = breakActivityPaused ? "停下來了" : (breakActivity ?? .rest).ongoingTitle
+            return "\(title) · 還剩 \(PopoverView.remainingBreakMinutes(until: breakEndsAt, now: date)) 分鐘"
+        }
+        return invitationText(at: date)
+    }
+
     func invitationText(at date: Date) -> String? {
         guard let invitationStartedAt else { return nil }
         return puppyIsDepleted ? BreakInvitation.depletedLine : BreakInvitation.line(since: invitationStartedAt, now: date).text
@@ -230,6 +258,7 @@ final class AppRuntime: ObservableObject {
     func openSettings() {
         showSettings = true
         showStatistics = false
+        checkForUpdates(force: true)
     }
 
     func closeSecondaryView() {
@@ -282,6 +311,7 @@ final class AppRuntime: ObservableObject {
 
     func deleteAllData() {
         try? dependencies?.store.deleteAll()
+        StoreLocation.removeLegacy(applicationSupport: StoreLocation.applicationSupport)
     }
 
     var store: (any LocalStore)? { dependencies?.store }

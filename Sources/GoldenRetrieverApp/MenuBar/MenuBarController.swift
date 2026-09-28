@@ -44,7 +44,7 @@ final class MenuBarController: NSObject {
 
         floatingPuppy = FloatingPuppyController(
             playbackAt: { [runtime] date in runtime.dogPlayback(at: date) },
-            lineAt: { [runtime] date in runtime.invitationText(at: date) },
+            lineAt: { [runtime] date in runtime.floatingLine(at: date) },
             onClick: { [weak self] in self?.showPopover() }
         )
 
@@ -71,8 +71,8 @@ final class MenuBarController: NSObject {
         )
         let button = statusItem.button
         button?.title = configuration.title
-        let size = runtime.showSettings || runtime.showStatistics
-            ? PopoverLayout.size
+        let size = runtime.showStatistics ? PopoverLayout.size
+            : runtime.showSettings ? CGSize(width: PopoverLayout.size.width, height: PopoverLayout.settingsHeight)
             : CGSize(
                 width: PopoverLayout.mainWidth,
                 height: PopoverLayout.mainHeight(showsActionRow: PopoverView.showsActionRow(
@@ -84,7 +84,9 @@ final class MenuBarController: NSObject {
         if popover.contentSize != size {
             popover.contentSize = size
         }
-        if runtime.invitationStartedAt != nil, runtime.showsPet {
+        // 小金金 stays on the desktop through the break the user chose, not
+        // only while inviting.
+        if runtime.invitationStartedAt != nil || runtime.breakEndsAt != nil, runtime.showsPet {
             floatingPuppy?.show()
         } else {
             floatingPuppy?.hide()
@@ -196,6 +198,8 @@ private struct PopoverRootView: View {
                     set: runtime.setShowsPet
                 ),
                 isAwaitingPermission: runtime.isAwaitingDetailedPermission,
+                currentVersion: runtime.updateChecker.currentVersion,
+                update: runtime.availableUpdate,
                 onClose: runtime.closeSecondaryView,
                 onDeleteData: runtime.deleteAllData
             )

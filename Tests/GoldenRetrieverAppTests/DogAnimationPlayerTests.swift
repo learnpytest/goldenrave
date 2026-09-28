@@ -30,6 +30,10 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .depleted).contains { $0.lastPathComponent == "rest.png" })
     }
 
+    func testPounceUsesTheEightFrameBellyUpBasedSequence() {
+        XCTAssertEqual(DogAnimationPlayer.frameURLs(for: .pounce).count, 8)
+    }
+
     func testMenuBarFramesFitInTheMenuBar() {
         let player = DogAnimationPlayer()
 
@@ -56,7 +60,7 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertLessThanOrEqual(rep.pixelsHigh, Int(DogAnimationPlayer.menuBarHeight) * 2, "Menu bar frames should not keep the full-size bitmap")
     }
 
-    func testMenuBarSwapsFramesAtMostAboutSevenTimesASecondButRunStaysFasterThanWalk() {
+    func testMenuBarSwapsFramesAtMostAboutSevenTimesASecond() {
         let player = DogAnimationPlayer()
 
         for animation in DogAnimation.allCases where animation != .spin {
@@ -66,8 +70,11 @@ final class DogAnimationPlayerTests: XCTestCase {
                 "\(animation)"
             )
         }
-        XCTAssertLessThan(player.menuBarFrameDuration(for: .run), player.menuBarFrameDuration(for: .walk))
         XCTAssertEqual(player.menuBarFrameDuration(for: .spin), player.frameDuration(for: .spin))
+        XCTAssertEqual(player.menuBarFrameDuration(for: .run), 0.3, accuracy: 0.0001)
+        XCTAssertEqual(player.menuBarFrameDuration(for: .play), 0.25, accuracy: 0.0001)
+        XCTAssertEqual(player.menuBarFrameDuration(for: .playBall), 0.25, accuracy: 0.0001)
+        XCTAssertEqual(player.menuBarFrameDuration(for: .walk), 0.57, accuracy: 0.0001)
     }
 
     func testPopoverFramesArePreScaledToThePopoverSize() throws {
@@ -121,11 +128,22 @@ final class DogAnimationPlayerTests: XCTestCase {
         )
     }
 
-    func testFastMotionsCycleFasterThanCalmOnes() {
+    func testLongRunningMotionsStayCalmSoTheyDoNotDazzle() {
         let player = DogAnimationPlayer()
 
-        XCTAssertLessThan(player.frameDuration(for: .run), player.frameDuration(for: .walk))
+        for animation: DogAnimation in [.run, .cuddle] {
+            XCTAssertEqual(player.frameDuration(for: animation), 0.3, accuracy: 0.0001, "\(animation)")
+        }
+        XCTAssertEqual(player.frameDuration(for: .play), 0.25, accuracy: 0.0001)
+        XCTAssertEqual(player.frameDuration(for: .playBall), 0.25, accuracy: 0.0001)
+        XCTAssertEqual(player.frameDuration(for: .walk), 0.38, accuracy: 0.0001)
+        XCTAssertEqual(player.frameDuration(for: .stroll), 0.45, accuracy: 0.0001)
+        XCTAssertEqual(player.frameDuration(for: .bellyUp), 0.375, accuracy: 0.0001)
         XCTAssertLessThan(player.frameDuration(for: .walk), player.frameDuration(for: .rest))
+    }
+
+    func testPounceUsesTheSmoothPreviewSpeed() {
+        XCTAssertEqual(DogAnimationPlayer().frameDuration(for: .pounce), 0.29, accuracy: 0.0001)
     }
 
     func testTheNextFrameIsScheduledOnItsOwnBoundaryNotAFixedTick() {

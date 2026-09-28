@@ -36,18 +36,20 @@ public struct DogStateMachine: Sendable {
         if input.isOnBreak {
             return .rest
         }
+        // Out of battery stays out, even while the user is away, until they
+        // pick a break or pause reminders.
+        if input.isDepleted {
+            return .depleted
+        }
         guard input.isActive else {
             return .idle
         }
         if input.remindersPaused {
             return .relaxing
         }
-        if input.isDepleted {
-            return .depleted
-        }
         if let secondsUntilBreak = input.secondsUntilBreak,
-           secondsUntilBreak <= policy.warningWindow,
-           secondsUntilBreak > -BreakInvitation.overdueGrace {
+           secondsUntilBreak <= 0,
+           secondsUntilBreak > -BreakInvitation.roundLength {
             return .pounce
         }
         if input.sessionDuration < 5 * 60 {
