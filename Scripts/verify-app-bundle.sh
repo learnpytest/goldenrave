@@ -4,7 +4,7 @@ set -euo pipefail
 APP_PATH="${1:-}"
 
 if [[ -z "$APP_PATH" || ! -d "$APP_PATH" ]]; then
-    echo "usage: $0 /path/to/GoldenRetriever.app" >&2
+    echo "usage: $0 /path/to/goldenrave.app" >&2
     exit 2
 fi
 

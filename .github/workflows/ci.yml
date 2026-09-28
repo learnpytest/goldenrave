@@ -16,12 +16,12 @@ jobs:
       - name: Upload macOS app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: GoldenRetriever-macOS
+          name: goldenrave-macOS
           path: dist
           if-no-files-found: error
       - name: Upload macOS disk image
         uses: actions/upload-artifact@v4
         with:
-          name: GoldenRetriever-macOS-dmg
-          path: dist/GoldenRetriever.dmg
+          name: goldenrave-macOS-dmg
+          path: dist/goldenrave.dmg
           if-no-files-found: error
