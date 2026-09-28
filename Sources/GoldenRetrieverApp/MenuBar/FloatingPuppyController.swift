@@ -183,7 +183,9 @@ private struct FloatingPuppyView: View {
     var body: some View {
         VStack(spacing: 2) {
             DogAnimationView(playbackAt: playbackAt)
-                .frame(width: DogAnimationPlayer.popoverSide, height: DogAnimationPlayer.popoverSide)
+                // Lying-down animations fit shorter than the square; centred,
+                // they left a gap above the bubble, so every paw sits on the bottom.
+                .frame(width: DogAnimationPlayer.popoverSide, height: DogAnimationPlayer.popoverSide, alignment: .bottom)
                 .scaleEffect(Self.dogSide / DogAnimationPlayer.popoverSide)
                 .frame(width: Self.dogSide, height: Self.dogSide)
             // Same line as under 小金金陪伴中 in the popover; it only appears on hover.
