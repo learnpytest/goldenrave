@@ -32,9 +32,7 @@ public struct SettingsView: View {
     public var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             BackButton(action: onClose)
-            Text("設定")
-                .font(.system(size: 15, weight: .heavy))
-                .padding(.top, 6)
+                .frame(minHeight: 18)
                 .padding(.bottom, 8)
             PanelDivider()
             minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange, step: 5)

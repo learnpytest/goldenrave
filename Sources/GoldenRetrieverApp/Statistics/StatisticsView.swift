@@ -50,27 +50,30 @@ public struct StatisticsView: View {
     }
 
     public var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 0) {
             HStack {
                 BackButton(action: onClose)
                 Spacer()
                 rangePicker
             }
+            .padding(.bottom, 8)
+            PanelDivider()
             if let loadError {
                 Text(loadError).font(.system(size: 12)).foregroundStyle(PanelStyle.red)
+                    .padding(.top, 8)
             } else {
                 HStack(alignment: .firstTextBaseline) {
-                    Text("使用統計").font(.system(size: 15, weight: .heavy))
+                    Text("總共").font(.system(size: 12))
                     Spacer()
-                    Text("總共").font(.system(size: 11)).foregroundStyle(PanelStyle.muted)
                     Text(totalIsPartial ? "尚無資料" : Self.format(total))
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(totalIsPartial ? PanelStyle.muted : PanelStyle.text)
                         .monospacedDigit()
                 }
-                CreamBlock {
-                    appList
-                }
+                .padding(.vertical, 7)
+                PanelDivider()
+                appList
+                    .padding(.top, 8)
             }
         }
         .foregroundStyle(PanelStyle.text)
@@ -144,7 +147,7 @@ public struct StatisticsView: View {
             .scrollIndicators(.visible)
             // A fade at the bottom shows there is more to scroll to.
             .overlay(alignment: .bottom) {
-                LinearGradient(colors: [PanelStyle.cream.opacity(0), PanelStyle.cream], startPoint: .top, endPoint: .bottom)
+                LinearGradient(colors: [PanelStyle.panel.opacity(0), PanelStyle.panel], startPoint: .top, endPoint: .bottom)
                     .frame(height: 22)
                     .allowsHitTesting(false)
             }
@@ -157,10 +160,10 @@ public struct StatisticsView: View {
                 let isOn = option == range
                 Button { range = option } label: {
                     Text(option.title)
-                        .font(.system(size: 11, weight: isOn ? .heavy : .regular))
+                        .font(.system(size: 10, weight: isOn ? .heavy : .regular))
                         .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
-                        .padding(.horizontal, 7)
-                        .padding(.vertical, 3)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 2)
                         .background(isOn ? PanelStyle.orange : Color.clear, in: Capsule())
                 }
                 .buttonStyle(.plain)
