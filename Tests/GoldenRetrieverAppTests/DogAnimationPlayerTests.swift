@@ -73,6 +73,7 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertEqual(player.menuBarFrameDuration(for: .spin), player.frameDuration(for: .spin))
         XCTAssertEqual(player.menuBarFrameDuration(for: .run), 0.3, accuracy: 0.0001)
         XCTAssertEqual(player.menuBarFrameDuration(for: .play), 0.25, accuracy: 0.0001)
+        XCTAssertEqual(player.menuBarFrameDuration(for: .playBall), 0.25, accuracy: 0.0001)
         XCTAssertEqual(player.menuBarFrameDuration(for: .walk), 0.57, accuracy: 0.0001)
     }
 
@@ -130,10 +131,11 @@ final class DogAnimationPlayerTests: XCTestCase {
     func testLongRunningMotionsStayCalmSoTheyDoNotDazzle() {
         let player = DogAnimationPlayer()
 
-        for animation: DogAnimation in [.run, .playBall, .cuddle] {
+        for animation: DogAnimation in [.run, .cuddle] {
             XCTAssertEqual(player.frameDuration(for: animation), 0.3, accuracy: 0.0001, "\(animation)")
         }
         XCTAssertEqual(player.frameDuration(for: .play), 0.25, accuracy: 0.0001)
+        XCTAssertEqual(player.frameDuration(for: .playBall), 0.25, accuracy: 0.0001)
         XCTAssertEqual(player.frameDuration(for: .walk), 0.38, accuracy: 0.0001)
         XCTAssertEqual(player.frameDuration(for: .stroll), 0.45, accuracy: 0.0001)
         XCTAssertEqual(player.frameDuration(for: .bellyUp), 0.375, accuracy: 0.0001)

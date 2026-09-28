@@ -141,8 +141,8 @@ public struct DogAnimationPlayer: Sendable {
         case .rest: 0.5
         case .depleted: 0.8
         case .bellyUp: 0.375
-        case .play: 0.25
-        case .playBall, .cuddle: 0.3
+        case .play, .playBall: 0.25
+        case .cuddle: 0.3
         case .waiting: 0.32
         case .timeWatch: 0.6
         }
@@ -153,12 +153,12 @@ public struct DogAnimationPlayer: Sendable {
     /// Each status item image swap is replicated to Control Center on macOS 26
     /// (NSStatusItem _windowNeedsReplicantUpdate dominated a 2026-09-26 sample),
     /// so the menu bar runs slower than the popover. Spin keeps its timing so it
-    /// still finishes within the spin moment; run and play are already calm at
-    /// 0.3s and looked sluggish any slower.
+    /// still finishes within the spin moment; run and the two play loops are
+    /// already calm and looked sluggish any slower.
     public func menuBarFrameDuration(for animation: DogAnimation) -> TimeInterval {
         let duration = frameDuration(for: animation)
         switch animation {
-        case .spin, .run, .play: return duration
+        case .spin, .run, .play, .playBall: return duration
         default: return max(duration * 1.5, Self.menuBarMinimumFrameDuration)
         }
     }
