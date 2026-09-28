@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>小金金 Pounce 動畫預覽</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #3d332b;
+      --muted: #78695d;
+      --cream: #fff9ef;
+      --card: #fffdf9;
+      --line: #eadfce;
+      --gold: #d9913e;
+      --gold-dark: #9d5c22;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-width: 320px;
+      background: linear-gradient(145deg, #fff9ef 0%, #f7eee2 100%);
+      color: var(--ink);
+      font: 16px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Rounded", "Helvetica Neue", sans-serif;
+    }
+
+    main {
+      width: min(980px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 38px 0 56px;
+    }
+
+    h1 { margin: 0 0 6px; font-size: clamp(25px, 4vw, 38px); letter-spacing: .02em; }
+    h2 { margin: 0 0 8px; font-size: 20px; }
+    p { margin: 0; }
+    .intro { color: var(--muted); max-width: 720px; }
+
+    .panel {
+      margin-top: 24px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: color-mix(in srgb, var(--card) 92%, transparent);
+      box-shadow: 0 18px 48px rgba(110, 75, 37, .10);
+    }
+
+    .stage {
+      display: grid;
+      place-items: center;
+      min-height: 360px;
+      border-radius: 18px;
+      background-color: #f4eadc;
+      background-image: linear-gradient(45deg, rgba(255,255,255,.42) 25%, transparent 25%),
+        linear-gradient(-45deg, rgba(255,255,255,.42) 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, rgba(255,255,255,.42) 75%),
+        linear-gradient(-45deg, transparent 75%, rgba(255,255,255,.42) 75%);
+      background-size: 28px 28px;
+      background-position: 0 0, 0 14px, 14px -14px, -14px 0;
+    }
+
+    #puppy {
+      width: min(340px, 72vw);
+      height: min(340px, 72vw);
+      object-fit: contain;
+      filter: drop-shadow(0 12px 9px rgba(92, 59, 28, .14));
+      user-select: none;
+    }
+
+    .status {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    #frame-title { font-weight: 700; color: var(--gold-dark); }
+    #counter { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: 1px solid #d8b98e;
+      border-radius: 999px;
+      padding: 8px 15px;
+      color: var(--gold-dark);
+      background: #fff8eb;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button:hover { background: #ffefd4; }
+    button:focus-visible { outline: 3px solid #e9b66d; outline-offset: 2px; }
+    .speed { display: flex; align-items: center; gap: 8px; color: var(--muted); }
+    input[type="range"] { accent-color: var(--gold); width: 160px; }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(8, minmax(90px, 1fr));
+      gap: 8px;
+      margin-top: 24px;
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+
+    .frame-card {
+      min-width: 90px;
+      padding: 7px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color .15s ease, transform .15s ease;
+    }
+
+    .frame-card:hover { transform: translateY(-2px); }
+    .frame-card.active { border: 2px solid var(--gold); padding: 6px; }
+    .frame-card img { display: block; width: 100%; aspect-ratio: 1; object-fit: contain; }
+    .frame-card span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; text-align: center; }
+
+    .motion-notes {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 26px;
+    }
+
+    .motion-notes div { padding: 12px; border-radius: 14px; background: #fff6e8; color: var(--muted); font-size: 14px; }
+    .motion-notes strong { display: block; color: var(--ink); font-size: 13px; }
+
+    @media (max-width: 700px) {
+      main { width: min(100% - 20px, 560px); padding-top: 24px; }
+      .panel { padding: 16px; }
+      .stage { min-height: 290px; }
+      .motion-notes { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>小金金的 Pounce 動畫預覽</h1>
+    <p class="intro">這是用 <code>belly-up-01</code> 同一隻兩個月幼金金做的 8 格草稿。請看它是不是「蓄力 → 往前撲 → 前腳先落地 → 後腳跟上 → 回到 play bow」，而不是左右跳位。</p>
+
+    <section class="panel" aria-label="動畫播放器">
+      <div class="stage">
+        <img id="puppy" src="frames/pounce-01.png" alt="小金金 pounce 動畫目前影格">
+      </div>
+      <div class="status">
+        <span id="frame-title">1／蓄力：前胸壓低、屁股抬高</span>
+        <span id="counter">第 1 格／8 格</span>
+      </div>
+      <div class="controls">
+        <button id="play" type="button">暫停</button>
+        <button id="previous" type="button">上一格</button>
+        <button id="next" type="button">下一格</button>
+        <label class="speed" for="speed">速度 <input id="speed" type="range" min="70" max="320" value="290" step="10"><span id="speed-value">290ms</span></label>
+      </div>
+      <div id="timeline" class="timeline" aria-label="逐格預覽"></div>
+    </section>
+
+    <section class="motion-notes" aria-label="動作拆解">
+      <div><strong>1–2 蓄力</strong>前胸低、後腳收好，先準備再出發。</div>
+      <div><strong>3–4 伸展</strong>身體沿同一個低弧線向前，前腳帶動。</div>
+      <div><strong>5 接地</strong>前腳先碰地，不突然站起或翻方向。</div>
+      <div><strong>6–7 跟上</strong>肩膀先沉，後腳與尾巴跟著收回。</div>
+      <div><strong>8 回位</strong>回到 play bow，接回第 1 格。</div>
+    </section>
+  </main>
+
+  <script>
+    const frames = [
+      ['pounce-01.png', '蓄力：前胸壓低、屁股抬高'],
+      ['pounce-02.png', '壓縮：前腳收近、後腳蓄力'],
+      ['pounce-03.png', '起步：肩膀和前腳向前'],
+      ['pounce-04.png', '伸展：低低地往前撲'],
+      ['pounce-05.png', '接地：前腳先落地'],
+      ['pounce-06.png', '跟上：後腳與身體收回'],
+      ['pounce-07.png', '回彈：回到 play bow'],
+      ['pounce-08.png', '重置：準備下一次 pounce']
+    ];
+    const puppy = document.querySelector('#puppy');
+    const title = document.querySelector('#frame-title');
+    const counter = document.querySelector('#counter');
+    const timeline = document.querySelector('#timeline');
+    const playButton = document.querySelector('#play');
+    const speed = document.querySelector('#speed');
+    const speedValue = document.querySelector('#speed-value');
+    let index = 0;
+    let playing = true;
+    let timer;
+
+    function render() {
+      const [file, label] = frames[index];
+      puppy.src = `frames/${file}`;
+      title.textContent = `${index + 1}／${label}`;
+      counter.textContent = `第 ${index + 1} 格／${frames.length} 格`;
+      [...timeline.children].forEach((card, cardIndex) => card.classList.toggle('active', cardIndex === index));
+    }
+
+    function schedule() {
+      clearTimeout(timer);
+      if (!playing) return;
+      timer = setTimeout(() => {
+        index = (index + 1) % frames.length;
+        render();
+        schedule();
+      }, Number(speed.value));
+    }
+
+    frames.forEach(([file, label], frameIndex) => {
+      const card = document.createElement('button');
+      card.className = 'frame-card';
+      card.type = 'button';
+      card.innerHTML = `<img src="frames/${file}" alt="第 ${frameIndex + 1} 格：${label}"><span>${frameIndex + 1}</span>`;
+      card.addEventListener('click', () => { index = frameIndex; render(); schedule(); });
+      timeline.appendChild(card);
+    });
+
+    playButton.addEventListener('click', () => {
+      playing = !playing;
+      playButton.textContent = playing ? '暫停' : '播放';
+      schedule();
+    });
+    document.querySelector('#previous').addEventListener('click', () => { index = (index - 1 + frames.length) % frames.length; render(); schedule(); });
+    document.querySelector('#next').addEventListener('click', () => { index = (index + 1) % frames.length; render(); schedule(); });
+    speed.addEventListener('input', () => { speedValue.textContent = `${speed.value}ms`; schedule(); });
+    render();
+    schedule();
+  </script>
+</body>
+</html>

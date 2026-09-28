@@ -30,6 +30,10 @@ final class DogAnimationPlayerTests: XCTestCase {
         XCTAssertFalse(DogAnimationPlayer.frameURLs(for: .depleted).contains { $0.lastPathComponent == "rest.png" })
     }
 
+    func testPounceUsesTheEightFrameBellyUpBasedSequence() {
+        XCTAssertEqual(DogAnimationPlayer.frameURLs(for: .pounce).count, 8)
+    }
+
     func testMenuBarFramesFitInTheMenuBar() {
         let player = DogAnimationPlayer()
 
@@ -126,6 +130,10 @@ final class DogAnimationPlayerTests: XCTestCase {
 
         XCTAssertLessThan(player.frameDuration(for: .run), player.frameDuration(for: .walk))
         XCTAssertLessThan(player.frameDuration(for: .walk), player.frameDuration(for: .rest))
+    }
+
+    func testPounceUsesTheSmoothPreviewSpeed() {
+        XCTAssertEqual(DogAnimationPlayer().frameDuration(for: .pounce), 0.29, accuracy: 0.0001)
     }
 
     func testTheNextFrameIsScheduledOnItsOwnBoundaryNotAFixedTick() {

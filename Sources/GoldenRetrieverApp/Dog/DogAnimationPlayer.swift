@@ -133,7 +133,8 @@ public struct DogAnimationPlayer: Sendable {
         case .idle: 0.6
         case .walk: 0.14
         case .run: 0.08
-        case .pounce: 0.1
+        // 290ms keeps the low, weight-following puppy pounce readable and smooth.
+        case .pounce: 0.29
         case .spin: DogAnimationDirector.spinDuration / 12
         case .rest: 0.5
         case .depleted: 0.8
