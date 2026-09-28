@@ -213,6 +213,16 @@ final class AppRuntime: ObservableObject {
         animationDirector.breakActivity(paused: paused)
     }
 
+    /// The floating bubble's line: the invitation, or during a break what
+    /// 小金金 is doing and how long is left.
+    func floatingLine(at date: Date) -> String? {
+        if let breakEndsAt {
+            let title = breakActivityPaused ? "停下來了" : (breakActivity ?? .rest).ongoingTitle
+            return "\(title) · 還剩 \(PopoverView.remainingBreakMinutes(until: breakEndsAt, now: date)) 分鐘"
+        }
+        return invitationText(at: date)
+    }
+
     func invitationText(at date: Date) -> String? {
         guard let invitationStartedAt else { return nil }
         return puppyIsDepleted ? BreakInvitation.depletedLine : BreakInvitation.line(since: invitationStartedAt, now: date).text

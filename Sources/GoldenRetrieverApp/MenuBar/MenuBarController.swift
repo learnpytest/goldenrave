@@ -44,7 +44,7 @@ final class MenuBarController: NSObject {
 
         floatingPuppy = FloatingPuppyController(
             playbackAt: { [runtime] date in runtime.dogPlayback(at: date) },
-            lineAt: { [runtime] date in runtime.invitationText(at: date) },
+            lineAt: { [runtime] date in runtime.floatingLine(at: date) },
             onClick: { [weak self] in self?.showPopover() }
         )
 
@@ -84,7 +84,9 @@ final class MenuBarController: NSObject {
         if popover.contentSize != size {
             popover.contentSize = size
         }
-        if runtime.invitationStartedAt != nil, runtime.showsPet {
+        // 小金金 stays on the desktop through the break the user chose, not
+        // only while inviting.
+        if runtime.invitationStartedAt != nil || runtime.breakEndsAt != nil, runtime.showsPet {
             floatingPuppy?.show()
         } else {
             floatingPuppy?.hide()
