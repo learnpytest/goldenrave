@@ -32,6 +32,7 @@ public struct StatisticsView: View {
     @State private var loadError: String?
 
     private static let appsShown = 5
+    private static let rowHeight: CGFloat = 40
 
     public init(
         store: any LocalStore,
@@ -108,7 +109,7 @@ public struct StatisticsView: View {
         } else {
             let longest = apps.first?.seconds ?? 1
             ScrollView {
-                VStack(alignment: .leading, spacing: 8) {
+                VStack(alignment: .leading, spacing: 0) {
                     ForEach(apps.prefix(Self.appsShown), id: \.appName) { app in
                         VStack(alignment: .leading, spacing: 2) {
                             HStack(spacing: 8) {
@@ -138,17 +139,23 @@ public struct StatisticsView: View {
                                     .truncationMode(.middle)
                             }
                         }
+                        .frame(height: Self.rowHeight, alignment: .top)
                     }
                 }
                 // Room for the overlay scroller so it never covers the times.
                 .padding(.trailing, 12)
-                .padding(.bottom, 14)
             }
+            // Three and a half rows: the half row plus the fade says there is more.
+            .frame(height: Self.rowHeight * 3.5)
             .scrollIndicators(.visible)
             // A fade at the bottom shows there is more to scroll to.
             .overlay(alignment: .bottom) {
-                LinearGradient(colors: [PanelStyle.panel.opacity(0), PanelStyle.panel], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 22)
+                LinearGradient(
+                    colors: [PanelStyle.panel.opacity(0), PanelStyle.panel.opacity(0.85), PanelStyle.panel],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+                    .frame(height: Self.rowHeight * 0.85)
                     .allowsHitTesting(false)
             }
         }
