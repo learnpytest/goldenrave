@@ -16,6 +16,9 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var workMinutes: Int
     @Published private(set) var restMinutes: Int
     @Published private(set) var showsPet: Bool
+    @Published private(set) var availableUpdate: AvailableUpdate?
+    let updateChecker = UpdateChecker()
+    private var lastUpdateCheck: Date?
 
     private var dependencies: AppDependencies?
     private let activitySource = SystemActivitySource()
@@ -47,7 +50,20 @@ final class AppRuntime: ObservableObject {
         timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.tick()
+                self?.checkForUpdates()
             }
+        }
+        checkForUpdates()
+    }
+
+    /// At most once per `UpdateChecker.interval`, unless forced (settings opened).
+    func checkForUpdates(force: Bool = false, now: Date = Date()) {
+        if !force, let lastUpdateCheck, now.timeIntervalSince(lastUpdateCheck) < UpdateChecker.interval { return }
+        lastUpdateCheck = now
+        let checker = updateChecker
+        Task { [weak self] in
+            let update = await checker.check()
+            await MainActor.run { self?.availableUpdate = update }
         }
     }
 
@@ -240,6 +256,7 @@ final class AppRuntime: ObservableObject {
     func openSettings() {
         showSettings = true
         showStatistics = false
+        checkForUpdates(force: true)
     }
 
     func closeSecondaryView() {

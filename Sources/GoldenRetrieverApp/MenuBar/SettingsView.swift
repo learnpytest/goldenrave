@@ -1,3 +1,4 @@
+import AppKit
 import GoldenRetrieverCore
 import SwiftUI
 
@@ -7,6 +8,8 @@ public struct SettingsView: View {
     @Binding private var restMinutes: Int
     @Binding private var showsPet: Bool
     private let isAwaitingPermission: Bool
+    private let currentVersion: String
+    private let update: AvailableUpdate?
     private let onClose: () -> Void
     private let onDeleteData: () -> Void
     @State private var showingDeleteConfirmation = false
@@ -17,6 +20,8 @@ public struct SettingsView: View {
         restMinutes: Binding<Int> = .constant(10),
         showsPet: Binding<Bool> = .constant(true),
         isAwaitingPermission: Bool = false,
+        currentVersion: String = "",
+        update: AvailableUpdate? = nil,
         onClose: @escaping () -> Void = {},
         onDeleteData: @escaping () -> Void = {}
     ) {
@@ -25,6 +30,8 @@ public struct SettingsView: View {
         self._restMinutes = restMinutes
         self._showsPet = showsPet
         self.isAwaitingPermission = isAwaitingPermission
+        self.currentVersion = currentVersion
+        self.update = update
         self.onClose = onClose
         self.onDeleteData = onDeleteData
     }
@@ -62,10 +69,26 @@ public struct SettingsView: View {
                     .padding(.horizontal, PopoverView.blockInset)
             }
             PanelDivider()
-            Button("清除本機資料") { showingDeleteConfirmation = true }
-                .buttonStyle(.plain)
-                .font(.system(size: 11))
-                .foregroundStyle(PanelStyle.muted)
+            HStack {
+                Button("清除本機資料") { showingDeleteConfirmation = true }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 11))
+                    .foregroundStyle(PanelStyle.muted)
+                Spacer()
+                // Notify only: the release page is where the new dmg is downloaded.
+                if let update {
+                    Button("有新版本 v\(update.version) · 前往下載") { NSWorkspace.shared.open(update.pageURL) }
+                        .buttonStyle(.plain)
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(PanelStyle.orange)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                } else {
+                    Text("v\(currentVersion)")
+                        .font(.system(size: 11))
+                        .foregroundStyle(PanelStyle.muted)
+                }
+            }
                 .padding(.top, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
         }

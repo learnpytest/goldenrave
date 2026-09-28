@@ -198,6 +198,8 @@ private struct PopoverRootView: View {
                     set: runtime.setShowsPet
                 ),
                 isAwaitingPermission: runtime.isAwaitingDetailedPermission,
+                currentVersion: runtime.updateChecker.currentVersion,
+                update: runtime.availableUpdate,
                 onClose: runtime.closeSecondaryView,
                 onDeleteData: runtime.deleteAllData
             )

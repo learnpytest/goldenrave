@@ -15,3 +15,7 @@ The app does not save keystrokes, mouse coordinates, screenshots, clipboard cont
 ## Permission
 
 Accessibility is requested only when the user chooses Detailed mode. The permission is used to read the frontmost app/window information needed for that mode. Unsupported browser data becomes an absent URL; it does not prevent the app name and window portion from being stored.
+
+## Network
+
+The only network request is a check of the latest release at `api.github.com/repos/learnpytest/goldenrave/releases/latest`, at launch, at most once a day, and when settings open. It sends no usage data; opening the download page is left to the user.
