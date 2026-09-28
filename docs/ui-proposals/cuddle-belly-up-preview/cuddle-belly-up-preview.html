@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>小金金 Cuddle 動畫預覽</title>
+  <style>
+    :root { color-scheme: light; --ink:#3d332b; --muted:#78695d; --cream:#fff9ef; --line:#eadfce; --gold:#d9913e; }
+    * { box-sizing: border-box; }
+    body { margin:0; background:linear-gradient(145deg,#fff9ef,#f7eee2); color:var(--ink); font:16px/1.6 -apple-system,BlinkMacSystemFont,"SF Pro Rounded","Helvetica Neue",sans-serif; }
+    main { width:min(920px,calc(100% - 32px)); margin:0 auto; padding:36px 0 52px; }
+    h1 { margin:0 0 6px; font-size:clamp(25px,4vw,38px); }
+    p { margin:0; } .intro { color:var(--muted); max-width:720px; }
+    .panel { margin-top:24px; padding:24px; border:1px solid var(--line); border-radius:24px; background:#fffdf9; box-shadow:0 18px 48px rgba(110,75,37,.1); }
+    .stage { display:grid; place-items:center; min-height:360px; border-radius:18px; background:#f4eadc; background-image:linear-gradient(45deg,rgba(255,255,255,.42) 25%,transparent 25%),linear-gradient(-45deg,rgba(255,255,255,.42) 25%,transparent 25%),linear-gradient(45deg,transparent 75%,rgba(255,255,255,.42) 75%),linear-gradient(-45deg,transparent 75%,rgba(255,255,255,.42) 75%); background-size:28px 28px; background-position:0 0,0 14px,14px -14px,-14px 0; }
+    #puppy { width:min(340px,72vw); height:min(340px,72vw); object-fit:contain; filter:drop-shadow(0 12px 9px rgba(92,59,28,.14)); }
+    .status { display:flex; justify-content:space-between; gap:12px; margin-top:18px; }
+    #frame-title { color:#9d5c22; font-weight:700; } #counter { color:var(--muted); font-variant-numeric:tabular-nums; }
+    .controls { display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin-top:14px; }
+    button { border:1px solid #d8b98e; border-radius:999px; padding:8px 15px; color:#9d5c22; background:#fff8eb; font:inherit; cursor:pointer; }
+    button:hover { background:#ffefd4; } button:focus-visible { outline:3px solid #e9b66d; outline-offset:2px; }
+    .speed { display:flex; align-items:center; gap:8px; color:var(--muted); } input[type=range] { width:160px; accent-color:var(--gold); }
+    .timeline { display:grid; grid-template-columns:repeat(8,minmax(90px,1fr)); gap:8px; margin-top:24px; overflow-x:auto; padding-bottom:4px; }
+    .frame-card { min-width:90px; padding:7px; border:1px solid var(--line); border-radius:14px; background:#fff; cursor:pointer; }
+    .frame-card.active { border:2px solid var(--gold); padding:6px; } .frame-card img { display:block; width:100%; aspect-ratio:1; object-fit:contain; } .frame-card span { display:block; color:var(--muted); font-size:12px; text-align:center; }
+    .notes { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:24px; } .notes div { padding:12px; border-radius:14px; background:#fff6e8; color:var(--muted); font-size:14px; } .notes strong { display:block; color:var(--ink); }
+    @media (max-width:700px) { main { width:min(100% - 20px,560px); padding-top:24px; } .panel { padding:16px; } .stage { min-height:290px; } .notes { grid-template-columns:1fr 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>小金金的 Cuddle 動畫預覽</h1>
+    <p class="intro">這 8 格都以同一個趴姿身體為底，只做很小的撒嬌變化：頭輕輕歪、前腳抬起伸手、尾巴小幅搖動，再回到原位。預設每格 300ms，一圈 2.4 秒。</p>
+    <section class="panel" aria-label="動畫播放器">
+      <div class="stage"><img id="puppy" src="frames/cuddle-01.png" alt="小金金 cuddle 動畫目前影格"></div>
+      <div class="status"><span id="frame-title">1／基準：趴著等抱抱</span><span id="counter">第 1 格／8 格</span></div>
+      <div class="controls">
+        <button id="play" type="button">暫停</button><button id="previous" type="button">上一格</button><button id="next" type="button">下一格</button>
+        <label class="speed" for="speed">速度 <input id="speed" type="range" min="120" max="600" value="300" step="10"><span id="speed-value">300ms</span></label>
+      </div>
+      <div id="timeline" class="timeline" aria-label="逐格預覽"></div>
+    </section>
+    <section class="notes" aria-label="動作拆解">
+      <div><strong>1–2 頭歪</strong>保持趴姿，只靠近你一點。</div>
+      <div><strong>3–4 伸手</strong>一隻前腳輕輕抬起，像是在討抱抱。</div>
+      <div><strong>5–7 尾巴</strong>尾巴小幅度擺動，身體不亂跑。</div>
+      <div><strong>8 回位</strong>回到第 1 格，循環不跳動。</div>
+    </section>
+  </main>
+  <script>
+    const frames = [
+      ['cuddle-01.png', '基準：趴著等抱抱'],
+      ['cuddle-02.png', '頭歪一下：看著你'],
+      ['cuddle-03.png', '前腳微抬：準備伸手'],
+      ['cuddle-04.png', '伸手：想要抱抱'],
+      ['cuddle-05.png', '放下：尾巴開始小擺'],
+      ['cuddle-06.png', '頭回來：安靜等你'],
+      ['cuddle-07.png', '尾巴微擺：還在等抱抱'],
+      ['cuddle-08.png', '回位：接回第 1 格']
+    ];
+    const puppy = document.querySelector('#puppy');
+    const title = document.querySelector('#frame-title');
+    const counter = document.querySelector('#counter');
+    const timeline = document.querySelector('#timeline');
+    const playButton = document.querySelector('#play');
+    const speed = document.querySelector('#speed');
+    const speedValue = document.querySelector('#speed-value');
+    let index = 0; let playing = true; let timer;
+    function render() {
+      const [file, label] = frames[index];
+      puppy.src = `frames/${file}`; title.textContent = `${index + 1}／${label}`; counter.textContent = `第 ${index + 1} 格／${frames.length} 格`;
+      [...timeline.children].forEach((card, cardIndex) => card.classList.toggle('active', cardIndex === index));
+    }
+    function schedule() {
+      clearTimeout(timer); if (!playing) return;
+      timer = setTimeout(() => { index = (index + 1) % frames.length; render(); schedule(); }, Number(speed.value));
+    }
+    frames.forEach(([file, label], frameIndex) => {
+      const card = document.createElement('button'); card.className = 'frame-card'; card.type = 'button';
+      card.innerHTML = `<img src="frames/${file}" alt="第 ${frameIndex + 1} 格：${label}"><span>${frameIndex + 1}</span>`;
+      card.addEventListener('click', () => { index = frameIndex; render(); schedule(); }); timeline.appendChild(card);
+    });
+    playButton.addEventListener('click', () => { playing = !playing; playButton.textContent = playing ? '暫停' : '播放'; schedule(); });
+    document.querySelector('#previous').addEventListener('click', () => { index = (index - 1 + frames.length) % frames.length; render(); schedule(); });
+    document.querySelector('#next').addEventListener('click', () => { index = (index + 1) % frames.length; render(); schedule(); });
+    speed.addEventListener('input', () => { speedValue.textContent = `${speed.value}ms`; schedule(); });
+    render(); schedule();
+  </script>
+</body>
+</html>
