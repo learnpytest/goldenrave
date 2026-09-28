@@ -134,24 +134,26 @@ final class AppRuntime: ObservableObject {
                 let sessionStart = now.addingTimeInterval(-snapshot.currentSession)
                 nextBreak = dependencies.scheduler.nextBreak(after: sessionStart)
             }
-        } else if sample.kind == .idle {
-            // Stepping away counts as the rest 小金金 was waiting for.
+        } else if sample.kind == .idle, !puppyIsDepleted {
+            // Stepping away counts as the rest 小金金 was waiting for, but not
+            // once it has run out of battery.
             nextBreak = nil
-            puppyIsDepleted = false
         }
         var invitationStart: Date?
-        if let due = nextBreak, !remindersPaused, !isOnBreak, sample.kind == .active {
-            let warning = dependencies.scheduler.policy.warningWindow
-            switch BreakInvitation.phase(due: due, warningWindow: warning, now: now) {
+        if puppyIsDepleted, !remindersPaused, !isOnBreak {
+            // Stays out of battery until 休息／陪玩／散步 or ⏸.
+            invitationStart = invitationStartedAt ?? now
+        } else if let due = nextBreak, !remindersPaused, !isOnBreak, sample.kind == .active {
+            switch BreakInvitation.phase(due: due, now: now) {
             case .notYet:
                 break
             case .inviting(let since):
                 invitationStart = since
             case .gaveUp:
-                // Ignored to the end: 小金金 runs out of battery and the break
-                // stays due, rather than quietly being rescheduled.
+                // Ignored through every line: 小金金 runs out of battery and
+                // the break stays due, rather than quietly being rescheduled.
                 puppyIsDepleted = true
-                invitationStart = due.addingTimeInterval(-warning)
+                invitationStart = due
             }
         }
         if invitationStartedAt != invitationStart {

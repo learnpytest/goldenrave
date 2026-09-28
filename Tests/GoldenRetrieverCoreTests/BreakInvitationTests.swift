@@ -5,22 +5,17 @@ final class BreakInvitationTests: XCTestCase {
     private let due = Date(timeIntervalSince1970: 1_000_000)
     private let warning: TimeInterval = 5 * 60
 
-    func testNoInvitationBeforeTheWarningWindow() {
-        XCTAssertEqual(BreakInvitation.phase(due: due, warningWindow: warning, now: due.addingTimeInterval(-6 * 60)), .notYet)
+    func testNoInvitationBeforeTheBreakIsDue() {
+        XCTAssertEqual(BreakInvitation.phase(due: due, now: due.addingTimeInterval(-1)), .notYet)
     }
 
-    func testInvitesFromFiveMinutesBeforeUntilTenMinutesAfter() {
-        let start = due.addingTimeInterval(-warning)
+    func testInvitesThroughOneRoundOfLinesThenRunsOutOfBattery() {
+        let lastLineEnds = due.addingTimeInterval(BreakInvitation.pounceLength + BreakInvitation.lineLength * 6)
 
-        XCTAssertEqual(BreakInvitation.phase(due: due, warningWindow: warning, now: start), .inviting(since: start))
-        XCTAssertEqual(
-            BreakInvitation.phase(due: due, warningWindow: warning, now: due.addingTimeInterval(9 * 60)),
-            .inviting(since: start)
-        )
-        XCTAssertEqual(
-            BreakInvitation.phase(due: due, warningWindow: warning, now: due.addingTimeInterval(10 * 60)),
-            .gaveUp
-        )
+        XCTAssertEqual(BreakInvitation.roundLength, 280)
+        XCTAssertEqual(BreakInvitation.phase(due: due, now: due), .inviting(since: due))
+        XCTAssertEqual(BreakInvitation.phase(due: due, now: lastLineEnds.addingTimeInterval(-1)), .inviting(since: due))
+        XCTAssertEqual(BreakInvitation.phase(due: due, now: lastLineEnds), .gaveUp)
     }
 
     func testAfterGivingUpItAsksAgainTwentyMinutesLater() {
