@@ -131,16 +131,18 @@ public struct DogAnimationPlayer: Sendable {
     public func frameDuration(for animation: DogAnimation) -> TimeInterval {
         switch animation {
         case .idle: 0.6
-        // Loops that play for minutes stay at 0.3s or slower so the puppy never dazzles.
+        // Loops that play for minutes stay at 0.25s or slower so the puppy never dazzles.
         case .run: 0.3
-        case .walk, .stroll: 0.45
+        case .walk: 0.38
+        case .stroll: 0.45
         // 290ms keeps the low, weight-following puppy pounce readable and smooth.
         case .pounce: 0.29
         case .spin: DogAnimationDirector.spinDuration / 12
         case .rest: 0.5
         case .depleted: 0.8
         case .bellyUp: 0.375
-        case .play, .playBall, .cuddle: 0.3
+        case .play: 0.25
+        case .playBall, .cuddle: 0.3
         case .waiting: 0.32
         case .timeWatch: 0.6
         }
