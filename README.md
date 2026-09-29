@@ -22,7 +22,7 @@ app 是 menu-bar-only utility，不會建立不必要的 Dock 視窗。第一次
 1. 把 `Packaging/Info.plist` 的 `CFBundleShortVersionString` 改成新版號（例如 `0.2.0`），合併進 `main`。
 2. 在 `main` 打 tag 並推上去：`git tag v0.2.0 && git push origin v0.2.0`。
 3. `Release` workflow 會檢查 tag 和版號一致、跑完全部測試，再建立 GitHub Release 並附上 `goldenrave.dmg`。
-4. 已安裝的 app 會在啟動時、每天一次、以及打開設定時檢查最新 Release；有新版時，設定底部會出現「有新版本 · 前往下載」。
+4. 已安裝的 app 會在啟動時、每天一次、以及打開設定時檢查最新 Release；有新版時，設定底部會出現「前往更新 x.y.z 版」，下面附更新步驟。
 
 ## 追蹤模式
 

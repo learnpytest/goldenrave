@@ -85,7 +85,7 @@ public struct SettingsView: View {
                 Spacer()
                 // Notify only: the release page is where the new dmg is downloaded.
                 if let update {
-                    Button("有新版本 v\(update.version) · 前往更新") { NSWorkspace.shared.open(update.pageURL) }
+                    Button("前往更新 \(update.version) 版") { NSWorkspace.shared.open(update.pageURL) }
                         .buttonStyle(.plain)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(PanelStyle.orange)
@@ -168,13 +168,15 @@ public struct SettingsView: View {
         return HStack {
             label(title)
             Spacer()
-            HStack(spacing: 8) {
+            // Same capsule, colour and type size as the Show / Hide chips.
+            HStack(spacing: 2) {
                 TextField("", value: clamped, format: .number)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13))
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(PanelStyle.text)
                     .monospacedDigit()
-                    .multilineTextAlignment(.trailing)
-                    .frame(width: 30)
+                    .multilineTextAlignment(.center)
+                    .frame(width: 24)
                     .onKeyPress(.upArrow) {
                         clamped.wrappedValue += 1
                         return .handled
@@ -188,10 +190,10 @@ public struct SettingsView: View {
                     arrow("chevron.down") { clamped.wrappedValue -= 1 }
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(PanelStyle.line, lineWidth: 1))
+            .padding(.leading, 8)
+            .padding(.trailing, 4)
+            .padding(.vertical, 2)
+            .background(PanelStyle.chip, in: Capsule())
             label("分鐘")
         }
     }
@@ -199,9 +201,9 @@ public struct SettingsView: View {
     private func arrow(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(PanelStyle.stepperArrow)
-                .frame(width: 16, height: 11)
+                .font(.system(size: 7, weight: .bold))
+                .foregroundStyle(PanelStyle.chipText)
+                .frame(width: 14, height: 9)
         }
         .buttonStyle(.plain)
     }
