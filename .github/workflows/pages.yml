@@ -1,0 +1,50 @@
+name: Pages
+
+# Publishes site/ to https://learnpytest.github.io/goldenrave/.
+# release.yml starts this after each release so the version shown stays
+# current: a release made with GITHUB_TOKEN does not trigger other workflows.
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/pages.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Fill in the latest version and when the page last changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version=$(gh release view --repo "$GITHUB_REPOSITORY" --json tagName -q .tagName)
+          updated_iso=$(TZ=Asia/Taipei git log -1 --format=%cd --date=format:%Y-%m-%d -- site)
+          updated=$(TZ=Asia/Taipei git log -1 --format=%cd --date='format:%Y 年 %-m 月 %-d 日' -- site)
+          sed -i \
+            -e "s/__VERSION__/${version}/" \
+            -e "s/__UPDATED_ISO__/${updated_iso}/" \
+            -e "s/__UPDATED__/${updated}/" \
+            site/index.html
+          ! grep -n "__VERSION__\|__UPDATED" site/index.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

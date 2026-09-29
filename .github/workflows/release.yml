@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   release:
@@ -32,3 +33,7 @@ jobs:
             --title "goldenrave ${GITHUB_REF_NAME}" \
             --notes "$(cat Packaging/release-notes.md)" \
             --generate-notes
+      - name: Refresh the web page with the new version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run pages.yml --repo "$GITHUB_REPOSITORY" --ref main
