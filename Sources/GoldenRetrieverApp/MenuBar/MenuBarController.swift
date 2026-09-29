@@ -74,7 +74,10 @@ final class MenuBarController: NSObject {
         let size = runtime.showStatistics ? PopoverLayout.size
             : runtime.showSettings ? CGSize(
                 width: PopoverLayout.size.width,
-                height: PopoverLayout.settingsHeight(showsUpdateHint: runtime.availableUpdate != nil)
+                height: PopoverLayout.settingsHeight(
+                    showsUpdateHint: runtime.availableUpdate != nil,
+                    showsPermissionHint: runtime.isAwaitingDetailedPermission
+                )
             )
             : CGSize(
                 width: PopoverLayout.mainWidth,
