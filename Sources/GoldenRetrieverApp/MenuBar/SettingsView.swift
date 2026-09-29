@@ -122,7 +122,7 @@ public struct SettingsView: View {
     }
 
     private static let rowPadding: CGFloat = 7
-    static let updateSteps = "下載後先按「結束小金金」，再把 goldenrave 拖進應用程式並選「取代」"
+    static let updateSteps = "更新前先「結束小金金」，再拖進應用程式取代"
 
     /// A two-option pill toggle, the same look for pet visibility and mode.
     private func toggleRow(_ title: String, options: [(String, Bool)], selected: Bool, onSelect: @escaping (Bool) -> Void) -> some View {
