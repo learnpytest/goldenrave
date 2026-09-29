@@ -72,7 +72,10 @@ final class MenuBarController: NSObject {
         let button = statusItem.button
         button?.title = configuration.title
         let size = runtime.showStatistics ? PopoverLayout.size
-            : runtime.showSettings ? CGSize(width: PopoverLayout.size.width, height: PopoverLayout.settingsHeight)
+            : runtime.showSettings ? CGSize(
+                width: PopoverLayout.size.width,
+                height: PopoverLayout.settingsHeight(showsUpdateHint: runtime.availableUpdate != nil)
+            )
             : CGSize(
                 width: PopoverLayout.mainWidth,
                 height: PopoverLayout.mainHeight(showsActionRow: PopoverView.showsActionRow(

@@ -45,7 +45,7 @@ public struct AppPreferences {
         }
     }
 
-    /// Show pet / Hide pet: whether 小金金 floats onto the desktop when a break is due.
+    /// Show / Hide: whether 小金金 floats onto the desktop when a break is due.
     public var showsFloatingPuppy: Bool {
         get { defaults.object(forKey: Key.showsFloatingPuppy) as? Bool ?? true }
         nonmutating set { defaults.set(newValue, forKey: Key.showsFloatingPuppy) }
