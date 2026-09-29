@@ -157,8 +157,9 @@ public struct SettingsView: View {
             .foregroundStyle(PanelStyle.text)
     }
 
-    /// The number itself is the control: type it, or step it a minute at a
-    /// time with ↑ / ↓. Anything outside the range snaps to its nearest end.
+    /// The box holds only the number: type it, or step it a minute at a time
+    /// with its arrows or ↑ / ↓. 分鐘 sits outside. Anything outside the range
+    /// snaps to its nearest end.
     private func minutesRow(_ title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
         let clamped = Binding<Int>(
             get: { value.wrappedValue },
@@ -167,13 +168,13 @@ public struct SettingsView: View {
         return HStack {
             label(title)
             Spacer()
-            HStack(spacing: 4) {
+            HStack(spacing: 8) {
                 TextField("", value: clamped, format: .number)
                     .textFieldStyle(.plain)
-                    .font(.system(size: 13, weight: .bold))
+                    .font(.system(size: 13))
                     .monospacedDigit()
                     .multilineTextAlignment(.trailing)
-                    .frame(width: 34)
+                    .frame(width: 30)
                     .onKeyPress(.upArrow) {
                         clamped.wrappedValue += 1
                         return .handled
@@ -182,14 +183,26 @@ public struct SettingsView: View {
                         clamped.wrappedValue -= 1
                         return .handled
                     }
-                Text("分鐘")
-                    .font(.system(size: 12))
-                    .foregroundStyle(PanelStyle.text)
+                VStack(spacing: 0) {
+                    arrow("chevron.up") { clamped.wrappedValue += 1 }
+                    arrow("chevron.down") { clamped.wrappedValue -= 1 }
+                }
             }
             .padding(.horizontal, 10)
             .padding(.vertical, 3)
             .background(Color.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(PanelStyle.line, lineWidth: 1))
+            label("分鐘")
         }
+    }
+
+    private func arrow(_ symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: 9, weight: .bold))
+                .foregroundStyle(PanelStyle.stepperArrow)
+                .frame(width: 16, height: 11)
+        }
+        .buttonStyle(.plain)
     }
 }

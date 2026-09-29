@@ -9,6 +9,7 @@ enum PanelStyle {
     static let text = Color(hex: 0x5B422C)
     static let muted = Color(hex: 0x92704A)
     static let chipText = Color(hex: 0x9A6B3D)
+    static let stepperArrow = Color(hex: 0xC7832D)
     static let green = Color(hex: 0x388A72)
     static let orange = Color(hex: 0xE98763)
     static let red = Color(hex: 0xE86F63)
