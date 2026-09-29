@@ -48,6 +48,7 @@ final class PopoverControlsTests: XCTestCase {
     func testThePanelIsCompactNowThatThePuppyLivesInTheMenuBar() {
         XCTAssertLessThanOrEqual(PopoverLayout.size.height, 300, "no empty space where the puppy used to be")
         XCTAssertLessThan(PopoverLayout.mainHeight(showsActionRow: false), PopoverLayout.mainHeight(showsActionRow: true))
+        XCTAssertLessThan(PopoverLayout.settingsHeight(showsUpdateHint: false), PopoverLayout.settingsHeight(showsUpdateHint: true))
     }
 
     func testPetVisibilityOffersHideAndShow() {

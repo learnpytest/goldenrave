@@ -51,7 +51,7 @@ public struct SettingsView: View {
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
-            toggleRow("休息時顯示小金金", options: PetVisibility.allCases.map { ($0.title, $0 == .show) }, selected: showsPet) { showsPet = $0 }
+            toggleRow("休息顯示小金金", options: PetVisibility.allCases.map { ($0.title, $0 == .show) }, selected: showsPet) { showsPet = $0 }
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
@@ -76,6 +76,14 @@ public struct SettingsView: View {
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
+            // A menu-bar-only app has no Dock icon or menu to quit from.
+            Button("結束小金金") { NSApp.terminate(nil) }
+                .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundStyle(PanelStyle.muted)
+                .padding(.vertical, Self.rowPadding)
+                .padding(.horizontal, PopoverView.blockInset)
+            PanelDivider()
             HStack {
                 Text("目前版本 v\(currentVersion)")
                     .font(.system(size: 11))
@@ -93,12 +101,22 @@ public struct SettingsView: View {
             }
                 .padding(.top, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
+            // A running app cannot be replaced, so the drag-in fails unless
+            // 小金金 is quit first.
+            if update != nil {
+                Text(Self.updateSteps)
+                    .font(.system(size: 10))
+                    .foregroundStyle(PanelStyle.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 4)
+                    .padding(.horizontal, PopoverView.blockInset)
+            }
         }
         .foregroundStyle(PanelStyle.text)
         // Same edges as the main panel: dividers span the width, text is inset.
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
-        .frame(width: PopoverLayout.size.width, height: PopoverLayout.settingsHeight, alignment: .top)
+        .frame(width: PopoverLayout.size.width, height: PopoverLayout.settingsHeight(showsUpdateHint: update != nil), alignment: .top)
         .confirmationDialog(
             "確定清除所有本機使用與休息紀錄？",
             isPresented: $showingDeleteConfirmation,
@@ -110,6 +128,7 @@ public struct SettingsView: View {
     }
 
     private static let rowPadding: CGFloat = 7
+    static let updateSteps = "下載後先按「結束小金金」，再把 goldenrave 拖進應用程式並選「取代」"
 
     /// A two-option pill toggle, the same look for pet visibility and mode.
     private func toggleRow(_ title: String, options: [(String, Bool)], selected: Bool, onSelect: @escaping (Bool) -> Void) -> some View {
