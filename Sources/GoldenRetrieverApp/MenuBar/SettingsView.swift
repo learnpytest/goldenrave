@@ -67,7 +67,7 @@ public struct SettingsView: View {
                     Text("需要「輔助使用」權限才能記錄各 app")
                         .font(.system(size: 10))
                         .foregroundStyle(PanelStyle.orange)
-                        .lineLimit(1)
+                        .fixedSize(horizontal: false, vertical: true)
                     Spacer(minLength: 0)
                     Button { NSWorkspace.shared.open(Self.accessibilitySettingsURL) } label: {
                         Text("打開系統設定")
