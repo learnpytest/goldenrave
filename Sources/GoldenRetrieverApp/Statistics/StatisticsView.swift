@@ -1,3 +1,4 @@
+import AppKit
 import Foundation
 import GoldenRetrieverCore
 import SwiftUI
@@ -26,7 +27,7 @@ public struct StatisticsView: View {
     @State private var total: TimeInterval = 0
     @State private var apps: [AppUsage] = []
     // Totals and per-app samples began on different days, so each part
-    // shows 尚無資料 on its own when the range reaches back before it.
+    // shows 尚無資料 on its own while it has only today's records.
     @State private var totalIsPartial = false
     @State private var listReachesBottom = false
     @State private var appsArePartial = false
@@ -34,7 +35,6 @@ public struct StatisticsView: View {
 
     private static let appsShown = 5
     private static let rowHeight: CGFloat = 40
-    private static let listSpace = "appList"
 
     public init(
         store: any LocalStore,
@@ -152,13 +152,7 @@ public struct StatisticsView: View {
                 }
                 // Room for the overlay scroller so it never covers the times.
                 .padding(.trailing, 12)
-                .background(GeometryReader { proxy in
-                    Color.clear.preference(key: ListBottomKey.self, value: proxy.frame(in: .named(Self.listSpace)).maxY)
-                })
-            }
-            .coordinateSpace(name: Self.listSpace)
-            .onPreferenceChange(ListBottomKey.self) { bottom in
-                listReachesBottom = bottom <= Self.rowHeight * 3.5 + 1
+                .background(ScrollBottomObserver { listReachesBottom = $0 })
             }
             // Three and a half rows: the half row plus the fade says there is more.
             .frame(height: Self.rowHeight * 3.5)
@@ -205,18 +199,20 @@ public struct StatisticsView: View {
             let end = calendar.date(byAdding: .day, value: 1, to: today) ?? Date()
             total = try totalForRange(from: start, today: today)
             apps = try store.appUsage(from: start, to: end)
-            totalIsPartial = try isPartial(since: store.firstSessionDate(), rangeStart: start)
-            appsArePartial = try isPartial(since: store.firstDetailedSampleDate(), rangeStart: start)
+            totalIsPartial = try isPartial(since: store.firstSessionDate(), today: today)
+            appsArePartial = try isPartial(since: store.firstDetailedSampleDate(), today: today)
             loadError = nil
         } catch {
             loadError = "讀取統計失敗：\(error.localizedDescription)"
         }
     }
 
-    private func isPartial(since first: Date?, rangeStart start: Date) -> Bool {
+    /// 近 7 天 and 本月 show whatever days exist once there is more than one;
+    /// with only today's records they would just repeat 今天.
+    private func isPartial(since first: Date?, today: Date) -> Bool {
         guard range != .today else { return false }
         guard let first else { return true }
-        return calendar.startOfDay(for: first) > start
+        return calendar.startOfDay(for: first) >= today
     }
 
     private func rangeStart(today: Date) -> Date {
@@ -252,10 +248,59 @@ public struct StatisticsView: View {
     }
 }
 
-private struct ListBottomKey: PreferenceKey {
-    static let defaultValue: CGFloat = .greatestFiniteMagnitude
+/// Reports whether the enclosing scroll view shows the end of its content.
+/// A GeometryReader preference in the list did not update while scrolling on
+/// macOS 26 (v1.0.2 kept the fade at the bottom), and SwiftUI's own scroll
+/// geometry needs macOS 15, so this reads the AppKit scroll view directly.
+private struct ScrollBottomObserver: NSViewRepresentable {
+    let onChange: (Bool) -> Void
 
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
-        value = nextValue()
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        context.coordinator.onChange = onChange
+        // The scroll view is found once this view is in the window.
+        DispatchQueue.main.async { context.coordinator.attach(to: view) }
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        context.coordinator.onChange = onChange
+        context.coordinator.report()
+    }
+
+    final class Coordinator: NSObject {
+        var onChange: (Bool) -> Void = { _ in }
+        private weak var scrollView: NSScrollView?
+        private var lastReported: Bool?
+
+        func attach(to view: NSView) {
+            guard let scrollView = view.enclosingScrollView else { return }
+            self.scrollView = scrollView
+            scrollView.contentView.postsBoundsChangedNotifications = true
+            NotificationCenter.default.addObserver(self, selector: #selector(changed), name: NSView.boundsDidChangeNotification, object: scrollView.contentView)
+            if let document = scrollView.documentView {
+                document.postsFrameChangedNotifications = true
+                NotificationCenter.default.addObserver(self, selector: #selector(changed), name: NSView.frameDidChangeNotification, object: document)
+            }
+            report()
+        }
+
+        @objc private func changed() { report() }
+
+        func report() {
+            guard let scrollView, let document = scrollView.documentView else { return }
+            let visible = scrollView.contentView.bounds
+            let atBottom = document.isFlipped
+                ? visible.maxY >= document.frame.height - 1
+                : visible.minY <= 1
+            guard atBottom != lastReported else { return }
+            lastReported = atBottom
+            // Never change SwiftUI state in the middle of a view update.
+            DispatchQueue.main.async { [onChange] in onChange(atBottom) }
+        }
+
+        deinit { NotificationCenter.default.removeObserver(self) }
     }
 }

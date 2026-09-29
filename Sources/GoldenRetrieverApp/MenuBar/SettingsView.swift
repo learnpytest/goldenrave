@@ -43,11 +43,11 @@ public struct SettingsView: View {
                 .padding(.horizontal, PopoverView.blockInset)
                 .padding(.bottom, 8)
             PanelDivider()
-            minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange, step: 5)
+            minutesRow("工作一次", value: $workMinutes, range: BreakPolicy.workMinutesRange)
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
-            minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange, step: 1)
+            minutesRow("休息一次", value: $restMinutes, range: BreakPolicy.restMinutesRange)
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
@@ -69,31 +69,25 @@ public struct SettingsView: View {
                     .padding(.horizontal, PopoverView.blockInset)
             }
             PanelDivider()
-            Button("清除本機資料") { showingDeleteConfirmation = true }
+            Button { showingDeleteConfirmation = true } label: { label("清除本機資料") }
                 .buttonStyle(.plain)
-                .font(.system(size: 11))
-                .foregroundStyle(PanelStyle.muted)
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
             // A menu-bar-only app has no Dock icon or menu to quit from.
-            Button("結束小金金") { NSApp.terminate(nil) }
+            Button { NSApp.terminate(nil) } label: { label("結束小金金") }
                 .buttonStyle(.plain)
-                .font(.system(size: 11))
-                .foregroundStyle(PanelStyle.muted)
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
             PanelDivider()
             HStack {
-                Text("目前版本 v\(currentVersion)")
-                    .font(.system(size: 11))
-                    .foregroundStyle(PanelStyle.muted)
+                label("目前版本 v\(currentVersion)")
                 Spacer()
                 // Notify only: the release page is where the new dmg is downloaded.
                 if let update {
-                    Button("有新版本 v\(update.version) · 前往更新") { NSWorkspace.shared.open(update.pageURL) }
+                    Button("前往更新 \(update.version) 版") { NSWorkspace.shared.open(update.pageURL) }
                         .buttonStyle(.plain)
-                        .font(.system(size: 11, weight: .bold))
+                        .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(PanelStyle.orange)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
@@ -128,13 +122,12 @@ public struct SettingsView: View {
     }
 
     private static let rowPadding: CGFloat = 7
-    static let updateSteps = "下載後先按「結束小金金」，再把 goldenrave 拖進應用程式並選「取代」"
+    static let updateSteps = "更新前先「結束小金金」，再拖進應用程式取代"
 
     /// A two-option pill toggle, the same look for pet visibility and mode.
     private func toggleRow(_ title: String, options: [(String, Bool)], selected: Bool, onSelect: @escaping (Bool) -> Void) -> some View {
         HStack {
-            Text(title)
-                .font(.system(size: 12))
+            label(title)
                 .lineLimit(1)
             Spacer(minLength: 6)
             HStack(spacing: 2) {
@@ -142,7 +135,7 @@ public struct SettingsView: View {
                     let isOn = option.1 == selected
                     Button { onSelect(option.1) } label: {
                         Text(option.0)
-                            .font(.system(size: 11, weight: isOn ? .heavy : .regular))
+                            .font(.system(size: 12, weight: isOn ? .heavy : .regular))
                             .foregroundStyle(isOn ? Color.white : PanelStyle.chipText)
                             .fixedSize()
                             .padding(.horizontal, 8)
@@ -157,32 +150,60 @@ public struct SettingsView: View {
         }
     }
 
-    private func minutesRow(_ title: String, value: Binding<Int>, range: ClosedRange<Int>, step: Int) -> some View {
-        HStack {
-            Text(title).font(.system(size: 12))
+    /// Every left-hand label matches 總共 on the statistics page.
+    private func label(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 12))
+            .foregroundStyle(PanelStyle.text)
+    }
+
+    /// The box holds only the number: type it, or step it a minute at a time
+    /// with its arrows or ↑ / ↓. 分鐘 sits outside. Anything outside the range
+    /// snaps to its nearest end.
+    private func minutesRow(_ title: String, value: Binding<Int>, range: ClosedRange<Int>) -> some View {
+        let clamped = Binding<Int>(
+            get: { value.wrappedValue },
+            set: { value.wrappedValue = min(max($0, range.lowerBound), range.upperBound) }
+        )
+        return HStack {
+            label(title)
             Spacer()
-            HStack(spacing: 8) {
-                Text("\(value.wrappedValue) 分鐘")
-                    .font(.system(size: 13))
+            // Same capsule, colour and type size as the Show / Hide chips.
+            HStack(spacing: 2) {
+                TextField("", value: clamped, format: .number)
+                    .textFieldStyle(.plain)
+                    .font(.system(size: 12, weight: .heavy))
+                    .foregroundStyle(PanelStyle.text)
                     .monospacedDigit()
+                    .multilineTextAlignment(.center)
+                    .frame(width: 24)
+                    .onKeyPress(.upArrow) {
+                        clamped.wrappedValue += 1
+                        return .handled
+                    }
+                    .onKeyPress(.downArrow) {
+                        clamped.wrappedValue -= 1
+                        return .handled
+                    }
                 VStack(spacing: 0) {
-                    arrow("chevron.up") { value.wrappedValue = min(value.wrappedValue + step, range.upperBound) }
-                    arrow("chevron.down") { value.wrappedValue = max(value.wrappedValue - step, range.lowerBound) }
+                    arrow("chevron.up") { clamped.wrappedValue += 1 }
+                    arrow("chevron.down") { clamped.wrappedValue -= 1 }
                 }
             }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 12, style: .continuous).stroke(PanelStyle.line, lineWidth: 1))
+            .padding(.leading, 8)
+            .padding(.trailing, 4)
+            .padding(.vertical, 2)
+            .background(PanelStyle.chip, in: Capsule())
+            label("分鐘")
         }
     }
 
     private func arrow(_ symbol: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: symbol)
-                .font(.system(size: 9, weight: .bold))
-                .foregroundStyle(PanelStyle.stepperArrow)
-                .frame(width: 16, height: 11)
+                .font(.system(size: 7, weight: .bold))
+                .foregroundStyle(PanelStyle.chipText)
+                .frame(width: 14, height: 9)
         }
         .buttonStyle(.plain)
     }

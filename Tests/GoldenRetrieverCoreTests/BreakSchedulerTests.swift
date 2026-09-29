@@ -23,8 +23,16 @@ final class BreakSchedulerTests: XCTestCase {
         XCTAssertLessThan(short.warningWindow, short.workInterval / 2)
     }
 
+    func testZeroWorkMinutesMakesTheBreakDueRightAway() {
+        let policy = BreakPolicy(workMinutes: 0, restMinutes: 5)
+        let start = Date(timeIntervalSince1970: 1_000_000)
+
+        XCTAssertEqual(policy.workInterval, 0)
+        XCTAssertEqual(BreakScheduler(policy: policy).nextBreak(after: start), start)
+    }
+
     func testCustomMinutesAreClampedToSaneRanges() {
-        let policy = BreakPolicy(workMinutes: 0, restMinutes: 500)
+        let policy = BreakPolicy(workMinutes: -5, restMinutes: 500)
 
         XCTAssertEqual(policy.workInterval, Double(BreakPolicy.workMinutesRange.lowerBound) * 60)
         XCTAssertEqual(policy.restInterval, Double(BreakPolicy.restMinutesRange.upperBound) * 60)

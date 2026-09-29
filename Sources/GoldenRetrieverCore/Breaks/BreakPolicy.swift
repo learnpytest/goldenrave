@@ -1,7 +1,8 @@
 import Foundation
 
 public struct BreakPolicy: Equatable, Sendable {
-    public static let workMinutesRange = 5...180
+    /// 0 means the break is due right away.
+    public static let workMinutesRange = 0...180
     public static let restMinutesRange = 1...60
 
     public let workInterval: TimeInterval
