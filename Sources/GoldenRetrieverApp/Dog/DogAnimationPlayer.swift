@@ -133,7 +133,7 @@ public struct DogAnimationPlayer: Sendable {
         case .idle: 0.6
         // Loops that play for minutes stay at 0.25s or slower so the puppy never dazzles.
         case .run: 0.3
-        case .walk: 0.38
+        case .walk: 0.32
         case .stroll: 0.45
         // 290ms keeps the low, weight-following puppy pounce readable and smooth.
         case .pounce: 0.29

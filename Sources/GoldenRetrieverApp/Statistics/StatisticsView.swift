@@ -78,9 +78,13 @@ public struct StatisticsView: View {
                 .padding(.vertical, 7)
                 .padding(.horizontal, PopoverView.blockInset)
                 PanelDivider()
-                appList
-                    .padding(.top, 8)
-                    .padding(.horizontal, PopoverView.blockInset)
+                if isDetailed {
+                    appList
+                        .padding(.top, 8)
+                        .padding(.horizontal, PopoverView.blockInset)
+                } else {
+                    detailedPrompt
+                }
             }
         }
         .foregroundStyle(PanelStyle.text)
@@ -91,25 +95,50 @@ public struct StatisticsView: View {
         .task(id: "\(range)-\(isDetailed)") { load() }
     }
 
+    /// Private records totals only: one row offers Detailed, over a faded
+    /// sample of the list it would show.
+    @ViewBuilder
+    private var detailedPrompt: some View {
+        HStack(spacing: 4) {
+            Button("開啟 Detailed", action: onEnableDetailed)
+                .buttonStyle(.plain)
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(PanelStyle.orange)
+            Text("查看各 app 的使用")
+                .font(.system(size: 12))
+            Spacer(minLength: 0)
+        }
+        .padding(.vertical, 7)
+        .padding(.horizontal, PopoverView.blockInset)
+        PanelDivider()
+        VStack(alignment: .leading, spacing: 0) {
+            ForEach(Self.sampleApps, id: \.appName) { app in
+                appRow(app, longest: Self.sampleApps[0].seconds)
+            }
+        }
+        .padding(.top, 8)
+        .padding(.trailing, 12)
+        .padding(.horizontal, PopoverView.blockInset)
+        .opacity(0.45)
+        .blur(radius: 0.6)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+        // The sample is longer than the room left; it must stay inside the panel.
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .clipped()
+    }
+
+    /// Made-up rows for the Private preview; never the user's own data.
+    private static let sampleApps = [
+        AppUsage(appName: "Safari", seconds: 72 * 60, topWindows: ["查資料 - Safari"]),
+        AppUsage(appName: "郵件", seconds: 44 * 60, topWindows: ["收件匣"]),
+        AppUsage(appName: "備忘錄", seconds: 27 * 60, topWindows: ["今天的待辦"]),
+        AppUsage(appName: "行事曆", seconds: 13 * 60, topWindows: ["行事曆"])
+    ]
+
     @ViewBuilder
     private var appList: some View {
-        if !isDetailed {
-            VStack(spacing: 10) {
-                Text("Private 模式只記使用時間")
-                    .font(.system(size: 12))
-                    .foregroundStyle(PanelStyle.muted)
-                Button(action: onEnableDetailed) {
-                    Text("切換成 Detailed，看各 app 用了多久")
-                        .font(.system(size: 12, weight: .heavy))
-                        .foregroundStyle(Color.white)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 6)
-                        .background(PanelStyle.orange, in: Capsule())
-                }
-                .buttonStyle(.plain)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-        } else if appsArePartial || apps.isEmpty {
+        if appsArePartial || apps.isEmpty {
             Text("尚無資料")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundStyle(PanelStyle.muted)
@@ -119,35 +148,7 @@ public struct StatisticsView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 0) {
                     ForEach(apps.prefix(Self.appsShown), id: \.appName) { app in
-                        VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 8) {
-                                Text(app.appName)
-                                    .font(.system(size: 13, weight: .bold))
-                                    .lineLimit(1)
-                                    .frame(width: 70, alignment: .leading)
-                                GeometryReader { proxy in
-                                    Capsule()
-                                        .fill(PanelStyle.orange.opacity(0.75))
-                                        .frame(width: max(4, proxy.size.width * app.seconds / longest))
-                                }
-                                .frame(height: 8)
-                                Text(Self.formatShort(app.seconds))
-                                    .font(.system(size: 12))
-                                    .monospacedDigit()
-                                    .lineLimit(1)
-                                    .fixedSize()
-                                    .frame(minWidth: 84, alignment: .trailing)
-                            }
-                            // One window each, so more apps fit before scrolling.
-                            ForEach(app.topWindows.prefix(1), id: \.self) { title in
-                                Text(title)
-                                    .font(.system(size: 11))
-                                    .foregroundStyle(PanelStyle.muted)
-                                    .lineLimit(1)
-                                    .truncationMode(.middle)
-                            }
-                        }
-                        .frame(height: Self.rowHeight, alignment: .top)
+                        appRow(app, longest: longest)
                     }
                 }
                 // Room for the overlay scroller so it never covers the times.
@@ -171,6 +172,38 @@ public struct StatisticsView: View {
                     .allowsHitTesting(false)
             }
         }
+    }
+
+    private func appRow(_ app: AppUsage, longest: TimeInterval) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            HStack(spacing: 8) {
+                Text(app.appName)
+                    .font(.system(size: 13, weight: .bold))
+                    .lineLimit(1)
+                    .frame(width: 70, alignment: .leading)
+                GeometryReader { proxy in
+                    Capsule()
+                        .fill(PanelStyle.orange.opacity(0.75))
+                        .frame(width: max(4, proxy.size.width * app.seconds / longest))
+                }
+                .frame(height: 8)
+                Text(Self.formatShort(app.seconds))
+                    .font(.system(size: 12))
+                    .monospacedDigit()
+                    .lineLimit(1)
+                    .fixedSize()
+                    .frame(minWidth: 84, alignment: .trailing)
+            }
+            // One window each, so more apps fit before scrolling.
+            ForEach(app.topWindows.prefix(1), id: \.self) { title in
+                Text(title)
+                    .font(.system(size: 11))
+                    .foregroundStyle(PanelStyle.muted)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+        }
+        .frame(height: Self.rowHeight, alignment: .top)
     }
 
     private var rangePicker: some View {

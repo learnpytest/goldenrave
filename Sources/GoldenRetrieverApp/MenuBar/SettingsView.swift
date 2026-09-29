@@ -60,13 +60,28 @@ public struct SettingsView: View {
             }
                 .padding(.vertical, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
+            // Detailed waits here until macOS grants Accessibility, then turns
+            // itself on; the button lands on the exact pane to allow it.
             if isAwaitingPermission {
-                Text("等待輔助使用權限：到「系統設定 → 隱私權與安全性 → 輔助使用」允許後，會自動切到 Detailed。")
-                    .font(.system(size: 10))
-                    .foregroundStyle(PanelStyle.orange)
-                    .fixedSize(horizontal: false, vertical: true)
-                    .padding(.bottom, 6)
-                    .padding(.horizontal, PopoverView.blockInset)
+                HStack(spacing: 8) {
+                    Text("需要「輔助使用」權限才能記錄各 app")
+                        .font(.system(size: 10))
+                        .foregroundStyle(PanelStyle.orange)
+                        .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button { NSWorkspace.shared.open(Self.accessibilitySettingsURL) } label: {
+                        Text("打開系統設定")
+                            .font(.system(size: 11, weight: .heavy))
+                            .foregroundStyle(Color.white)
+                            .fixedSize()
+                            .padding(.horizontal, 9)
+                            .padding(.vertical, 3)
+                            .background(PanelStyle.orange, in: Capsule())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.bottom, 7)
+                .padding(.horizontal, PopoverView.blockInset)
             }
             PanelDivider()
             Button { showingDeleteConfirmation = true } label: { label("清除本機資料") }
@@ -110,7 +125,11 @@ public struct SettingsView: View {
         // Same edges as the main panel: dividers span the width, text is inset.
         .padding(.horizontal, 18)
         .padding(.vertical, 16)
-        .frame(width: PopoverLayout.size.width, height: PopoverLayout.settingsHeight(showsUpdateHint: update != nil), alignment: .top)
+        .frame(
+            width: PopoverLayout.size.width,
+            height: PopoverLayout.settingsHeight(showsUpdateHint: update != nil, showsPermissionHint: isAwaitingPermission),
+            alignment: .top
+        )
         .confirmationDialog(
             "確定清除所有本機使用與休息紀錄？",
             isPresented: $showingDeleteConfirmation,
@@ -122,6 +141,7 @@ public struct SettingsView: View {
     }
 
     private static let rowPadding: CGFloat = 7
+    static let accessibilitySettingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
     static let updateSteps = "更新前先「結束小金金」，再拖進應用程式取代"
 
     /// A two-option pill toggle, the same look for pet visibility and mode.
