@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>goldenrave 小金金</title>
+<meta name="description" content="goldenrave：住在 macOS 選單列的小金金，陪你工作，也提醒你休息。">
+<link rel="icon" href="pup/play-ball-01.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<style>
+:root{
+  --bg:#FFFDF6; --cream:#FFF5DF; --chip:#F6E4C9; --line:#E8B86A;
+  --text:#5B422C; --muted:#92704A; --orange:#E98763; --orange-deep:#D9714C;
+  --card:#FFFFFF;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#211b15; --cream:#2c241c; --chip:#3a2f24; --line:#7a5b30;
+  --text:#f3e6d4; --muted:#c7ab89; --orange:#EF9573; --orange-deep:#F2A283; --card:#2a221b; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#211b15; --cream:#2c241c; --chip:#3a2f24; --line:#7a5b30;
+  --text:#f3e6d4; --muted:#c7ab89; --orange:#EF9573; --orange-deep:#F2A283; --card:#2a221b; color-scheme:dark;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",-apple-system,"PingFang TC",sans-serif;line-height:1.7;padding-inline:16px}
+.wrap{max-width:960px;margin:0 auto}
+a{color:var(--orange-deep)}
+a:focus-visible,.dl:focus-visible{outline:2px solid var(--orange);outline-offset:3px;border-radius:8px}
+
+.hero{padding-block:28px 24px}
+.desk{border-radius:22px;overflow:hidden;background:var(--cream);box-shadow:0 10px 30px rgba(91,66,44,.12)}
+.topbar{display:flex;align-items:center;justify-content:space-between;height:34px;padding:0 10px 0 16px;background:linear-gradient(90deg,#3b5f86,#4b6f97)}
+.apple{width:12px;height:14px;border-radius:50% 50% 45% 45%;background:#fff;opacity:.9}
+.tb-right .menubar{background:none;box-shadow:none;margin:0;padding:0;height:34px}
+.tb-right{position:relative}
+.pointer{position:absolute;top:calc(100% + 6px);left:4px;white-space:nowrap;font-size:13px;font-weight:700;color:var(--orange-deep)}
+.hero-body{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 20px 36px}
+.hero-pup{width:min(240px,60vw);height:auto;margin-bottom:4px}
+.eyebrow{font-size:13px;letter-spacing:.08em;color:var(--muted);font-weight:500}
+h1{font-size:clamp(34px,6vw,52px);line-height:1.15;margin:6px 0 12px;font-weight:900;text-wrap:balance}
+h1 small{display:block;font-size:.42em;font-weight:500;color:var(--muted);margin-top:8px;letter-spacing:.02em}
+.lead{font-size:17px;max-width:30em;margin:0 0 24px}
+.dl{display:inline-flex;align-items:center;gap:10px;background:var(--orange);color:#fff;text-decoration:none;font-weight:700;font-size:17px;padding:12px 22px;border-radius:999px;box-shadow:0 6px 16px color-mix(in srgb,var(--orange) 35%,transparent)}
+.dl:hover{background:var(--orange-deep)}
+.dl svg{width:18px;height:18px}
+.req{display:block;margin-top:10px;font-size:13px;color:var(--muted)}
+.stage{position:relative;aspect-ratio:1;max-width:340px;justify-self:center;width:100%;
+  background:radial-gradient(circle at 50% 62%,var(--cream) 0 58%,transparent 59%)}
+.stage img{position:absolute;inset:6% 6% 0;width:88%;height:auto}
+.menubar{display:inline-flex;align-items:center;gap:14px;height:30px;padding:0 12px 0 6px;margin:0 0 6px;border-radius:8px;
+  background:linear-gradient(90deg,#3b5f86,#4b6f97);box-shadow:inset 0 -1px 0 rgba(255,255,255,.12)}
+.menubar img{height:30px;width:auto;display:block}
+.hero .menubar img{height:30px}
+.menubar .sys{height:13px;width:auto}
+.menubar .clock{color:#fff;font-size:13px;font-weight:500;white-space:nowrap;font-family:-apple-system,"PingFang TC",sans-serif}
+h1+.menubar{margin-top:8px}
+.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.acts figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.tile{background:var(--cream);border-radius:18px;width:100%;aspect-ratio:1;display:grid;place-items:center}
+.tile img{width:82%;height:auto}
+.acts figcaption{font-weight:700;font-size:16px}
+
+section{padding-block:32px}
+h2{font-size:24px;margin:0 0 20px;text-wrap:balance}
+.features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.feature{display:flex;flex-direction:column;gap:12px}
+.shot{background:var(--cream);border-radius:18px;padding:18px 14px 0;display:flex;justify-content:center;align-items:flex-start;height:260px;overflow:hidden}
+.shot img{width:100%;max-width:260px;height:auto;filter:drop-shadow(0 6px 14px rgba(91,66,44,.18))}
+.feature h3{font-size:17px;margin:0}
+.feature p{margin:0;font-size:15px;color:var(--muted)}
+
+.steps{counter-reset:s;list-style:none;padding:0;margin:0;display:grid;gap:12px;max-width:640px}
+.steps li{counter-increment:s;display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start;font-size:15px}
+.steps li::before{content:counter(s);display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--chip);color:var(--text);font-weight:700;font-size:14px}
+.steps b{font-weight:700}
+.note{font-size:14px;color:var(--muted);margin-top:14px;max-width:640px}
+
+footer{border-top:1px solid color-mix(in srgb,var(--line) 45%,transparent);margin-top:24px;padding-block:24px 40px;font-size:13px;color:var(--muted);text-align:center;display:flex;flex-direction:column;align-items:center;gap:6px}
+footer p{margin:0}
+.links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px}
+
+@media (max-width:760px){
+  .acts{gap:10px}
+  .acts figcaption{font-size:14px}
+  .tb-right .menubar .clock{display:none}
+  .features{grid-template-columns:1fr}
+  .shot{height:auto;padding-bottom:14px}
+}
+@media (prefers-reduced-motion:reduce){.stage img{animation:none}}
+.legal{font-size:12px;opacity:.85}
+.privacy{display:flex;gap:12px;align-items:center;justify-content:center;padding:18px 20px;margin-block:8px}
+.privacy svg{width:26px;height:26px;flex:none;color:var(--muted)}
+.privacy p{margin:0;font-size:15px;color:var(--muted)}
+.privacy b{color:var(--text);font-weight:700;margin-right:10px}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="desk">
+      <div class="topbar">
+        <span class="apple" aria-hidden="true"></span>
+        <div class="tb-right">
+          <span class="pointer" aria-hidden="true">↑ 小金金住在這裡</span>
+          <div class="menubar" role="img" aria-label="選單列右上角，小金金和連續使用時間在 Wi-Fi 與時鐘旁邊">
+        <img src="img/menubar-item.png" alt="" width="94" height="30">
+        <svg class="sys" viewBox="0 0 20 14" aria-hidden="true"><path d="M1 5a13 13 0 0 1 18 0M4 8a8.5 8.5 0 0 1 12 0M7 11a4 4 0 0 1 6 0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg class="sys" viewBox="0 0 26 13" aria-hidden="true"><rect x="1" y="1" width="21" height="11" rx="3" fill="none" stroke="#fff" stroke-width="1.4"/><rect x="3" y="3" width="14" height="7" rx="1.5" fill="#fff"/><rect x="23" y="4.5" width="2" height="4" rx="1" fill="#fff"/></svg>
+        <span class="clock">週二 下午 3:20</span>
+      </div>
+        </div>
+      </div>
+      <div class="hero-body">
+        <img id="pup" class="hero-pup" src="pup/play-ball-01.png" alt="小金金在玩球">
+        <div class="eyebrow">macOS 選單列夥伴</div>
+        <h1>goldenrave<small>小金金陪你工作，也提醒你休息</small></h1>
+        <a class="dl" href="https://github.com/learnpytest/goldenrave/releases/latest/download/goldenrave.dmg">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        下載 goldenrave
+      </a>
+        <span class="req">免費 · macOS 14 Sonoma 以上 · 最新版 __VERSION__</span>
+      </div>
+    </div>
+  </header>
+
+  <section>
+    <h2>金金會做的事</h2>
+    <div class="features">
+      <div class="feature">
+        <div class="shot"><img src="img/invite.png" alt="休息時間到了，小金金邀請你陪牠"></div>
+        <h3>時間到了，來邀請你</h3>
+      </div>
+      <div class="feature">
+        <div class="shot"><img src="img/break.png" alt="休息中，選擇休息、陪玩或散步"></div>
+        <h3>休息、陪玩、散步</h3>
+      </div>
+      <div class="feature">
+        <div class="shot"><img src="img/stats.png" alt="使用統計，今天、近 7 天、本月"></div>
+        <h3>看看今天用了多久</h3>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>你可以陪金金</h2>
+    <div class="acts">
+      <figure><div class="tile"><img data-clip="rest" data-count="6" data-seconds="0.5" src="pup/rest-01.png" alt="小金金趴著休息"></div><figcaption>休息</figcaption></figure>
+      <figure><div class="tile"><img data-clip="play" data-count="10" data-seconds="0.25" src="pup/play-01.png" alt="小金金在玩"></div><figcaption>陪玩</figcaption></figure>
+      <figure><div class="tile"><img data-clip="stroll" data-count="12" data-seconds="0.45" src="pup/stroll-01.png" alt="小金金散步"></div><figcaption>散步</figcaption></figure>
+    </div>
+  </section>
+
+  <section class="privacy">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 17.2s-3-1.8-3-3.8a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 2-3 3.8-3 3.8Z" fill="currentColor"/></svg>
+    <p><b>資料只存在你的 Mac 上</b>不用帳號，也不會上傳任何使用紀錄。</p>
+  </section>
+
+  <section>
+    <h2>安裝</h2>
+    <ol class="steps">
+      <li><span>按上面的<b>下載 goldenrave</b>，打開下載好的 <code>goldenrave.dmg</code>。</span></li>
+      <li><span>把 goldenrave 拖進「應用程式」。</span></li>
+      <li><span>從「應用程式」打開，小金金就會出現在選單列。</span></li>
+    </ol>
+    <p class="note">之後有新版本時，設定頁會出現「前往更新」。更新前先按「結束小金金」，再拖進應用程式取代，統計資料會保留。</p>
+  </section>
+
+  <footer>
+    <nav class="links" aria-label="相關連結">
+      <a href="https://github.com/learnpytest/goldenrave">GitHub</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/learnpytest/goldenrave/releases">所有版本</a>
+      <span aria-hidden="true">·</span>
+      <a href="https://github.com/learnpytest/goldenrave/blob/main/docs/privacy.md">隱私說明</a>
+    </nav>
+    <p class="legal">© 2026 goldenrave · 網頁最後更新 <time datetime="__UPDATED_ISO__">__UPDATED__</time></p>
+  </footer>
+</div>
+
+<script>
+(() => {
+  const img = document.getElementById('pup');
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  const clips = [
+    {name: 'play-ball', count: 10, seconds: 0.25, loops: 3},
+    {name: 'walk', count: 12, seconds: 0.32, loops: 2}
+  ];
+  const src = (c, i) => `pup/${c.name}-${String(i + 1).padStart(2, '0')}.png`;
+  clips.forEach(c => { for (let i = 0; i < c.count; i++) new Image().src = src(c, i); });
+  let clip = 0, frame = 0, loop = 0;
+  const alts = {'play-ball': '小金金在玩球', 'walk': '小金金在走路'};
+  function step() {
+    const c = clips[clip];
+    img.src = src(c, frame);
+    img.alt = alts[c.name];
+    frame++;
+    if (frame === c.count) { frame = 0; loop++; if (loop === c.loops) { loop = 0; clip = (clip + 1) % clips.length; } }
+    setTimeout(step, clips[clip].seconds * 1000);
+  }
+  step();
+  document.querySelectorAll('img[data-clip]').forEach(el => {
+    const name = el.dataset.clip, count = +el.dataset.count, ms = +el.dataset.seconds * 1000;
+    for (let i = 0; i < count; i++) new Image().src = `pup/${name}-${String(i + 1).padStart(2, '0')}.png`;
+    let i = 0;
+    setInterval(() => { i = (i + 1) % count; el.src = `pup/${name}-${String(i + 1).padStart(2, '0')}.png`; }, ms);
+  });
+})();
+</script>
+</body>
+</html>

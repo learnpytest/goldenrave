@@ -2,6 +2,8 @@
 
 goldenrave（小金金）是一個只支援 macOS 14 Sonoma 以上的 Native menu-bar companion。它用一隻兩個月大的真實幼黃金，依照目前使用狀態走路、奔跑、玩耍、跳起來提醒，或在休息時安靜呼吸。
 
+網站與下載：https://learnpytest.github.io/goldenrave/
+
 ## 本機安裝
 
 在有相容的 macOS Swift toolchain（完整 Xcode 或與 SDK 對應的 Command Line Tools）上：
