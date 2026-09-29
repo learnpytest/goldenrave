@@ -27,7 +27,7 @@ public struct StatisticsView: View {
     @State private var total: TimeInterval = 0
     @State private var apps: [AppUsage] = []
     // Totals and per-app samples began on different days, so each part
-    // shows 尚無資料 on its own when the range reaches back before it.
+    // shows 尚無資料 on its own while it has only today's records.
     @State private var totalIsPartial = false
     @State private var listReachesBottom = false
     @State private var appsArePartial = false
@@ -199,18 +199,20 @@ public struct StatisticsView: View {
             let end = calendar.date(byAdding: .day, value: 1, to: today) ?? Date()
             total = try totalForRange(from: start, today: today)
             apps = try store.appUsage(from: start, to: end)
-            totalIsPartial = try isPartial(since: store.firstSessionDate(), rangeStart: start)
-            appsArePartial = try isPartial(since: store.firstDetailedSampleDate(), rangeStart: start)
+            totalIsPartial = try isPartial(since: store.firstSessionDate(), today: today)
+            appsArePartial = try isPartial(since: store.firstDetailedSampleDate(), today: today)
             loadError = nil
         } catch {
             loadError = "讀取統計失敗：\(error.localizedDescription)"
         }
     }
 
-    private func isPartial(since first: Date?, rangeStart start: Date) -> Bool {
+    /// 近 7 天 and 本月 show whatever days exist once there is more than one;
+    /// with only today's records they would just repeat 今天.
+    private func isPartial(since first: Date?, today: Date) -> Bool {
         guard range != .today else { return false }
         guard let first else { return true }
-        return calendar.startOfDay(for: first) > start
+        return calendar.startOfDay(for: first) >= today
     }
 
     private func rangeStart(today: Date) -> Date {
