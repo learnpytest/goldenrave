@@ -21,6 +21,8 @@
   --bg:#211b15; --cream:#2c241c; --chip:#3a2f24; --line:#7a5b30;
   --text:#f3e6d4; --muted:#c7ab89; --orange:#EF9573; --orange-deep:#F2A283; --card:#2a221b; color-scheme:dark;}
 *{box-sizing:border-box}
+img{max-width:100%}
+code{overflow-wrap:anywhere}
 body{margin:0;background:var(--bg);color:var(--text);font-family:"Noto Sans TC",-apple-system,"PingFang TC",sans-serif;line-height:1.7;padding-inline:16px}
 .wrap{max-width:960px;margin:0 auto}
 a{color:var(--orange-deep)}
@@ -32,7 +34,7 @@ a:focus-visible,.dl:focus-visible{outline:2px solid var(--orange);outline-offset
 .apple{width:12px;height:14px;border-radius:50% 50% 45% 45%;background:#fff;opacity:.9}
 .tb-right .menubar{background:none;box-shadow:none;margin:0;padding:0;height:34px}
 .tb-right{position:relative}
-.pointer{position:absolute;top:calc(100% + 6px);left:4px;white-space:nowrap;font-size:13px;font-weight:700;color:var(--orange-deep)}
+.pointer{position:absolute;top:calc(100% + 4px);left:40px;font-size:20px;line-height:1;font-weight:700;color:var(--orange-deep)}
 .hero-body{display:flex;flex-direction:column;align-items:center;text-align:center;padding:36px 20px 36px}
 .hero-pup{width:min(240px,60vw);height:auto;margin-bottom:4px}
 .eyebrow{font-size:13px;letter-spacing:.08em;color:var(--muted);font-weight:500}
@@ -53,7 +55,7 @@ h1 small{display:block;font-size:.42em;font-weight:500;color:var(--muted);margin
 .menubar .sys{height:13px;width:auto}
 .menubar .clock{color:#fff;font-size:13px;font-weight:500;white-space:nowrap;font-family:-apple-system,"PingFang TC",sans-serif}
 h1+.menubar{margin-top:8px}
-.acts{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
 .acts figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}
 .tile{background:var(--cream);border-radius:18px;width:100%;aspect-ratio:1;display:grid;place-items:center}
 .tile img{width:82%;height:auto}
@@ -61,7 +63,7 @@ h1+.menubar{margin-top:8px}
 
 section{padding-block:32px}
 h2{font-size:24px;margin:0 0 20px;text-wrap:balance}
-.features{display:grid;grid-template-columns:repeat(3,1fr);gap:20px}
+.features{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
 .feature{display:flex;flex-direction:column;gap:12px}
 .shot{background:var(--cream);border-radius:18px;padding:18px 14px 0;display:flex;justify-content:center;align-items:flex-start;height:260px;overflow:hidden}
 .shot img{width:100%;max-width:260px;height:auto;filter:drop-shadow(0 6px 14px rgba(91,66,44,.18))}
@@ -79,11 +81,25 @@ footer p{margin:0}
 .links{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 10px}
 
 @media (max-width:760px){
-  .acts{gap:10px}
-  .acts figcaption{font-size:14px}
+  .hero{padding-block:16px}
+  .desk{border-radius:18px}
+  .topbar{padding:0 8px 0 12px}
+  .tb-right .menubar{gap:10px}
   .tb-right .menubar .clock{display:none}
-  .features{grid-template-columns:1fr}
-  .shot{height:auto;padding-bottom:14px}
+  .hero-body{padding:30px 16px 28px}
+  .hero-pup{width:min(200px,56vw)}
+  .req{line-height:1.6}
+  section{padding-block:24px}
+  h2{font-size:21px;margin-bottom:14px}
+  .features{grid-template-columns:minmax(0,1fr);gap:28px}
+  .shot{height:auto;padding:16px 16px 14px}
+  .shot img{max-width:280px}
+  .acts{gap:10px}
+  .tile{border-radius:14px}
+  .acts figcaption{font-size:14px}
+  .privacy{flex-direction:column;text-align:center;gap:8px;padding:8px 4px}
+  .privacy b{display:block;margin:0 0 2px}
+  .steps li{font-size:14px}
 }
 @media (prefers-reduced-motion:reduce){.stage img{animation:none}}
 .legal{font-size:12px;opacity:.85}
@@ -101,7 +117,7 @@ footer p{margin:0}
       <div class="topbar">
         <span class="apple" aria-hidden="true"></span>
         <div class="tb-right">
-          <span class="pointer" aria-hidden="true">↑ 小金金住在這裡</span>
+          <span class="pointer" aria-hidden="true">↑</span>
           <div class="menubar" role="img" aria-label="選單列右上角，小金金和連續使用時間在 Wi-Fi 與時鐘旁邊">
         <img src="img/menubar-item.png" alt="" width="94" height="30">
         <svg class="sys" viewBox="0 0 20 14" aria-hidden="true"><path d="M1 5a13 13 0 0 1 18 0M4 8a8.5 8.5 0 0 1 12 0M7 11a4 4 0 0 1 6 0" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round"/></svg>
