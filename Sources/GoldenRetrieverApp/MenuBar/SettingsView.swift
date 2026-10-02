@@ -10,8 +10,11 @@ public struct SettingsView: View {
     private let isAwaitingPermission: Bool
     private let currentVersion: String
     private let update: AvailableUpdate?
+    private let isInstallingUpdate: Bool
+    private let updateError: String?
     private let onClose: () -> Void
     private let onDeleteData: () -> Void
+    private let onInstallUpdate: () -> Void
     @State private var showingDeleteConfirmation = false
 
     public init(
@@ -22,8 +25,11 @@ public struct SettingsView: View {
         isAwaitingPermission: Bool = false,
         currentVersion: String = "",
         update: AvailableUpdate? = nil,
+        isInstallingUpdate: Bool = false,
+        updateError: String? = nil,
         onClose: @escaping () -> Void = {},
-        onDeleteData: @escaping () -> Void = {}
+        onDeleteData: @escaping () -> Void = {},
+        onInstallUpdate: @escaping () -> Void = {}
     ) {
         self._mode = mode
         self._workMinutes = workMinutes
@@ -32,8 +38,11 @@ public struct SettingsView: View {
         self.isAwaitingPermission = isAwaitingPermission
         self.currentVersion = currentVersion
         self.update = update
+        self.isInstallingUpdate = isInstallingUpdate
+        self.updateError = updateError
         self.onClose = onClose
         self.onDeleteData = onDeleteData
+        self.onInstallUpdate = onInstallUpdate
     }
 
     public var body: some View {
@@ -98,9 +107,15 @@ public struct SettingsView: View {
             HStack {
                 label("目前版本 v\(currentVersion)")
                 Spacer()
-                // Notify only: the release page is where the new dmg is downloaded.
                 if let update {
-                    Button("前往更新 \(update.version) 版") { NSWorkspace.shared.open(update.pageURL) }
+                    Group {
+                        if update.downloadURL != nil {
+                            Button(isInstallingUpdate ? "更新中…" : "更新到 \(update.version) 版", action: onInstallUpdate)
+                                .disabled(isInstallingUpdate)
+                        } else {
+                            Button("前往更新 \(update.version) 版") { NSWorkspace.shared.open(update.pageURL) }
+                        }
+                    }
                         .buttonStyle(.plain)
                         .font(.system(size: 12, weight: .bold))
                         .foregroundStyle(PanelStyle.orange)
@@ -110,12 +125,24 @@ public struct SettingsView: View {
             }
                 .padding(.top, Self.rowPadding)
                 .padding(.horizontal, PopoverView.blockInset)
-            // A running app cannot be replaced, so the drag-in fails unless
-            // 小金金 is quit first.
-            if update != nil {
-                Text(Self.updateSteps)
+            // Keep a short explanation while the updater downloads the DMG;
+            // the helper quits and reopens the app after staging it.
+            if let update {
+                Text(
+                    update.downloadURL != nil
+                        ? (isInstallingUpdate ? "正在下載並準備更新" : Self.automaticUpdateSteps)
+                        : Self.manualUpdateSteps
+                )
                     .font(.system(size: 10))
                     .foregroundStyle(PanelStyle.muted)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 4)
+                    .padding(.horizontal, PopoverView.blockInset)
+            }
+            if let updateError {
+                Text(updateError)
+                    .font(.system(size: 10))
+                    .foregroundStyle(PanelStyle.orange)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 4)
                     .padding(.horizontal, PopoverView.blockInset)
@@ -127,7 +154,11 @@ public struct SettingsView: View {
         .padding(.vertical, 16)
         .frame(
             width: PopoverLayout.size.width,
-            height: PopoverLayout.settingsHeight(showsUpdateHint: update != nil, showsPermissionHint: isAwaitingPermission),
+            height: PopoverLayout.settingsHeight(
+                showsUpdateHint: update != nil,
+                showsPermissionHint: isAwaitingPermission,
+                showsUpdateError: updateError != nil
+            ),
             alignment: .top
         )
         .confirmationDialog(
@@ -142,7 +173,8 @@ public struct SettingsView: View {
 
     private static let rowPadding: CGFloat = 7
     static let accessibilitySettingsURL = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility")!
-    static let updateSteps = "更新前先「結束小金金」，再拖進應用程式取代"
+    static let automaticUpdateSteps = "點下更新後，小金金會自行結束、更新並重新打開"
+    static let manualUpdateSteps = "請到 GitHub 下載新版；更新前先「結束小金金」，再拖進應用程式取代"
 
     /// A two-option pill toggle, the same look for pet visibility and mode.
     private func toggleRow(_ title: String, options: [(String, Bool)], selected: Bool, onSelect: @escaping (Bool) -> Void) -> some View {

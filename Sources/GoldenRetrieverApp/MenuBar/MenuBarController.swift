@@ -76,7 +76,8 @@ final class MenuBarController: NSObject {
                 width: PopoverLayout.size.width,
                 height: PopoverLayout.settingsHeight(
                     showsUpdateHint: runtime.availableUpdate != nil,
-                    showsPermissionHint: runtime.isAwaitingDetailedPermission
+                    showsPermissionHint: runtime.isAwaitingDetailedPermission,
+                    showsUpdateError: runtime.updateError != nil
                 )
             )
             : CGSize(
@@ -206,8 +207,11 @@ private struct PopoverRootView: View {
                 isAwaitingPermission: runtime.isAwaitingDetailedPermission,
                 currentVersion: runtime.updateChecker.currentVersion,
                 update: runtime.availableUpdate,
+                isInstallingUpdate: runtime.isInstallingUpdate,
+                updateError: runtime.updateError,
                 onClose: runtime.closeSecondaryView,
-                onDeleteData: runtime.deleteAllData
+                onDeleteData: runtime.deleteAllData,
+                onInstallUpdate: runtime.installUpdate
             )
         } else {
             PopoverView(

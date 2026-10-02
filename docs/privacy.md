@@ -18,4 +18,4 @@ Accessibility is requested only when the user chooses Detailed mode. The permiss
 
 ## Network
 
-The only network request is a check of the latest release at `api.github.com/repos/learnpytest/goldenrave/releases/latest`, at launch, at most once a day, and when settings open. It sends no usage data; opening the download page is left to the user.
+The app checks the latest release at `api.github.com/repos/learnpytest/goldenrave/releases/latest` at launch, at most once a day, and when settings open. If the user chooses an update, it downloads the selected `goldenrave.dmg` from the GitHub Release to replace the app. These requests send no usage data.
