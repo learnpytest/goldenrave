@@ -17,6 +17,8 @@ final class AppRuntime: ObservableObject {
     @Published private(set) var restMinutes: Int
     @Published private(set) var showsPet: Bool
     @Published private(set) var availableUpdate: AvailableUpdate?
+    @Published private(set) var isInstallingUpdate = false
+    @Published private(set) var updateError: String?
     let updateChecker = UpdateChecker()
     private var lastUpdateCheck: Date?
 
@@ -36,6 +38,7 @@ final class AppRuntime: ObservableObject {
     private var animationDirector = DogAnimationDirector()
     private let preferences = AppPreferences()
     private var permissionTimer: Timer?
+    private var activationObserver: NSObjectProtocol?
 
     init() {
         workMinutes = preferences.workMinutes
@@ -45,6 +48,15 @@ final class AppRuntime: ObservableObject {
         trackingMode = dependencies?.trackingController.mode ?? .privateMode
         if dependencies?.trackingController.isAwaitingPermission == true {
             waitForDetailedPermission()
+        }
+        activationObserver = NotificationCenter.default.addObserver(
+            forName: NSApplication.didBecomeActiveNotification,
+            object: NSApp,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.refreshDetailedPermission()
+            }
         }
         tick()
         timer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
@@ -70,6 +82,9 @@ final class AppRuntime: ObservableObject {
     deinit {
         timer?.invalidate()
         permissionTimer?.invalidate()
+        if let activationObserver {
+            NotificationCenter.default.removeObserver(activationObserver)
+        }
     }
 
     func tick(now: Date = Date()) {
@@ -280,12 +295,42 @@ final class AppRuntime: ObservableObject {
         syncTrackingMode()
     }
 
+    func installUpdate() {
+        guard let update = availableUpdate,
+              update.downloadURL != nil,
+              !isInstallingUpdate else { return }
+        updateError = nil
+        isInstallingUpdate = true
+        let installer = UpdateInstaller()
+        let appURL = Bundle.main.bundleURL
+        Task { [weak self] in
+            do {
+                try await installer.install(
+                    downloadURL: update.downloadURL,
+                    appURL: appURL,
+                    expectedVersion: update.version
+                )
+                await MainActor.run {
+                    self?.isInstallingUpdate = false
+                    NSApp.terminate(nil)
+                }
+            } catch {
+                await MainActor.run {
+                    self?.isInstallingUpdate = false
+                    self?.updateError = error.localizedDescription
+                }
+            }
+        }
+    }
+
     /// Accessibility is granted in System Settings after our request returns,
     /// so poll briefly instead of making the user pick Detailed again.
     private func waitForDetailedPermission() {
         permissionTimer?.invalidate()
+        refreshDetailedPermission()
+        guard dependencies?.trackingController.isAwaitingPermission == true else { return }
         let deadline = Date().addingTimeInterval(5 * 60)
-        permissionTimer = Timer.scheduledTimer(withTimeInterval: 2, repeats: true) { [weak self] timer in
+        let timer = Timer(timeInterval: 2, repeats: true) { [weak self] timer in
             Task { @MainActor [weak self] in
                 guard let self, let controller = self.dependencies?.trackingController else {
                     timer.invalidate()
@@ -297,6 +342,18 @@ final class AppRuntime: ObservableObject {
                 }
                 self.syncTrackingMode()
             }
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        permissionTimer = timer
+    }
+
+    private func refreshDetailedPermission() {
+        guard let controller = dependencies?.trackingController else { return }
+        controller.refreshPermission()
+        syncTrackingMode()
+        if !controller.isAwaitingPermission {
+            permissionTimer?.invalidate()
+            permissionTimer = nil
         }
     }
 

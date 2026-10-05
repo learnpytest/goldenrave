@@ -8,6 +8,14 @@
 <meta name="description" content="goldenrave：住在 macOS 選單列的小金金，陪你工作，也提醒你休息。">
 <link rel="icon" href="pup/play-ball-01.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-05YXXCWBP7"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-05YXXCWBP7');
+</script>
 <style>
 :root{
   --bg:#FFFDF6; --cream:#FFF5DF; --chip:#F6E4C9; --line:#E8B86A;
@@ -107,7 +115,7 @@ footer p{margin:0}
 </head>
 <body>
 <div class="wrap">
-  <header class="hero">
+  <header class="hero" data-track-section="hero">
     <div class="desk">
       <div class="topbar">
         <span class="apple" aria-hidden="true"></span>
@@ -125,7 +133,8 @@ footer p{margin:0}
         <img id="pup" class="hero-pup" src="pup/play-ball-01.png" alt="小金金在玩球">
         <div class="eyebrow">macOS 選單列夥伴</div>
         <h1>goldenrave<small>小金金陪你工作，也提醒你休息</small></h1>
-        <a class="dl" href="https://github.com/learnpytest/goldenrave/releases/latest/download/goldenrave.dmg">
+        <a class="dl" href="https://github.com/learnpytest/goldenrave/releases/latest/download/goldenrave.dmg"
+          data-ga-event="download_click" data-file-name="goldenrave.dmg" data-button-position="hero">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 20h16" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
         下載 goldenrave
       </a>
@@ -134,7 +143,7 @@ footer p{margin:0}
     </div>
   </header>
 
-  <section>
+  <section data-track-section="features">
     <h2>金金會做的事</h2>
     <div class="features">
       <div class="feature">
@@ -152,7 +161,7 @@ footer p{margin:0}
     </div>
   </section>
 
-  <section>
+  <section data-track-section="activities">
     <h2>你可以陪金金</h2>
     <div class="acts">
       <figure><div class="tile"><img data-clip="rest" data-count="6" data-seconds="0.5" src="pup/rest-01.png" alt="小金金趴著休息"></div><figcaption>休息</figcaption></figure>
@@ -161,28 +170,28 @@ footer p{margin:0}
     </div>
   </section>
 
-  <section class="privacy">
+  <section class="privacy" data-track-section="privacy">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V19a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-7.5Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 17.2s-3-1.8-3-3.8a1.6 1.6 0 0 1 3-.8 1.6 1.6 0 0 1 3 .8c0 2-3 3.8-3 3.8Z" fill="currentColor"/></svg>
     <p><b>資料只存在你的 Mac 上</b>不用帳號，也不會上傳任何使用紀錄。</p>
   </section>
 
-  <section>
+  <section data-track-section="install">
     <h2>安裝</h2>
     <ol class="steps">
       <li><span>按上面的<b>下載 goldenrave</b>，打開下載好的 <code>goldenrave.dmg</code>。</span></li>
       <li><span>把 goldenrave 拖進「應用程式」。</span></li>
       <li><span>從「應用程式」打開，小金金就會出現在選單列。</span></li>
     </ol>
-    <p class="note">之後有新版本時，設定頁會出現「前往更新」。更新前先按「結束小金金」，再拖進應用程式取代，統計資料會保留。</p>
+    <p class="note">之後有新版本時，設定頁會出現「更新到 x.y.z 版」。點下去會下載、驗證並自動取代 app，再重新打開；統計資料會保留。</p>
   </section>
 
   <footer>
     <nav class="links" aria-label="相關連結">
-      <a href="https://github.com/learnpytest/goldenrave">GitHub</a>
+      <a href="https://github.com/learnpytest/goldenrave" data-ga-event="outbound_click" data-link-name="github">GitHub</a>
       <span aria-hidden="true">·</span>
-      <a href="https://github.com/learnpytest/goldenrave/releases">所有版本</a>
+      <a href="https://github.com/learnpytest/goldenrave/releases" data-ga-event="outbound_click" data-link-name="releases">所有版本</a>
       <span aria-hidden="true">·</span>
-      <a href="https://github.com/learnpytest/goldenrave/blob/main/docs/privacy.md">隱私說明</a>
+      <a href="https://github.com/learnpytest/goldenrave/blob/main/docs/privacy.md" data-ga-event="outbound_click" data-link-name="privacy">隱私說明</a>
     </nav>
     <p class="legal">© 2026 goldenrave · 網頁最後更新 <time datetime="__UPDATED_ISO__">__UPDATED__</time></p>
   </footer>
@@ -214,6 +223,41 @@ footer p{margin:0}
     for (let i = 0; i < count; i++) new Image().src = `pup/${name}-${String(i + 1).padStart(2, '0')}.png`;
     let i = 0;
     setInterval(() => { i = (i + 1) % count; el.src = `pup/${name}-${String(i + 1).padStart(2, '0')}.png`; }, ms);
+  });
+
+  const track = (eventName, params) => {
+    if (typeof window.gtag === 'function') window.gtag('event', eventName, params);
+  };
+
+  const seenSections = new Set();
+  const sectionObserver = new IntersectionObserver(entries => {
+    entries.forEach(entry => {
+      const sectionName = entry.target.dataset.trackSection;
+      if (entry.isIntersecting && !seenSections.has(sectionName)) {
+        seenSections.add(sectionName);
+        track('section_view', {section_name: sectionName, site_version: '__VERSION__'});
+      }
+    });
+  }, {threshold: 0.5});
+  document.querySelectorAll('[data-track-section]').forEach(section => sectionObserver.observe(section));
+
+  document.querySelectorAll('[data-ga-event]').forEach(link => {
+    link.addEventListener('click', () => {
+      const eventName = link.dataset.gaEvent;
+      if (eventName === 'download_click') {
+        track(eventName, {
+          file_name: link.dataset.fileName,
+          release_version: '__VERSION__',
+          button_position: link.dataset.buttonPosition,
+          target_url: link.href
+        });
+      } else if (eventName === 'outbound_click') {
+        track(eventName, {
+          link_name: link.dataset.linkName,
+          target_domain: new URL(link.href).hostname
+        });
+      }
+    });
   });
 })();
 </script>

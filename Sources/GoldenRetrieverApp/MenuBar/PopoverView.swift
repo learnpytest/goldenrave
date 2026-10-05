@@ -46,8 +46,12 @@ enum PopoverLayout {
     static let mainWidth: CGFloat = 260
     /// Settings lists one option per row between dividers, so it runs taller,
     /// and taller again while a new version's install steps are shown.
-    static func settingsHeight(showsUpdateHint: Bool, showsPermissionHint: Bool = false) -> CGFloat {
-        306 + (showsUpdateHint ? 18 : 0) + (showsPermissionHint ? 34 : 0)
+    static func settingsHeight(
+        showsUpdateHint: Bool,
+        showsPermissionHint: Bool = false,
+        showsUpdateError: Bool = false
+    ) -> CGFloat {
+        306 + (showsUpdateHint ? 18 : 0) + (showsPermissionHint ? 34 : 0) + (showsUpdateError ? 18 : 0)
     }
     /// The main panel is shorter without the break-choice row, so no blank
     /// row is left between the dividers.
